@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Testing
+coverage/
+
+# Next.js
+.next/
+out/
+apps/web/.next/
+apps/web/out/
+
+# Production builds
+build/
+dist/
+apps/api/dist/
+
+# Misc
+.DS_Store
+*.pem
+.turbo
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Vercel
+.vercel
+
+# Typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+
+# NOTE: .env files are INCLUDED for private repo
+# Make sure repo stays private!
+

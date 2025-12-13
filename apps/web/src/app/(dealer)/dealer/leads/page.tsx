@@ -1,0 +1,237 @@
+'use client';
+
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { 
+  Users, 
+  Mail, 
+  Phone, 
+  Calendar,
+  MessageSquare,
+  CheckCircle,
+  Clock,
+  XCircle,
+  MoreVertical,
+  Search,
+  Filter
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
+
+const leads = [
+  {
+    id: '1',
+    name: 'John Smith',
+    email: 'john@example.com',
+    phone: '+1 (555) 123-4567',
+    vehicle: '2024 BMW M4 Competition',
+    status: 'new',
+    date: '2024-01-18',
+    message: 'Interested in test driving this vehicle. Available this weekend?',
+  },
+  {
+    id: '2',
+    name: 'Emily Davis',
+    email: 'emily@example.com',
+    phone: '+1 (555) 234-5678',
+    vehicle: '2023 Mercedes-Benz C300',
+    status: 'contacted',
+    date: '2024-01-17',
+    message: 'Looking for financing options. Can you provide more details?',
+  },
+  {
+    id: '3',
+    name: 'Michael Brown',
+    email: 'michael@example.com',
+    phone: '+1 (555) 345-6789',
+    vehicle: '2024 Audi Q7 Premium',
+    status: 'qualified',
+    date: '2024-01-15',
+    message: 'Ready to make a purchase. When can we schedule a meeting?',
+  },
+  {
+    id: '4',
+    name: 'Sarah Wilson',
+    email: 'sarah@example.com',
+    phone: '+1 (555) 456-7890',
+    vehicle: '2023 Porsche Cayenne',
+    status: 'closed',
+    date: '2024-01-10',
+    message: 'Would like to trade in my current vehicle.',
+  },
+];
+
+const statusConfig = {
+  new: { label: 'New', color: 'bg-blue-100 text-blue-700', icon: Clock },
+  contacted: { label: 'Contacted', color: 'bg-yellow-100 text-yellow-700', icon: MessageSquare },
+  qualified: { label: 'Qualified', color: 'bg-green-100 text-green-700', icon: CheckCircle },
+  closed: { label: 'Closed', color: 'bg-gray-100 text-gray-700', icon: XCircle },
+};
+
+export default function LeadsPage() {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  return (
+    <div>
+      <div className="mb-8">
+        <h1 className="font-display text-2xl font-bold">Leads</h1>
+        <p className="text-muted-foreground">
+          Manage inquiries and potential customers
+        </p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid gap-4 sm:grid-cols-4 mb-8">
+        {[
+          { label: 'Total Leads', value: '156', icon: Users },
+          { label: 'New Today', value: '12', icon: Clock },
+          { label: 'Contacted', value: '45', icon: MessageSquare },
+          { label: 'Converted', value: '23', icon: CheckCircle },
+        ].map((stat, index) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="rounded-xl border bg-card p-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <stat.icon className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stat.value}</p>
+                <p className="text-sm text-muted-foreground">{stat.label}</p>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div className="mb-6 flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search leads..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Select defaultValue="all">
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="new">New</SelectItem>
+            <SelectItem value="contacted">Contacted</SelectItem>
+            <SelectItem value="qualified">Qualified</SelectItem>
+            <SelectItem value="closed">Closed</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Leads List */}
+      <div className="space-y-4">
+        {leads.map((lead, index) => {
+          const status = statusConfig[lead.status as keyof typeof statusConfig];
+          return (
+            <motion.div
+              key={lead.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="rounded-xl border bg-card p-4 sm:p-6"
+            >
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Avatar className="h-12 w-12 shrink-0">
+                  <AvatarFallback>{lead.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                </Avatar>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-semibold">{lead.name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Interested in: {lead.vehicle}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={cn(
+                        'inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium',
+                        status.color
+                      )}>
+                        <status.icon className="h-3 w-3" />
+                        {status.label}
+                      </span>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>View Details</DropdownMenuItem>
+                          <DropdownMenuItem>Update Status</DropdownMenuItem>
+                          <DropdownMenuItem>Add Note</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+
+                  <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
+                    {lead.message}
+                  </p>
+
+                  <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Mail className="h-4 w-4" />
+                      {lead.email}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Phone className="h-4 w-4" />
+                      {lead.phone}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      {lead.date}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 flex gap-2">
+                    <Button size="sm" className="gap-2">
+                      <Mail className="h-4 w-4" />
+                      Email
+                    </Button>
+                    <Button size="sm" variant="outline" className="gap-2">
+                      <Phone className="h-4 w-4" />
+                      Call
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
