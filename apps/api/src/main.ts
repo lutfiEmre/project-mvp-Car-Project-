@@ -30,8 +30,10 @@ async function bootstrap() {
     defaultVersion: '1',
   });
 
-  // Global prefix
-  app.setGlobalPrefix(configService.get('API_PREFIX', 'api'));
+  // Global prefix (exclude Swagger docs)
+  app.setGlobalPrefix(configService.get('API_PREFIX', 'api'), {
+    exclude: ['/docs', '/docs/(.*)'],
+  });
 
   // Validation
   app.useGlobalPipes(
