@@ -25,29 +25,6 @@ async function bootstrap() {
   });
 
   // API Versioning
-  app.enableVersioning({
-    type: VersioningType.URI,
-    defaultVersion: '1',
-  });
-
-  // Global prefix (exclude Swagger docs)
-  app.setGlobalPrefix(configService.get('API_PREFIX', 'api'), {
-    exclude: ['/docs', '/docs/(.*)'],
-  });
-
-  // Validation
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
-    }),
-  );
-
-  // Swagger Documentation
   if (configService.get('NODE_ENV') !== 'production') {
     const config = new DocumentBuilder()
       .setTitle('CarHaus API')
@@ -80,6 +57,24 @@ async function bootstrap() {
       },
     });
   }
+
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: '1',
+  });
+
+  app.setGlobalPrefix(configService.get('API_PREFIX', 'api'));
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
 
   const port = configService.get('PORT', 3001);
   await app.listen(port);
