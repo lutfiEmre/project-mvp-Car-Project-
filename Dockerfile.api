@@ -1,5 +1,7 @@
 FROM node:18-alpine AS base
 
+RUN apk add --no-cache openssl1.1-compat
+
 RUN npm install -g pnpm
 
 FROM base AS deps
