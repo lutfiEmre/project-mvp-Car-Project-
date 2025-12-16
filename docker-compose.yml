@@ -1,0 +1,139 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: carhaus-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-carhaus}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-carhaus}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    command: postgres -c max_connections=50 -c shared_buffers=128MB -c effective_cache_size=512MB -c work_mem=4MB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-carhaus}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - carhaus-network
+    mem_limit: 256m
+
+  redis:
+    image: redis:7-alpine
+    container_name: carhaus-redis
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - carhaus-network
+    mem_limit: 128m
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      args:
+        NODE_OPTIONS: "--max-old-space-size=256"
+    container_name: carhaus-api
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-carhaus}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-carhaus}?connection_limit=20&pool_timeout=30
+      DATABASE_CONNECTION_LIMIT: ${DATABASE_CONNECTION_LIMIT:-20}
+      DATABASE_POOL_TIMEOUT: ${DATABASE_POOL_TIMEOUT:-30}
+      REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      PORT: 3001
+      NODE_ENV: production
+      NODE_OPTIONS: "--max-old-space-size=256"
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+      API_PREFIX: api
+      UPLOAD_DIR: ./uploads
+      THROTTLE_TTL: ${THROTTLE_TTL:-60}
+      THROTTLE_LIMIT: ${THROTTLE_LIMIT:-200}
+    volumes:
+      - ./apps/api/uploads:/app/apps/api/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "3001"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - carhaus-network
+    mem_limit: 384m
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        NODE_OPTIONS: "--max-old-space-size=256"
+    container_name: carhaus-web
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost/api}
+      NODE_ENV: production
+      NODE_OPTIONS: "--max-old-space-size=256"
+      PORT: 3000
+    depends_on:
+      - api
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - carhaus-network
+    mem_limit: 384m
+
+  nginx:
+    image: nginx:alpine
+    container_name: carhaus-nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./apps/web/public:/usr/share/nginx/html/static:ro
+      - ./apps/api/uploads:/usr/share/nginx/html/uploads:ro
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    depends_on:
+      - web
+      - api
+    restart: unless-stopped
+    networks:
+      - carhaus-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  carhaus-network:
+    driver: bridge
+
+

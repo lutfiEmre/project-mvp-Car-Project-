@@ -1,0 +1,45 @@
+name: Deploy to Ubuntu Server
+
+on:
+  push:
+    branches:
+      - main
+      - production
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /root/carhaus
+            CHANGED_FILES=$(git pull origin main 2>&1)
+            
+            if echo "$CHANGED_FILES" | grep -q "apps/api/"; then
+              docker compose build api
+              docker compose up -d api
+            fi
+            
+            if echo "$CHANGED_FILES" | grep -q "apps/web/"; then
+              docker compose build web
+              docker compose up -d web
+            fi
+            
+            if echo "$CHANGED_FILES" | grep -q "nginx.conf"; then
+              docker compose restart nginx
+            fi
+            
+            if echo "$CHANGED_FILES" | grep -q "docker-compose.yml"; then
+              docker compose up -d
+            fi
+            
+            docker image prune -f
+            docker compose ps
+

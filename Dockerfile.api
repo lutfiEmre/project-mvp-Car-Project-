@@ -1,0 +1,59 @@
+FROM node:18-alpine AS base
+
+RUN npm install -g pnpm
+
+FROM base AS deps
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json ./apps/api/
+COPY packages/api-client/package.json ./packages/api-client/
+COPY packages/types/package.json ./packages/types/
+
+RUN pnpm install --frozen-lockfile
+
+FROM base AS builder
+
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=deps /app/packages ./packages
+
+COPY . .
+
+WORKDIR /app/apps/api
+
+RUN pnpm prisma generate
+
+RUN pnpm build
+
+RUN test -f dist/src/main.js || (echo "ERROR: dist/src/main.js not found!" && ls -laR dist/ && exit 1)
+
+FROM base AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+COPY --from=builder /app/apps/api/dist ./apps/api/dist
+COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
+COPY --from=builder /app/apps/api/package.json ./apps/api/
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=builder /app/package.json ./
+
+RUN mkdir -p /app/apps/api/uploads
+
+WORKDIR /app/apps/api
+
+RUN pnpm prisma generate
+
+RUN test -f dist/src/main.js || (echo "ERROR: main.js not found in runner!" && exit 1)
+
+EXPOSE 3001
+
+CMD ["node", "dist/src/main.js"]
+
+
