@@ -83,7 +83,11 @@ if [ -d "carhaus" ]; then
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo "Stopping containers..."
         cd carhaus
-        docker compose down -v 2>/dev/null || true
+        if command -v docker-compose &> /dev/null; then
+            docker-compose down -v 2>/dev/null || true
+        else
+            docker compose down -v 2>/dev/null || true
+        fi
         cd /root
         rm -rf carhaus
         echo -e "${GREEN}Old directory removed${NC}"
