@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAdminSettings, useUpdateSetting } from '@/hooks/use-admin';
+import { api } from '@/lib/api';
 import { toast } from 'sonner';
 
 export default function AdminSettingsPage() {
