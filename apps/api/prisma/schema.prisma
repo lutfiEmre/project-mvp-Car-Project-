@@ -109,193 +109,192 @@ enum MediaType {
 
 // Models
 model User {
-  id                String     @id @default(uuid())
-  email             String     @unique
-  password          String
-  firstName         String     @map("first_name")
-  lastName          String     @map("last_name")
-  phone             String?
-  avatar            String?
-  bio               String?    @db.Text
-  bannerImage       String?    @map("banner_image")
-  city              String?
-  province          String?
-  role              UserRole   @default(USER)
-  status            UserStatus @default(PENDING_VERIFICATION)
-  emailVerified     Boolean    @default(false) @map("email_verified")
-  emailVerifiedAt   DateTime?  @map("email_verified_at")
-  twoFactorEnabled  Boolean    @default(false) @map("two_factor_enabled")
-  twoFactorSecret   String?    @map("two_factor_secret")
-  passwordResetToken String?   @map("password_reset_token")
-  passwordResetExpires DateTime? @map("password_reset_expires")
-  lastLoginAt       DateTime?  @map("last_login_at")
-  lastLoginIp       String?    @map("last_login_ip")
-  createdAt         DateTime   @default(now()) @map("created_at")
-  updatedAt         DateTime   @updatedAt @map("updated_at")
+  id                   String     @id @default(uuid())
+  email                String     @unique
+  password             String
+  firstName            String     @map("first_name")
+  lastName             String     @map("last_name")
+  phone                String?
+  avatar               String?
+  bio                  String?    @db.Text
+  bannerImage          String?    @map("banner_image")
+  city                 String?
+  province             String?
+  role                 UserRole   @default(USER)
+  status               UserStatus @default(PENDING_VERIFICATION)
+  emailVerified        Boolean    @default(false) @map("email_verified")
+  emailVerifiedAt      DateTime?  @map("email_verified_at")
+  twoFactorEnabled     Boolean    @default(false) @map("two_factor_enabled")
+  twoFactorSecret      String?    @map("two_factor_secret")
+  passwordResetToken   String?    @map("password_reset_token")
+  passwordResetExpires DateTime?  @map("password_reset_expires")
+  lastLoginAt          DateTime?  @map("last_login_at")
+  lastLoginIp          String?    @map("last_login_ip")
+  createdAt            DateTime   @default(now()) @map("created_at")
+  updatedAt            DateTime   @updatedAt @map("updated_at")
 
   // Relations
-  dealer            Dealer?
-  subscriptions     Subscription[]
-  payments          Payment[]
-  listings          Listing[]
-  savedListings     SavedListing[]
-  refreshTokens     RefreshToken[]
-  activityLogs      ActivityLog[]
-  notifications     Notification[]
-  inquiries         Inquiry[]
+  dealer        Dealer?
+  subscriptions Subscription[]
+  listings      Listing[]
+  savedListings SavedListing[]
+  refreshTokens RefreshToken[]
+  activityLogs  ActivityLog[]
+  notifications Notification[]
+  inquiries     Inquiry[]
 
   @@map("users")
 }
 
 model Dealer {
-  id                String   @id @default(uuid())
-  userId            String   @unique @map("user_id")
-  businessName      String   @map("business_name")
-  businessLicense   String?  @map("business_license")
-  taxNumber         String?  @map("tax_number")
-  description       String?  @db.Text
-  website           String?
-  logo              String?
-  bannerImage       String?  @map("banner_image")
-  
+  id              String  @id @default(uuid())
+  userId          String  @unique @map("user_id")
+  businessName    String  @map("business_name")
+  businessLicense String? @map("business_license")
+  taxNumber       String? @map("tax_number")
+  description     String? @db.Text
+  website         String?
+  logo            String?
+  bannerImage     String? @map("banner_image")
+
   // Address
-  address           String?
-  city              String?
-  province          String?
-  postalCode        String?  @map("postal_code")
-  country           String   @default("Canada")
-  latitude          Float?
-  longitude         Float?
-  
+  address    String?
+  city       String?
+  province   String?
+  postalCode String? @map("postal_code")
+  country    String  @default("Canada")
+  latitude   Float?
+  longitude  Float?
+
   // Business hours
-  businessHours     Json?    @map("business_hours")
-  
+  businessHours Json? @map("business_hours")
+
   // Contact
-  contactEmail      String?  @map("contact_email")
-  contactPhone      String?  @map("contact_phone")
-  
+  contactEmail String? @map("contact_email")
+  contactPhone String? @map("contact_phone")
+
   // Social
-  facebook          String?
-  instagram         String?
-  twitter           String?
-  youtube           String?
-  
+  facebook  String?
+  instagram String?
+  twitter   String?
+  youtube   String?
+
   // Verification
-  verified          Boolean  @default(false)
-  verifiedAt        DateTime? @map("verified_at")
-  
+  verified   Boolean   @default(false)
+  verifiedAt DateTime? @map("verified_at")
+
   // Stripe
-  stripeCustomerId  String?  @unique @map("stripe_customer_id")
-  
+  stripeCustomerId String? @unique @map("stripe_customer_id")
+
   // Stats
-  totalListings     Int      @default(0) @map("total_listings")
-  totalSold         Int      @default(0) @map("total_sold")
-  rating            Float    @default(0)
-  reviewCount       Int      @default(0) @map("review_count")
-  
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  totalListings Int   @default(0) @map("total_listings")
+  totalSold     Int   @default(0) @map("total_sold")
+  rating        Float @default(0)
+  reviewCount   Int   @default(0) @map("review_count")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  listings          Listing[]
-  subscriptions     Subscription[]
-  payments          Payment[]
-  reviews           DealerReview[]
-  inquiries         Inquiry[]
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listings      Listing[]
+  subscriptions Subscription[]
+  payments      Payment[]
+  reviews       DealerReview[]
+  inquiries     Inquiry[]
 
   @@map("dealers")
 }
 
 model Listing {
-  id                String        @id @default(uuid())
-  userId            String        @map("user_id")
-  dealerId          String?       @map("dealer_id")
-  
+  id       String  @id @default(uuid())
+  userId   String  @map("user_id")
+  dealerId String? @map("dealer_id")
+
   // Vehicle Info
-  title             String
-  slug              String        @unique
-  description       String?       @db.Text
-  
+  title       String
+  slug        String  @unique
+  description String? @db.Text
+
   // Vehicle Details
-  make              String
-  model             String
-  year              Int
-  trim              String?
-  vin               String?       @unique
-  stockNumber       String?       @map("stock_number")
-  
+  make        String
+  model       String
+  year        Int
+  trim        String?
+  vin         String? @unique
+  stockNumber String? @map("stock_number")
+
   // Specifications
-  mileage           Int
-  mileageUnit       String        @default("km") @map("mileage_unit")
-  fuelType          FuelType      @map("fuel_type")
-  transmission      TransmissionType
-  driveType         DriveType     @map("drive_type")
-  bodyType          BodyType      @map("body_type")
-  condition         Condition     @default(USED)
-  
+  mileage      Int
+  mileageUnit  String           @default("km") @map("mileage_unit")
+  fuelType     FuelType         @map("fuel_type")
+  transmission TransmissionType
+  driveType    DriveType        @map("drive_type")
+  bodyType     BodyType         @map("body_type")
+  condition    Condition        @default(USED)
+
   // Engine & Performance
-  engineSize        Float?        @map("engine_size")
-  engineCylinders   Int?          @map("engine_cylinders")
-  horsepower        Int?
-  torque            Int?
-  fuelEconomy       Json?         @map("fuel_economy")
-  
+  engineSize      Float? @map("engine_size")
+  engineCylinders Int?   @map("engine_cylinders")
+  horsepower      Int?
+  torque          Int?
+  fuelEconomy     Json?  @map("fuel_economy")
+
   // Exterior
-  exteriorColor     String?       @map("exterior_color")
-  interiorColor     String?       @map("interior_color")
-  doors             Int?
-  seats             Int?
-  
+  exteriorColor String? @map("exterior_color")
+  interiorColor String? @map("interior_color")
+  doors         Int?
+  seats         Int?
+
   // Pricing
-  price             Decimal       @db.Decimal(12, 2)
-  originalPrice     Decimal?      @db.Decimal(12, 2) @map("original_price")
-  currency          String        @default("CAD")
-  priceNegotiable   Boolean       @default(false) @map("price_negotiable")
-  
+  price           Decimal  @db.Decimal(12, 2)
+  originalPrice   Decimal? @map("original_price") @db.Decimal(12, 2)
+  currency        String   @default("CAD")
+  priceNegotiable Boolean  @default(false) @map("price_negotiable")
+
   // Features
-  features          String[]
-  safetyFeatures    String[]      @map("safety_features")
-  
+  features       String[]
+  safetyFeatures String[] @map("safety_features")
+
   // Location
-  city              String?
-  province          String?
-  postalCode        String?       @map("postal_code")
-  country           String        @default("Canada")
-  latitude          Float?
-  longitude         Float?
-  
+  city       String?
+  province   String?
+  postalCode String? @map("postal_code")
+  country    String  @default("Canada")
+  latitude   Float?
+  longitude  Float?
+
   // Status
-  status            ListingStatus @default(DRAFT)
-  featured          Boolean       @default(false)
-  featuredUntil     DateTime?     @map("featured_until")
-  featuredOrder     Int?          @map("featured_order")
-  featuredRequestStatus String?   @default("NONE") @map("featured_request_status")
-  
+  status                ListingStatus @default(DRAFT)
+  featured              Boolean       @default(false)
+  featuredUntil         DateTime?     @map("featured_until")
+  featuredOrder         Int?          @map("featured_order")
+  featuredRequestStatus String?       @default("NONE") @map("featured_request_status")
+
   // Stats
-  views             Int           @default(0)
-  saves             Int           @default(0)
-  inquiries         Int           @default(0)
-  
+  views     Int @default(0)
+  saves     Int @default(0)
+  inquiries Int @default(0)
+
   // SEO
-  metaTitle         String?       @map("meta_title")
-  metaDescription   String?       @map("meta_description")
-  
+  metaTitle       String? @map("meta_title")
+  metaDescription String? @map("meta_description")
+
   // Timestamps
-  publishedAt       DateTime?     @map("published_at")
-  expiresAt         DateTime?     @map("expires_at")
-  soldAt            DateTime?     @map("sold_at")
-  createdAt         DateTime      @default(now()) @map("created_at")
-  updatedAt         DateTime      @updatedAt @map("updated_at")
+  publishedAt DateTime? @map("published_at")
+  expiresAt   DateTime? @map("expires_at")
+  soldAt      DateTime? @map("sold_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  dealer            Dealer?       @relation(fields: [dealerId], references: [id], onDelete: SetNull)
-  media             MediaFile[]
-  savedBy           SavedListing[]
-  vehicleHistory    VehicleHistory?
-  inquiryMessages   Inquiry[]
-  reviews           ListingReview[]
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dealer          Dealer?         @relation(fields: [dealerId], references: [id], onDelete: SetNull)
+  media           MediaFile[]
+  savedBy         SavedListing[]
+  vehicleHistory  VehicleHistory?
+  inquiryMessages Inquiry[]
+  reviews         ListingReview[]
 
   @@index([make, model, year])
   @@index([status])
@@ -305,99 +304,99 @@ model Listing {
 }
 
 model VehicleHistory {
-  id                String   @id @default(uuid())
-  listingId         String   @unique @map("listing_id")
-  
-  accidents         Int      @default(0)
-  previousOwners    Int      @default(1) @map("previous_owners")
-  serviceRecords    Boolean  @default(false) @map("service_records")
-  carfaxReportUrl   String?  @map("carfax_report_url")
-  
+  id        String @id @default(uuid())
+  listingId String @unique @map("listing_id")
+
+  accidents       Int     @default(0)
+  previousOwners  Int     @default(1) @map("previous_owners")
+  serviceRecords  Boolean @default(false) @map("service_records")
+  carfaxReportUrl String? @map("carfax_report_url")
+
   // Detailed history
-  history           Json?
-  
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  history Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  listing           Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
   @@map("vehicle_histories")
 }
 
 model MediaFile {
-  id                String    @id @default(uuid())
-  listingId         String?   @map("listing_id")
-  
-  fileName          String    @map("file_name")
-  originalName      String    @map("original_name")
-  mimeType          String    @map("mime_type")
-  size              Int
-  type              MediaType @default(IMAGE)
-  url               String
-  thumbnailUrl      String?   @map("thumbnail_url")
-  order             Int       @default(0)
-  isPrimary         Boolean   @default(false) @map("is_primary")
-  alt               String?
-  
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
+  id        String  @id @default(uuid())
+  listingId String? @map("listing_id")
+
+  fileName     String    @map("file_name")
+  originalName String    @map("original_name")
+  mimeType     String    @map("mime_type")
+  size         Int
+  type         MediaType @default(IMAGE)
+  url          String
+  thumbnailUrl String?   @map("thumbnail_url")
+  order        Int       @default(0)
+  isPrimary    Boolean   @default(false) @map("is_primary")
+  alt          String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  listing           Listing?  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listing Listing? @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
   @@map("media_files")
 }
 
 model SavedListing {
-  id                String   @id @default(uuid())
-  userId            String   @map("user_id")
-  listingId         String   @map("listing_id")
-  createdAt         DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  listingId String   @map("listing_id")
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  listing           Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
   @@unique([userId, listingId])
   @@map("saved_listings")
 }
 
 model Subscription {
-  id                String             @id @default(uuid())
-  dealerId          String?            @map("dealer_id")
-  userId            String?            @map("user_id")
-  plan              SubscriptionPlan   @default(FREE)
-  status            SubscriptionStatus @default(ACTIVE)
-  
+  id       String             @id @default(uuid())
+  dealerId String?            @map("dealer_id")
+  userId   String?            @map("user_id")
+  plan     SubscriptionPlan   @default(FREE)
+  status   SubscriptionStatus @default(ACTIVE)
+
   // Limits
-  maxListings       Int                @map("max_listings")
-  maxPhotosPerListing Int              @map("max_photos_per_listing")
-  featuredListings  Int                @default(0) @map("featured_listings")
-  xmlImportEnabled  Boolean            @default(false) @map("xml_import_enabled")
-  analyticsEnabled  Boolean            @default(false) @map("analytics_enabled")
-  prioritySupport   Boolean            @default(false) @map("priority_support")
-  
+  maxListings         Int     @map("max_listings")
+  maxPhotosPerListing Int     @map("max_photos_per_listing")
+  featuredListings    Int     @default(0) @map("featured_listings")
+  xmlImportEnabled    Boolean @default(false) @map("xml_import_enabled")
+  analyticsEnabled    Boolean @default(false) @map("analytics_enabled")
+  prioritySupport     Boolean @default(false) @map("priority_support")
+
   // Billing
-  price             Decimal            @db.Decimal(10, 2)
-  currency          String             @default("CAD")
-  billingCycle      String             @default("monthly") @map("billing_cycle")
-  
+  price        Decimal @db.Decimal(10, 2)
+  currency     String  @default("CAD")
+  billingCycle String  @default("monthly") @map("billing_cycle")
+
   // Stripe
-  stripeSubscriptionId String?         @unique @map("stripe_subscription_id")
-  
+  stripeSubscriptionId String? @unique @map("stripe_subscription_id")
+
   // Dates
-  startDate         DateTime           @map("start_date")
-  endDate           DateTime           @map("end_date")
-  cancelledAt       DateTime?          @map("cancelled_at")
-  
-  createdAt         DateTime           @default(now()) @map("created_at")
-  updatedAt         DateTime           @updatedAt @map("updated_at")
+  startDate   DateTime  @map("start_date")
+  endDate     DateTime  @map("end_date")
+  cancelledAt DateTime? @map("cancelled_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  dealer            Dealer?            @relation(fields: [dealerId], references: [id], onDelete: Cascade)
-  user              User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  payments          Payment[]
+  dealer   Dealer?   @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments Payment[]
 
   @@index([dealerId])
   @@index([userId])
@@ -405,119 +404,119 @@ model Subscription {
 }
 
 model Payment {
-  id                String        @id @default(uuid())
-  dealerId          String        @map("dealer_id")
-  subscriptionId    String?       @map("subscription_id")
-  
-  amount            Decimal       @db.Decimal(10, 2)
-  currency          String        @default("CAD")
-  status            PaymentStatus @default(PENDING)
-  
+  id             String  @id @default(uuid())
+  dealerId       String  @map("dealer_id")
+  subscriptionId String? @map("subscription_id")
+
+  amount   Decimal       @db.Decimal(10, 2)
+  currency String        @default("CAD")
+  status   PaymentStatus @default(PENDING)
+
   // Payment details
-  paymentMethod     String?       @map("payment_method")
-  transactionId     String?       @map("transaction_id")
-  invoiceNumber     String?       @unique @map("invoice_number")
-  
+  paymentMethod String? @map("payment_method")
+  transactionId String? @map("transaction_id")
+  invoiceNumber String? @unique @map("invoice_number")
+
   // Stripe fields
-  stripeCustomerId      String?   @map("stripe_customer_id")
-  stripePaymentIntentId String?   @map("stripe_payment_intent_id")
-  stripeSubscriptionId  String?   @map("stripe_subscription_id")
+  stripeCustomerId        String? @map("stripe_customer_id")
+  stripePaymentIntentId   String? @map("stripe_payment_intent_id")
+  stripeSubscriptionId    String? @map("stripe_subscription_id")
   stripeCheckoutSessionId String? @map("stripe_checkout_session_id")
-  
+
   // Metadata
-  description       String?
-  metadata          Json?
-  
+  description String?
+  metadata    Json?
+
   // Dates
-  paidAt            DateTime?     @map("paid_at")
-  createdAt         DateTime      @default(now()) @map("created_at")
-  updatedAt         DateTime      @updatedAt @map("updated_at")
+  paidAt    DateTime? @map("paid_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  dealer            Dealer        @relation(fields: [dealerId], references: [id], onDelete: Cascade)
-  subscription      Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  dealer       Dealer        @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
 
   @@map("payments")
 }
 
 model DealerReview {
-  id                String   @id @default(uuid())
-  dealerId          String   @map("dealer_id")
-  reviewerName      String   @map("reviewer_name")
-  reviewerEmail     String   @map("reviewer_email")
-  rating            Int
-  title             String?
-  content           String?  @db.Text
-  isVerified        Boolean  @default(false) @map("is_verified")
-  isPublished       Boolean  @default(false) @map("is_published")
-  
+  id            String  @id @default(uuid())
+  dealerId      String  @map("dealer_id")
+  reviewerName  String  @map("reviewer_name")
+  reviewerEmail String  @map("reviewer_email")
+  rating        Int
+  title         String?
+  content       String? @db.Text
+  isVerified    Boolean @default(false) @map("is_verified")
+  isPublished   Boolean @default(false) @map("is_published")
+
   // Dealer response
-  dealerResponse    String?  @db.Text @map("dealer_response")
-  dealerResponseAt  DateTime? @map("dealer_response_at")
-  
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  dealerResponse   String?   @map("dealer_response") @db.Text
+  dealerResponseAt DateTime? @map("dealer_response_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  dealer            Dealer   @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  dealer Dealer @relation(fields: [dealerId], references: [id], onDelete: Cascade)
 
   @@map("dealer_reviews")
 }
 
 model ListingReview {
-  id                String   @id @default(uuid())
-  listingId         String   @map("listing_id")
-  reviewerName      String   @map("reviewer_name")
-  reviewerEmail     String   @map("reviewer_email")
-  rating            Int
-  title             String?
-  content           String?  @db.Text
-  isVerified        Boolean  @default(false) @map("is_verified")
-  isPublished       Boolean  @default(false) @map("is_published")
-  
+  id            String  @id @default(uuid())
+  listingId     String  @map("listing_id")
+  reviewerName  String  @map("reviewer_name")
+  reviewerEmail String  @map("reviewer_email")
+  rating        Int
+  title         String?
+  content       String? @db.Text
+  isVerified    Boolean @default(false) @map("is_verified")
+  isPublished   Boolean @default(false) @map("is_published")
+
   // Dealer response
-  dealerResponse    String?  @db.Text @map("dealer_response")
-  dealerResponseAt  DateTime? @map("dealer_response_at")
-  
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  dealerResponse   String?   @map("dealer_response") @db.Text
+  dealerResponseAt DateTime? @map("dealer_response_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  listing           Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
   @@map("listing_reviews")
 }
 
 model RefreshToken {
-  id                String   @id @default(uuid())
-  userId            String   @map("user_id")
-  token             String   @unique
-  userAgent         String?  @map("user_agent")
-  ipAddress         String?  @map("ip_address")
-  expiresAt         DateTime @map("expires_at")
-  createdAt         DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  userAgent String?  @map("user_agent")
+  ipAddress String?  @map("ip_address")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("refresh_tokens")
 }
 
 model ActivityLog {
-  id                String   @id @default(uuid())
-  userId            String?  @map("user_id")
-  action            String
-  entity            String
-  entityId          String?  @map("entity_id")
-  oldValues         Json?    @map("old_values")
-  newValues         Json?    @map("new_values")
-  ipAddress         String?  @map("ip_address")
-  userAgent         String?  @map("user_agent")
-  metadata          Json?
-  createdAt         DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  action    String
+  entity    String
+  entityId  String?  @map("entity_id")
+  oldValues Json?    @map("old_values")
+  newValues Json?    @map("new_values")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
-  user              User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([action, entity])
   @@index([createdAt])
@@ -525,106 +524,106 @@ model ActivityLog {
 }
 
 model Notification {
-  id                String   @id @default(uuid())
-  userId            String   @map("user_id")
-  type              String
-  title             String
-  message           String   @db.Text
-  data              Json?
-  isRead            Boolean  @default(false) @map("is_read")
-  readAt            DateTime? @map("read_at")
-  createdAt         DateTime @default(now()) @map("created_at")
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  type      String
+  title     String
+  message   String    @db.Text
+  data      Json?
+  isRead    Boolean   @default(false) @map("is_read")
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
   // Relations
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isRead])
   @@map("notifications")
 }
 
 model VehicleMake {
-  id                String         @id @default(uuid())
-  name              String         @unique
-  slug              String         @unique
-  logo              String?
-  country           String?
-  isPopular         Boolean        @default(false) @map("is_popular")
-  createdAt         DateTime       @default(now()) @map("created_at")
-  updatedAt         DateTime       @updatedAt @map("updated_at")
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  logo      String?
+  country   String?
+  isPopular Boolean  @default(false) @map("is_popular")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  models            VehicleModel[]
+  models VehicleModel[]
 
   @@map("vehicle_makes")
 }
 
 model VehicleModel {
-  id                String      @id @default(uuid())
-  makeId            String      @map("make_id")
-  name              String
-  slug              String
-  bodyTypes         BodyType[]  @map("body_types")
-  yearStart         Int?        @map("year_start")
-  yearEnd           Int?        @map("year_end")
-  isPopular         Boolean     @default(false) @map("is_popular")
-  createdAt         DateTime    @default(now()) @map("created_at")
-  updatedAt         DateTime    @updatedAt @map("updated_at")
+  id        String     @id @default(uuid())
+  makeId    String     @map("make_id")
+  name      String
+  slug      String
+  bodyTypes BodyType[] @map("body_types")
+  yearStart Int?       @map("year_start")
+  yearEnd   Int?       @map("year_end")
+  isPopular Boolean    @default(false) @map("is_popular")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
 
   // Relations
-  make              VehicleMake @relation(fields: [makeId], references: [id], onDelete: Cascade)
+  make VehicleMake @relation(fields: [makeId], references: [id], onDelete: Cascade)
 
   @@unique([makeId, slug])
   @@map("vehicle_models")
 }
 
 model SystemSetting {
-  id                String   @id @default(uuid())
-  key               String   @unique
-  value             Json
-  description       String?
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       Json
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("system_settings")
 }
 
 model Inquiry {
-  id                String   @id @default(uuid())
-  listingId         String   @map("listing_id")
-  dealerId          String?  @map("dealer_id")
-  userId            String?  @map("user_id") // User who sent the inquiry
-  
+  id        String  @id @default(uuid())
+  listingId String  @map("listing_id")
+  dealerId  String? @map("dealer_id")
+  userId    String? @map("user_id") // User who sent the inquiry
+
   // Contact Info
-  name              String
-  email             String
-  phone             String?
-  message           String   @db.Text
-  
+  name    String
+  email   String
+  phone   String?
+  message String  @db.Text
+
   // Status
-  status            String   @default("NEW") // NEW, READ, REPLIED, ARCHIVED
-  isRead            Boolean  @default(false) @map("is_read")
-  readAt            DateTime? @map("read_at")
-  
+  status String    @default("NEW") // NEW, READ, REPLIED, ARCHIVED
+  isRead Boolean   @default(false) @map("is_read")
+  readAt DateTime? @map("read_at")
+
   // Read status (separate for user and dealer)
-  userReadAt        DateTime? @map("user_read_at")
-  dealerReadAt      DateTime? @map("dealer_read_at")
-  
+  userReadAt   DateTime? @map("user_read_at")
+  dealerReadAt DateTime? @map("dealer_read_at")
+
   // Archive flags (separate for user and dealer)
-  userArchived      Boolean  @default(false) @map("user_archived")
-  dealerArchived    Boolean  @default(false) @map("dealer_archived")
-  
+  userArchived   Boolean @default(false) @map("user_archived")
+  dealerArchived Boolean @default(false) @map("dealer_archived")
+
   // Reply
-  reply             String?  @db.Text
-  repliedAt         DateTime? @map("replied_at")
-  repliedBy         String?  @map("replied_by") // User ID who replied
-  
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  reply     String?   @db.Text
+  repliedAt DateTime? @map("replied_at")
+  repliedBy String?   @map("replied_by") // User ID who replied
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  listing           Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  dealer            Dealer?  @relation(fields: [dealerId], references: [id], onDelete: SetNull)
-  user              User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  dealer  Dealer? @relation(fields: [dealerId], references: [id], onDelete: SetNull)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([dealerId, status])
   @@index([listingId])
@@ -632,4 +631,3 @@ model Inquiry {
   @@index([createdAt])
   @@map("inquiries")
 }
-
