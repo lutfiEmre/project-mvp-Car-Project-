@@ -41,6 +41,10 @@ COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder /app/apps/web/public ./apps/web/public
 
+# Copy sharp for image optimization in standalone mode
+COPY --from=builder /app/apps/web/node_modules/sharp ./node_modules/sharp
+COPY --from=builder /app/node_modules/sharp ./node_modules/sharp 2>/dev/null || true
+
 WORKDIR /app/apps/web
 
 EXPOSE 3000
