@@ -4,6 +4,7 @@ import './globals.css';
 import { Providers } from '@/components/providers';
 import { Toaster } from 'sonner';
 import { MaintenanceCheck } from '@/components/maintenance-check';
+import { ServiceWorkerCleanup } from '@/components/service-worker-cleanup';
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -31,6 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${outfit.variable} ${sora.variable} font-sans`}>
+        <ServiceWorkerCleanup />
         <Providers>
           <MaintenanceCheck>
             {children}

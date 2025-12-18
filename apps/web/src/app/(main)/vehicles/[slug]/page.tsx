@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -467,7 +467,8 @@ export default function VehicleDetailPage() {
   
   const { data: apiListing, isLoading } = useListing(slug);
   const [currentImage, setCurrentImage] = useState(0);
-  const [saved, setSaved] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [mockVehicle, setMockVehicle] = useState<any>(null);
   const [messageDialogOpen, setMessageDialogOpen] = useState(false);
   const [messageForm, setMessageForm] = useState({
@@ -579,10 +580,77 @@ export default function VehicleDetailPage() {
   const features = vehicle.features || [];
   const safetyFeatures = vehicle.safetyFeatures || [];
 
-  const nextImage = () => setCurrentImage((prev) => (prev + 1) % images.length);
-  const prevImage = () => setCurrentImage((prev) => (prev - 1 + images.length) % images.length);
+  const thumbnailsRef = useRef<HTMLDivElement>(null);
+  
+  const scrollToThumbnail = (index: number) => {
+    if (thumbnailsRef.current) {
+      const thumbnail = thumbnailsRef.current.children[index] as HTMLElement;
+      if (thumbnail) {
+        thumbnail.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'center',
+        });
+      }
+    }
+  };
+
+  const nextImage = () => {
+    const newIndex = (currentImage + 1) % images.length;
+    setCurrentImage(newIndex);
+    scrollToThumbnail(newIndex);
+  };
+  
+  const prevImage = () => {
+    const newIndex = (currentImage - 1 + images.length) % images.length;
+    setCurrentImage(newIndex);
+    scrollToThumbnail(newIndex);
+  };
+
+  const handleThumbnailClick = (index: number) => {
+    setCurrentImage(index);
+    scrollToThumbnail(index);
+  };
 
   const reviews = vehicle.reviews || [];
+
+  useEffect(() => {
+    const checkSaved = async () => {
+      if (!isAuthenticated || !vehicle?.id) return;
+      try {
+        const savedData = await api.listings.getSaved();
+        const found = savedData.some((listing: any) => listing.id === vehicle.id);
+        setIsSaved(found);
+      } catch (e) {}
+    };
+    checkSaved();
+  }, [isAuthenticated, vehicle?.id]);
+
+  const handleToggleSave = async () => {
+    if (!isAuthenticated) {
+      router.push(`/login?redirect=/vehicles/${slug}`);
+      return;
+    }
+    if (!vehicle?.id) return;
+    
+    setIsSaving(true);
+    try {
+      if (isSaved) {
+        await api.listings.unsave(vehicle.id);
+        setIsSaved(false);
+        toast.success('Removed from saved');
+      } else {
+        await api.listings.save(vehicle.id);
+        setIsSaved(true);
+        toast.success('Added to saved');
+      }
+      queryClient.invalidateQueries({ queryKey: ['listings', 'saved'] });
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to update saved status');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const createReviewMutation = useMutation({
     mutationFn: async (data: { rating: number; title?: string; content: string }) => {
@@ -740,17 +808,28 @@ export default function VehicleDetailPage() {
               </div>
 
               {images.length > 1 && (
-                <div className="flex gap-2 p-4 overflow-x-auto">
+                <div 
+                  ref={thumbnailsRef}
+                  className="flex gap-2 p-4 overflow-x-auto scroll-smooth scrollbar-hide"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
                   {images.map((img: string, i: number) => (
-                    <button
+                    <motion.button
                       key={i}
-                      onClick={() => setCurrentImage(i)}
-                      className={`relative h-20 w-28 shrink-0 overflow-hidden rounded-lg ${
-                        i === currentImage ? 'ring-2 ring-primary' : ''
+                      onClick={() => handleThumbnailClick(i)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      animate={{
+                        scale: i === currentImage ? 1.05 : 1,
+                        opacity: i === currentImage ? 1 : 0.7,
+                      }}
+                      transition={{ duration: 0.2 }}
+                      className={`relative h-20 w-28 shrink-0 overflow-hidden rounded-lg transition-all ${
+                        i === currentImage ? 'ring-2 ring-primary shadow-lg' : 'hover:ring-1 hover:ring-primary/50'
                       }`}
                     >
                       <Image src={img} alt="" fill className="object-cover" />
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
               )}
@@ -772,8 +851,17 @@ export default function VehicleDetailPage() {
                       <p className="mt-1 text-muted-foreground">{vehicle.trim}</p>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="icon" onClick={() => setSaved(!saved)}>
-                        <Heart className={saved ? 'fill-coral-500 text-coral-500' : ''} />
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        onClick={handleToggleSave}
+                        disabled={isSaving}
+                      >
+                        {isSaving ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Heart className={isSaved ? 'fill-coral-500 text-coral-500' : ''} />
+                        )}
                       </Button>
                       <Button variant="outline" size="icon">
                         <Share2 className="h-5 w-5" />
@@ -1241,6 +1329,12 @@ export default function VehicleDetailPage() {
                           <p className="text-sm text-muted-foreground">Private Seller</p>
                         </div>
                       </div>
+                      <Link href={`/users/${vehicle.user.id}`}>
+                        <Button variant="ghost" className="w-full gap-2">
+                          View User Profile
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      </Link>
                     </div>
                   ) : (
                     <div className="text-center text-muted-foreground">

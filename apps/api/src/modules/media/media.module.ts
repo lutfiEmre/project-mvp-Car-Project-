@@ -6,9 +6,11 @@ import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { MediaController } from './media.controller';
 import { MediaService } from './media.service';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 
 @Module({
   imports: [
+    SubscriptionsModule,
     MulterModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

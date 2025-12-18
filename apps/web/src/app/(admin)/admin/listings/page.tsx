@@ -37,7 +37,9 @@ import { cn, formatPrice, formatNumber, formatMileage } from '@/lib/utils';
 import { useAdminListings, useApproveListing, useRejectListing, useDeleteListing } from '@/hooks/use-admin';
 import { useUpdateListing } from '@/hooks/use-listings';
 import { Label } from '@/components/ui/label';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import { Star } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -87,6 +89,30 @@ export default function AdminListingsPage() {
   const rejectListing = useRejectListing();
   const deleteListing = useDeleteListing();
   const updateListing = useUpdateListing();
+  
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) => 
+      api.admin.updateListingStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'listings'] });
+      toast.success('Listing status updated');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update status');
+    },
+  });
+  
+  const featureMutation = useMutation({
+    mutationFn: ({ id, featured, days }: { id: string; featured: boolean; days?: number }) => 
+      api.admin.featureListing(id, featured, days),
+    onSuccess: (_, { featured }) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'listings'] });
+      toast.success(featured ? 'Listing featured successfully' : 'Listing unfeatured');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update feature status');
+    },
+  });
 
   // Initialize local listings from mock data store
   useEffect(() => {
@@ -584,6 +610,33 @@ export default function AdminListingsPage() {
                                   Reject
                                 </DropdownMenuItem>
                               </>
+                            )}
+                            <DropdownMenuSeparator />
+                            {listing.featured ? (
+                              <DropdownMenuItem 
+                                onClick={() => featureMutation.mutate({ id: listing.id, featured: false })}
+                                disabled={featureMutation.isPending}
+                              >
+                                <Star className="mr-2 h-4 w-4" />
+                                Remove Featured
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem 
+                                className="text-amber-600"
+                                onClick={() => featureMutation.mutate({ id: listing.id, featured: true, days: 30 })}
+                                disabled={featureMutation.isPending}
+                              >
+                                <Star className="mr-2 h-4 w-4" />
+                                Feature (30 days)
+                              </DropdownMenuItem>
+                            )}
+                            {listing.status === 'ACTIVE' && (
+                              <DropdownMenuItem 
+                                onClick={() => updateStatusMutation.mutate({ id: listing.id, status: 'SOLD' })}
+                              >
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Mark as Sold
+                              </DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 

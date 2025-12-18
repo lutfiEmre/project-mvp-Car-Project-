@@ -17,10 +17,12 @@ import {
   X,
   Loader2,
   MessageCircle,
+  Trash2,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -45,6 +47,8 @@ const sidebarLinks = [
 ];
 
 function NotificationsDropdown() {
+  const router = useRouter();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { data: notificationsData } = useQuery({
     queryKey: ['notifications'],
     queryFn: () => api.notifications.getAll({ limit: 10 }),
@@ -66,9 +70,31 @@ function NotificationsDropdown() {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
+  const deleteAll = useMutation({
+    mutationFn: () => api.notifications.deleteAll(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+    },
+  });
 
   const notifications = notificationsData?.data || [];
   const count = unreadCount || 0;
+
+  const getNotificationLink = (notification: any) => {
+    switch (notification.type) {
+      case 'NEW_MESSAGE':
+      case 'MESSAGE_REPLY':
+        return '/dashboard/messages';
+      case 'NEW_INQUIRY':
+        return '/dashboard/messages';
+      case 'LISTING_APPROVED':
+      case 'LISTING_REJECTED':
+        return '/dashboard/listings';
+      default:
+        return '/dashboard/notifications';
+    }
+  };
 
   return (
     <DropdownMenu>
@@ -85,20 +111,36 @@ function NotificationsDropdown() {
       <DropdownMenuContent align="end" className="w-80">
         <div className="flex items-center justify-between px-2 py-1.5">
           <h3 className="text-sm font-semibold">Notifications</h3>
-          {count > 0 && (
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
-              size="sm"
-              className="h-auto p-0 text-xs"
-              onClick={() => markAllAsRead.mutate()}
-              disabled={markAllAsRead.isPending}
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => router.push('/dashboard/notifications')}
+              title="Settings"
             >
-              Mark all as read
+              <Settings className="h-4 w-4" />
             </Button>
-          )}
+            {notifications.length > 0 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-destructive hover:text-destructive"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowDeleteConfirm(true);
+                }}
+                disabled={deleteAll.isPending}
+                title="Delete all"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
         <DropdownMenuSeparator />
-        <div className="max-h-[400px] overflow-y-auto">
+        <div className="max-h-[400px] overflow-y-auto scrollbar-hide">
           {notifications.length === 0 ? (
             <div className="px-2 py-8 text-center text-sm text-muted-foreground">
               No notifications
@@ -107,6 +149,7 @@ function NotificationsDropdown() {
             <div className="py-1">
               {notifications.map((notification: any) => {
                 const timeAgo = new Date(notification.createdAt).toLocaleString();
+                const link = getNotificationLink(notification);
                 return (
                   <DropdownMenuItem
                     key={notification.id}
@@ -115,6 +158,7 @@ function NotificationsDropdown() {
                       if (!notification.isRead) {
                         markAsRead.mutate(notification.id);
                       }
+                      router.push(link);
                     }}
                   >
                     <div className="flex items-start justify-between w-full gap-2">
@@ -142,6 +186,17 @@ function NotificationsDropdown() {
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={() => deleteAll.mutate()}
+        title="Delete All Notifications?"
+        message="This will permanently delete all your notifications. This action cannot be undone."
+        confirmText="Delete All"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={deleteAll.isPending}
+      />
     </DropdownMenu>
   );
 }

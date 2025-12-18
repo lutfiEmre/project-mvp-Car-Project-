@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
@@ -154,6 +155,7 @@ const DRAFT_KEY = 'carhaus_listing_draft';
 
 export default function NewListingPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { data: makes } = useVehicleMakes();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -361,19 +363,6 @@ export default function NewListingPage() {
     setIsSubmitting(true);
 
     try {
-      // First, upload photos
-      const uploadedPhotos: string[] = [];
-      for (const photo of formData.photos) {
-        try {
-          const result = await api.media.upload(photo.file);
-          uploadedPhotos.push(result.url);
-        } catch (e) {
-          console.error('Photo upload failed:', e);
-          // Continue with other photos
-        }
-      }
-
-      // Create listing
       const listingData = {
         title: formData.title,
         make: formData.make,
@@ -405,13 +394,24 @@ export default function NewListingPage() {
         originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
         priceNegotiable: formData.priceNegotiable,
         currency: 'CAD',
-        // Media would be attached separately
       };
 
-      await api.listings.create(listingData);
+      const listing = await api.listings.create(listingData);
       
-      // Clear draft
+      if (formData.photos.length > 0) {
+        for (const photo of formData.photos) {
+          try {
+            await api.media.uploadForListing(listing.id, photo.file);
+          } catch (e) {
+            console.error('Photo upload failed:', e);
+          }
+        }
+      }
+      
       localStorage.removeItem(DRAFT_KEY);
+      
+      queryClient.invalidateQueries({ queryKey: ['my-listings'] });
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
       
       toast.success('Listing submitted successfully! It will be reviewed shortly.');
       router.push('/dashboard/listings');

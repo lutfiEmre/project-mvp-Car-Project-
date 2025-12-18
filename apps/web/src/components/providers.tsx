@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { useState } from 'react';
+import { SocketProvider } from './socket-provider';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -12,8 +13,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
           queries: {
             staleTime: 60 * 1000,
             refetchOnWindowFocus: false,
-            retry: false, // Disable retries to prevent multiple failed requests
-            throwOnError: false, // Don't throw errors to React
+            retry: false,
+            throwOnError: false,
           },
           mutations: {
             retry: false,
@@ -31,9 +32,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
         enableSystem
         disableTransitionOnChange
       >
-        {children}
+        <SocketProvider>
+          {children}
+        </SocketProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
 }
-

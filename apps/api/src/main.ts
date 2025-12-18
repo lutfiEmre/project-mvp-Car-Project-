@@ -5,10 +5,25 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import { AppModule } from './app.module';
+import * as express from 'express';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
+
+  // Security: Helmet
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", 'data:', 'https:', 'http:'],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  }));
 
   // Serve static files from uploads directory
   const uploadDir = configService.get('UPLOAD_DIR', './uploads');
@@ -16,12 +31,26 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
-  // CORS
+  // CORS - Production için daha sıkı
+  const corsOrigin = configService.get('CORS_ORIGIN', 'http://localhost:3000');
+  const allowedOrigins = corsOrigin.split(',').map((origin: string) => origin.trim());
+  
   app.enableCors({
-    origin: configService.get('CORS_ORIGIN', 'http://localhost:3000'),
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Content-Range', 'X-Total-Count'],
+    maxAge: 86400, // 24 hours
   });
 
   // API Versioning
@@ -64,6 +93,8 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix(configService.get('API_PREFIX', 'api'));
+
+  app.use('/api/v1/payments/webhook', express.raw({ type: 'application/json' }));
 
   app.useGlobalPipes(
     new ValidationPipe({

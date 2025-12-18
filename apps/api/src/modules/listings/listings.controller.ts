@@ -70,6 +70,14 @@ export class ListingsController {
     return this.listingsService.getMyListings(user.sub, status, user.role);
   }
 
+  @Get('saved')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Get current user saved listings' })
+  async getSavedListings(@CurrentUser() user: any) {
+    return this.listingsService.getSavedListings(user.sub);
+  }
+
   @Get('stats')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
@@ -224,6 +232,30 @@ export class ListingsController {
     @Body() dto: CreateListingReviewDto,
   ) {
     return this.listingsService.createReview(listingId, userId, dto);
+  }
+
+  @Post(':id/save')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Save a listing to favorites' })
+  async saveListing(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.listingsService.saveListing(id, user.sub);
+  }
+
+  @Post(':id/unsave')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Remove a listing from favorites' })
+  async unsaveListing(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.listingsService.unsaveListing(id, user.sub);
+  }
+
+  @Post(':id/request-featured')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Request to feature a listing' })
+  async requestFeatured(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.listingsService.requestFeatured(id, user.sub);
   }
 }
 

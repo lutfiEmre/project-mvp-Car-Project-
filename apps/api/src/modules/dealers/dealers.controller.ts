@@ -88,6 +88,19 @@ export class DealersController {
     return this.dealersService.update(dealer.id, user.sub, dto);
   }
 
+  @Put('me/avatar')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.DEALER)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Update dealer avatar' })
+  async updateAvatar(
+    @CurrentUser() user: any,
+    @Body('avatarUrl') avatarUrl: string,
+  ) {
+    const dealer = await this.dealersService.findByUserId(user.sub);
+    return this.dealersService.update(dealer.id, user.sub, { logo: avatarUrl });
+  }
+
   @Get(':id')
   @Public()
   @ApiOperation({ summary: 'Get dealer public profile' })

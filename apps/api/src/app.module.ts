@@ -21,23 +21,24 @@ import { VehicleDataModule } from './modules/vehicle-data/vehicle-data.module';
 import { ImportModule } from './modules/import/import.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { HealthModule } from './modules/health/health.module';
+import { EmailModule } from './modules/email/email.module';
 
 @Module({
   imports: [
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
+      envFilePath: ['../../.env', '.env.local', '.env'],
     }),
 
-    // Rate limiting
+    // Rate limiting - Production için daha sıkı
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => [
         {
           ttl: config.get('THROTTLE_TTL', 60) * 1000,
-          limit: config.get('THROTTLE_LIMIT', 100),
+          limit: config.get('THROTTLE_LIMIT', process.env.NODE_ENV === 'production' ? 60 : 100),
         },
       ],
     }),
@@ -60,6 +61,7 @@ import { HealthModule } from './modules/health/health.module';
     ImportModule,
     AdminModule,
     HealthModule,
+    EmailModule,
   ],
   providers: [
     {

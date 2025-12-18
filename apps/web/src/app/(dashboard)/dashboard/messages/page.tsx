@@ -17,6 +17,8 @@ import {
   Send,
   Trash2,
   User,
+  Check,
+  CheckCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +38,7 @@ import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSocket } from '@/hooks/use-socket';
 
 export default function UserMessagesPage() {
   const [selectedInquiry, setSelectedInquiry] = useState<any>(null);
@@ -45,6 +48,35 @@ export default function UserMessagesPage() {
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleInquiryReply = (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['user', 'inquiries'] });
+      queryClient.refetchQueries({ queryKey: ['user', 'inquiries'] });
+      if (selectedInquiry?.id === data.inquiry?.id) {
+        setSelectedInquiry(data.inquiry);
+      }
+    };
+
+    const handleMessageRead = (data: any) => {
+      if (data.readBy === 'dealer' && selectedInquiry?.id === data.inquiryId) {
+        setSelectedInquiry((prev: any) => prev ? { ...prev, dealerReadAt: new Date().toISOString() } : prev);
+      }
+      queryClient.invalidateQueries({ queryKey: ['user', 'inquiries'] });
+      queryClient.refetchQueries({ queryKey: ['user', 'inquiries'] });
+    };
+
+    socket.on('inquiry_reply', handleInquiryReply);
+    socket.on('message_read', handleMessageRead);
+
+    return () => {
+      socket.off('inquiry_reply', handleInquiryReply);
+      socket.off('message_read', handleMessageRead);
+    };
+  }, [socket, queryClient, selectedInquiry?.id]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -72,8 +104,9 @@ export default function UserMessagesPage() {
       }
       return response.json();
     },
-    refetchInterval: 10000, // Refetch every 10 seconds
-    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchInterval: 3000,
+    refetchOnWindowFocus: true,
+    refetchIntervalInBackground: false,
   });
 
   const inquiries = inquiriesData?.data || [];
@@ -213,16 +246,14 @@ export default function UserMessagesPage() {
       return result;
     },
     onSuccess: (data) => {
-      // Invalidate and refetch inquiries
       queryClient.invalidateQueries({ queryKey: ['user', 'inquiries'] });
       queryClient.invalidateQueries({ queryKey: ['user', 'inquiries', 'unread'] });
       setNewMessage('');
       toast.success('Message sent successfully!');
       
-      // Refetch to update the selected inquiry
       setTimeout(() => {
         queryClient.refetchQueries({ queryKey: ['user', 'inquiries'] });
-      }, 500);
+      }, 100);
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to send message');
@@ -289,6 +320,28 @@ export default function UserMessagesPage() {
       });
     } finally {
       setIsSendingMessage(false);
+    }
+  };
+
+  const markAsReadMutation = useMutation({
+    mutationFn: async (inquiryId: string) => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+      
+      await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/users/me/inquiries/${inquiryId}/read`,
+        {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+    },
+  });
+
+  const handleSelectInquiry = (inquiry: any) => {
+    setSelectedInquiry(inquiry);
+    if (inquiry.reply && !inquiry.userReadAt) {
+      markAsReadMutation.mutate(inquiry.id);
     }
   };
 
@@ -386,7 +439,7 @@ export default function UserMessagesPage() {
                   {filteredInquiries.map((inquiry: any) => (
                     <div key={inquiry.id} className="relative group">
                       <button
-                        onClick={() => setSelectedInquiry(inquiry)}
+                        onClick={() => handleSelectInquiry(inquiry)}
                         className={`w-full text-left p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${
                           selectedInquiry?.id === inquiry.id ? 'bg-slate-50 dark:bg-slate-800/50' : ''
                         }`}
@@ -606,8 +659,12 @@ export default function UserMessagesPage() {
                       );
                     }
                     
+                    const lastUserMsgIdx = allMessages.map((m, i) => m.type === 'user' ? i : -1).filter(i => i >= 0).pop();
+                    
                     return allMessages.map((msg: any, idx: number) => {
                       if (msg.type === 'user') {
+                        const isLastUserMsg = idx === lastUserMsgIdx;
+                        const isRead = !!selectedInquiry.dealerReadAt;
                         return (
                           <motion.div
                             key={`user-${msg.id}-${idx}`}
@@ -621,11 +678,20 @@ export default function UserMessagesPage() {
                                 <div className="bg-primary text-primary-foreground rounded-2xl rounded-tr-sm px-4 py-2.5 shadow-md">
                                   <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
                                 </div>
-                                {msg.timestamp && (
-                                  <span className="text-xs text-muted-foreground mt-1 px-2">
-                                    {msg.timestamp}
-                                  </span>
-                                )}
+                                <div className="flex items-center gap-1 mt-1 px-2">
+                                  {msg.timestamp && (
+                                    <span className="text-xs text-muted-foreground">
+                                      {msg.timestamp}
+                                    </span>
+                                  )}
+                                  {isLastUserMsg && (
+                                    isRead ? (
+                                      <CheckCheck className="h-4 w-4 text-blue-500" />
+                                    ) : (
+                                      <Check className="h-4 w-4 text-muted-foreground" />
+                                    )
+                                  )}
+                                </div>
                               </div>
                               <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                                 <User className="h-4 w-4 text-primary" />

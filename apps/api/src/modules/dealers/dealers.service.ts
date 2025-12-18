@@ -3,10 +3,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDealerDto } from './dto/create-dealer.dto';
 import { UpdateDealerDto } from './dto/update-dealer.dto';
 import { Prisma } from '@prisma/client';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 
 @Injectable()
 export class DealersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsGateway: NotificationsGateway,
+  ) {}
 
   async create(userId: string, dto: CreateDealerDto) {
     // Check if user already has a dealer profile
@@ -499,18 +503,23 @@ export class DealersService {
     const inquiry = await this.getInquiryById(inquiryId, dealerId);
 
     const updateData: any = {
-      status: status === 'ARCHIVED' ? inquiry.status : status, // Don't change status if archiving
-      isRead: true,
-      readAt: new Date(),
+      status: status === 'ARCHIVED' ? inquiry.status : status,
     };
 
-    // If archiving, set dealerArchived flag instead of changing status
+    let shouldNotifyUser = false;
+
+    if (status === 'READ' && !inquiry.dealerReadAt) {
+      updateData.isRead = true;
+      updateData.readAt = new Date();
+      updateData.dealerReadAt = new Date();
+      shouldNotifyUser = true;
+    }
+
     if (status === 'ARCHIVED') {
       updateData.dealerArchived = true;
     }
 
     if (reply) {
-      // If there's an existing reply, append the new one with timestamp (include seconds for better ordering)
       const now = new Date();
       const timestamp = now.toLocaleString('en-US', {
         month: 'short',
@@ -528,10 +537,12 @@ export class DealersService {
       
       updateData.reply = newReply;
       updateData.repliedAt = new Date();
-      updateData.repliedBy = dealerId; // In real app, this would be the user ID
+      updateData.repliedBy = dealerId;
+      updateData.status = 'REPLIED';
+      updateData.userReadAt = null;
     }
 
-    return this.prisma.inquiry.update({
+    const updated = await this.prisma.inquiry.update({
       where: { id: inquiryId },
       data: updateData,
       include: {
@@ -546,6 +557,16 @@ export class DealersService {
         },
       },
     });
+
+    if (shouldNotifyUser && inquiry.userId) {
+      this.notificationsGateway.sendMessageRead(inquiry.userId, inquiryId, 'dealer');
+    }
+
+    if (reply && inquiry.userId) {
+      this.notificationsGateway.sendInquiryReply(inquiry.userId, { inquiry: updated });
+    }
+
+    return updated;
   }
 
   async respondToReview(reviewId: string, dealerId: string, response: string) {

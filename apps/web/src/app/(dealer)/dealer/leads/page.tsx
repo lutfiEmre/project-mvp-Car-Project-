@@ -13,7 +13,7 @@ import {
   XCircle,
   MoreVertical,
   Search,
-  Filter
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,59 +32,56 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-
-const leads = [
-  {
-    id: '1',
-    name: 'John Smith',
-    email: 'john@example.com',
-    phone: '+1 (555) 123-4567',
-    vehicle: '2024 BMW M4 Competition',
-    status: 'new',
-    date: '2024-01-18',
-    message: 'Interested in test driving this vehicle. Available this weekend?',
-  },
-  {
-    id: '2',
-    name: 'Emily Davis',
-    email: 'emily@example.com',
-    phone: '+1 (555) 234-5678',
-    vehicle: '2023 Mercedes-Benz C300',
-    status: 'contacted',
-    date: '2024-01-17',
-    message: 'Looking for financing options. Can you provide more details?',
-  },
-  {
-    id: '3',
-    name: 'Michael Brown',
-    email: 'michael@example.com',
-    phone: '+1 (555) 345-6789',
-    vehicle: '2024 Audi Q7 Premium',
-    status: 'qualified',
-    date: '2024-01-15',
-    message: 'Ready to make a purchase. When can we schedule a meeting?',
-  },
-  {
-    id: '4',
-    name: 'Sarah Wilson',
-    email: 'sarah@example.com',
-    phone: '+1 (555) 456-7890',
-    vehicle: '2023 Porsche Cayenne',
-    status: 'closed',
-    date: '2024-01-10',
-    message: 'Would like to trade in my current vehicle.',
-  },
-];
+import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
 
 const statusConfig = {
-  new: { label: 'New', color: 'bg-blue-100 text-blue-700', icon: Clock },
-  contacted: { label: 'Contacted', color: 'bg-yellow-100 text-yellow-700', icon: MessageSquare },
-  qualified: { label: 'Qualified', color: 'bg-green-100 text-green-700', icon: CheckCircle },
-  closed: { label: 'Closed', color: 'bg-gray-100 text-gray-700', icon: XCircle },
+  NEW: { label: 'New', color: 'bg-blue-100 text-blue-700', icon: Clock },
+  READ: { label: 'Contacted', color: 'bg-yellow-100 text-yellow-700', icon: MessageSquare },
+  REPLIED: { label: 'Qualified', color: 'bg-green-100 text-green-700', icon: CheckCircle },
+  ARCHIVED: { label: 'Closed', color: 'bg-gray-100 text-gray-700', icon: XCircle },
 };
 
 export default function LeadsPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  const { data: inquiriesData, isLoading } = useQuery({
+    queryKey: ['dealer', 'inquiries', 'leads'],
+    queryFn: async () => {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/dealers/me/inquiries`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) throw new Error('Failed to fetch inquiries');
+      return response.json();
+    },
+    refetchInterval: 30000,
+  });
+
+  const leads = inquiriesData?.data || [];
+
+  const filteredLeads = leads.filter((lead: any) => {
+    const matchesStatus = statusFilter === 'all' || lead.status === statusFilter;
+    const matchesSearch = searchTerm === '' ||
+      lead.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.listing?.title?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
+
+  const stats = {
+    total: leads.length,
+    new: leads.filter((l: any) => l.status === 'NEW').length,
+    contacted: leads.filter((l: any) => l.status === 'READ').length,
+    converted: leads.filter((l: any) => l.status === 'REPLIED').length,
+  };
 
   return (
     <div>
@@ -95,13 +92,12 @@ export default function LeadsPage() {
         </p>
       </div>
 
-      {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4 mb-8">
         {[
-          { label: 'Total Leads', value: '156', icon: Users },
-          { label: 'New Today', value: '12', icon: Clock },
-          { label: 'Contacted', value: '45', icon: MessageSquare },
-          { label: 'Converted', value: '23', icon: CheckCircle },
+          { label: 'Total Leads', value: stats.total.toString(), icon: Users },
+          { label: 'New Today', value: stats.new.toString(), icon: Clock },
+          { label: 'Contacted', value: stats.contacted.toString(), icon: MessageSquare },
+          { label: 'Converted', value: stats.converted.toString(), icon: CheckCircle },
         ].map((stat, index) => (
           <motion.div
             key={stat.label}
@@ -123,7 +119,6 @@ export default function LeadsPage() {
         ))}
       </div>
 
-      {/* Filters */}
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -134,103 +129,142 @@ export default function LeadsPage() {
             className="pl-10"
           />
         </div>
-        <Select defaultValue="all">
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="new">New</SelectItem>
-            <SelectItem value="contacted">Contacted</SelectItem>
-            <SelectItem value="qualified">Qualified</SelectItem>
-            <SelectItem value="closed">Closed</SelectItem>
+            <SelectItem value="NEW">New</SelectItem>
+            <SelectItem value="READ">Contacted</SelectItem>
+            <SelectItem value="REPLIED">Qualified</SelectItem>
+            <SelectItem value="ARCHIVED">Closed</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* Leads List */}
-      <div className="space-y-4">
-        {leads.map((lead, index) => {
-          const status = statusConfig[lead.status as keyof typeof statusConfig];
-          return (
-            <motion.div
-              key={lead.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="rounded-xl border bg-card p-4 sm:p-6"
-            >
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Avatar className="h-12 w-12 shrink-0">
-                  <AvatarFallback>{lead.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                </Avatar>
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : filteredLeads.length === 0 ? (
+        <div className="text-center py-12 rounded-xl border bg-card">
+          <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground mb-2">
+            {searchTerm || statusFilter !== 'all' 
+              ? 'No leads match your search' 
+              : 'No leads yet'}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Leads will appear here when customers inquire about your vehicles
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredLeads.map((lead: any, index: number) => {
+            const status = statusConfig[lead.status as keyof typeof statusConfig] || statusConfig.NEW;
+            const vehicleTitle = lead.listing?.title || 
+              `${lead.listing?.year || ''} ${lead.listing?.make || ''} ${lead.listing?.model || ''}`.trim() ||
+              'Unknown Vehicle';
+            
+            return (
+              <motion.div
+                key={lead.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="rounded-xl border bg-card p-4 sm:p-6"
+              >
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Avatar className="h-12 w-12 shrink-0">
+                    <AvatarFallback>
+                      {lead.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-semibold">{lead.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Interested in: {lead.vehicle}
-                      </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-semibold">{lead.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Interested in: {vehicleTitle}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          'inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium',
+                          status.color
+                        )}>
+                          <status.icon className="h-3 w-3" />
+                          {status.label}
+                        </span>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                              <Link href="/dealer/messages" className="cursor-pointer">
+                                View Details
+                              </Link>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className={cn(
-                        'inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium',
-                        status.color
-                      )}>
-                        <status.icon className="h-3 w-3" />
-                        {status.label}
+
+                    <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
+                      {lead.message || 'No message'}
+                    </p>
+
+                    <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Mail className="h-4 w-4" />
+                        {lead.email}
                       </span>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>View Details</DropdownMenuItem>
-                          <DropdownMenuItem>Update Status</DropdownMenuItem>
-                          <DropdownMenuItem>Add Note</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {lead.phone && (
+                        <span className="flex items-center gap-1">
+                          <Phone className="h-4 w-4" />
+                          {lead.phone}
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        {new Date(lead.createdAt).toLocaleDateString()}
+                      </span>
                     </div>
-                  </div>
 
-                  <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
-                    {lead.message}
-                  </p>
-
-                  <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Mail className="h-4 w-4" />
-                      {lead.email}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Phone className="h-4 w-4" />
-                      {lead.phone}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      {lead.date}
-                    </span>
-                  </div>
-
-                  <div className="mt-4 flex gap-2">
-                    <Button size="sm" className="gap-2">
-                      <Mail className="h-4 w-4" />
-                      Email
-                    </Button>
-                    <Button size="sm" variant="outline" className="gap-2">
-                      <Phone className="h-4 w-4" />
-                      Call
-                    </Button>
+                    <div className="mt-4 flex gap-2">
+                      <a href={`mailto:${lead.email}`}>
+                        <Button size="sm" className="gap-2">
+                          <Mail className="h-4 w-4" />
+                          Email
+                        </Button>
+                      </a>
+                      {lead.phone && (
+                        <a href={`tel:${lead.phone}`}>
+                          <Button size="sm" variant="outline" className="gap-2">
+                            <Phone className="h-4 w-4" />
+                            Call
+                          </Button>
+                        </a>
+                      )}
+                      <Link href="/dealer/messages">
+                        <Button size="sm" variant="outline" className="gap-2">
+                          <MessageSquare className="h-4 w-4" />
+                          Reply
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

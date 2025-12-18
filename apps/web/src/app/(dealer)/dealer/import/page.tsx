@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   Upload,
@@ -10,11 +10,16 @@ import {
   AlertCircle,
   Download,
   HelpCircle,
+  Loader2,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 export default function ImportPage() {
   const [importing, setImporting] = useState(false);
@@ -23,19 +28,132 @@ export default function ImportPage() {
     failed: number;
     errors: string[];
   } | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [jsonData, setJsonData] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const xmlFileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImport = async () => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, type: 'json' | 'xml') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (type === 'json' && !file.name.endsWith('.json')) {
+        toast.error('Please select a JSON file');
+        return;
+      }
+      if (type === 'xml' && !file.name.endsWith('.xml')) {
+        toast.error('Please select an XML file');
+        return;
+      }
+      setSelectedFile(file);
+      setImportResult(null);
+    }
+  };
+
+  const handleJsonImport = async () => {
+    if (!jsonData.trim()) {
+      toast.error('Please enter JSON data');
+      return;
+    }
+
     setImporting(true);
-    await new Promise((r) => setTimeout(r, 2000));
-    setImportResult({
-      success: 23,
-      failed: 2,
-      errors: [
-        'Row 5: Missing required field "make"',
-        'Row 12: Invalid price format',
-      ],
-    });
-    setImporting(false);
+    setImportResult(null);
+
+    try {
+      const vehicles = JSON.parse(jsonData);
+      
+      if (!Array.isArray(vehicles)) {
+        throw new Error('JSON must be an array of vehicles');
+      }
+
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/import/json`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ vehicles }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Import failed');
+      }
+
+      const result = await response.json();
+      setImportResult(result);
+      toast.success(`Successfully imported ${result.success} vehicles`);
+      
+      if (result.failed > 0) {
+        toast.warning(`Failed to import ${result.failed} vehicles`);
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to import vehicles');
+      setImportResult({
+        success: 0,
+        failed: 0,
+        errors: [error.message],
+      });
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleXmlImport = async () => {
+    if (!selectedFile) {
+      toast.error('Please select an XML file');
+      return;
+    }
+
+    setImporting(true);
+    setImportResult(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/import/xml`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Import failed');
+      }
+
+      const result = await response.json();
+      setImportResult(result);
+      toast.success(`Successfully imported ${result.success} vehicles`);
+      
+      if (result.failed > 0) {
+        toast.warning(`Failed to import ${result.failed} vehicles`);
+      }
+      
+      setSelectedFile(null);
+      if (xmlFileInputRef.current) {
+        xmlFileInputRef.current.value = '';
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to import vehicles');
+      setImportResult({
+        success: 0,
+        failed: 0,
+        errors: [error.message],
+      });
+    } finally {
+      setImporting(false);
+    }
   };
 
   return (
@@ -57,10 +175,160 @@ export default function ImportPage() {
         <TabsContent value="upload" className="mt-6 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Upload File</CardTitle>
+              <CardTitle>Upload XML File</CardTitle>
               <CardDescription>
-                Supported formats: XML, JSON. Maximum file size: 10MB
+                Upload your inventory XML file. Maximum file size: 10MB
               </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="xml-file">XML File</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="xml-file"
+                    ref={xmlFileInputRef}
+                    type="file"
+                    accept=".xml"
+                    onChange={(e) => handleFileSelect(e, 'xml')}
+                    disabled={importing}
+                  />
+                  {selectedFile && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        setSelectedFile(null);
+                        if (xmlFileInputRef.current) {
+                          xmlFileInputRef.current.value = '';
+                        }
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                {selectedFile && (
+                  <p className="text-sm text-muted-foreground">
+                    Selected: {selectedFile.name}
+                  </p>
+                )}
+              </div>
+
+              <Button
+                onClick={handleXmlImport}
+                disabled={!selectedFile || importing}
+                className="w-full"
+              >
+                {importing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Importing...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Import XML
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>JSON Import</CardTitle>
+              <CardDescription>
+                Paste your JSON data directly
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="json-data">JSON Data</Label>
+                <textarea
+                  id="json-data"
+                  className="w-full min-h-[200px] p-3 rounded-md border bg-background text-sm font-mono"
+                  placeholder='[{"make": "Toyota", "model": "Camry", "year": 2024, ...}]'
+                  value={jsonData}
+                  onChange={(e) => setJsonData(e.target.value)}
+                  disabled={importing}
+                />
+              </div>
+
+              <Button
+                onClick={handleJsonImport}
+                disabled={!jsonData.trim() || importing}
+                className="w-full"
+              >
+                {importing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Importing...
+                  </>
+                ) : (
+                  <>
+                    <FileJson className="mr-2 h-4 w-4" />
+                    Import JSON
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {importResult && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Import Results</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="rounded-lg border p-4 bg-emerald-50 dark:bg-emerald-950/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Check className="h-4 w-4 text-emerald-600" />
+                      <span className="text-sm font-medium text-emerald-900 dark:text-emerald-100">
+                        Successful
+                      </span>
+                    </div>
+                    <p className="text-2xl font-bold text-emerald-600">
+                      {importResult.success}
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg border p-4 bg-red-50 dark:bg-red-950/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <AlertCircle className="h-4 w-4 text-red-600" />
+                      <span className="text-sm font-medium text-red-900 dark:text-red-100">
+                        Failed
+                      </span>
+                    </div>
+                    <p className="text-2xl font-bold text-red-600">
+                      {importResult.failed}
+                    </p>
+                  </div>
+                </div>
+
+                {importResult.errors && importResult.errors.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm">Errors:</h4>
+                    <div className="rounded-lg border bg-red-50 dark:bg-red-950/20 p-3 space-y-1">
+                      {importResult.errors.map((error, index) => (
+                        <p key={index} className="text-sm text-red-700 dark:text-red-300">
+                          • {error}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <HelpCircle className="h-5 w-5" />
+                Need Help?
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="border-2 border-dashed rounded-2xl p-12 text-center">

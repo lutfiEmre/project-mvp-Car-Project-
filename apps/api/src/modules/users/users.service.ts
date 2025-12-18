@@ -2,10 +2,15 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Prisma, UserRole, UserStatus } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsGateway: NotificationsGateway,
+  ) {}
 
   async findAll(params: {
     skip?: number;
@@ -54,6 +59,30 @@ export class UsersService {
         take: take || 10,
       },
     };
+  }
+
+  async getPublicProfile(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        avatar: true,
+        bio: true,
+        bannerImage: true,
+        city: true,
+        province: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
   }
 
   async findById(id: string) {
@@ -317,12 +346,176 @@ export class UsersService {
   async archiveInquiry(userId: string, inquiryId: string) {
     const inquiry = await this.getInquiryById(userId, inquiryId);
     
-    // Mark as archived for user only (not dealer)
     return this.prisma.inquiry.update({
       where: { id: inquiryId },
       data: {
         userArchived: true,
       },
+    });
+  }
+
+  async markInquiryAsRead(userId: string, inquiryId: string) {
+    const inquiry = await this.getInquiryById(userId, inquiryId);
+    
+    if (inquiry.userReadAt) {
+      return inquiry;
+    }
+    
+    const updated = await this.prisma.inquiry.update({
+      where: { id: inquiryId },
+      data: {
+        userReadAt: new Date(),
+      },
+      include: {
+        dealer: {
+          select: { userId: true },
+        },
+      },
+    });
+
+    if (updated.dealer?.userId) {
+      this.notificationsGateway.sendMessageRead(updated.dealer.userId, inquiryId, 'user');
+    }
+
+    return updated;
+  }
+
+  async sendMessage(userId: string, inquiryId: string, message: string) {
+    const inquiry = await this.getInquiryById(userId, inquiryId);
+    
+    const now = new Date();
+    const timestamp = now.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    });
+    
+    const newMessage = inquiry.message
+      ? `${inquiry.message}\n\n--- ${timestamp} ---\n${message}`
+      : message;
+    
+    const updated = await this.prisma.inquiry.update({
+      where: { id: inquiryId },
+      data: {
+        message: newMessage,
+        dealerReadAt: null,
+        status: 'NEW',
+      },
+      include: {
+        listing: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            make: true,
+            model: true,
+            year: true,
+            price: true,
+          },
+        },
+        dealer: {
+          select: {
+            id: true,
+            businessName: true,
+            userId: true,
+          },
+        },
+      },
+    });
+
+    if (updated.dealer?.userId) {
+      this.notificationsGateway.sendNewInquiry(updated.dealer.userId, updated);
+    }
+
+    return updated;
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      throw new BadRequestException('Current password is incorrect');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    return { message: 'Password changed successfully' };
+  }
+
+  async requestAccountDeletion(userId: string, reason?: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const admins = await this.prisma.user.findMany({
+      where: { role: 'ADMIN' },
+      select: { id: true },
+    });
+
+    for (const admin of admins) {
+      await this.prisma.notification.create({
+        data: {
+          userId: admin.id,
+          type: 'ACCOUNT_DELETION_REQUEST',
+          title: 'Account Deletion Request',
+          message: `User ${user.firstName} ${user.lastName} (${user.email}) has requested account deletion.${reason ? ` Reason: ${reason}` : ''}`,
+          data: { requestUserId: userId, reason },
+        },
+      });
+    }
+
+    return { message: 'Account deletion request submitted. Admin will review your request.' };
+  }
+
+  async updateAvatar(userId: string, avatarUrl: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { avatar: avatarUrl },
+      select: {
+        id: true,
+        avatar: true,
+      },
+    });
+  }
+
+  async getNotificationSettings(userId: string) {
+    const settings = await this.prisma.systemSetting.findFirst({
+      where: { key: `user_notification_settings_${userId}` },
+    });
+
+    return settings?.value || {
+      emailNotifications: true,
+      pushNotifications: true,
+      smsNotifications: false,
+      marketingEmails: false,
+    };
+  }
+
+  async updateNotificationSettings(userId: string, settings: {
+    emailNotifications?: boolean;
+    pushNotifications?: boolean;
+    smsNotifications?: boolean;
+    marketingEmails?: boolean;
+  }) {
+    const key = `user_notification_settings_${userId}`;
+    
+    return this.prisma.systemSetting.upsert({
+      where: { key },
+      update: { value: settings },
+      create: { key, value: settings },
     });
   }
 }

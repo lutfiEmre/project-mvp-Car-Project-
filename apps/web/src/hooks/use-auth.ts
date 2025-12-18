@@ -69,6 +69,18 @@ export function useAuth() {
     router.push('/');
   };
 
+  const refreshUser = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        const userData = await api.auth.me();
+        login(userData, token);
+      }
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+    }
+  };
+
   return {
     user,
     isAuthenticated,
@@ -76,6 +88,7 @@ export function useAuth() {
     login: handleLogin,
     register: handleRegister,
     logout: handleLogout,
+    refreshUser,
   };
 }
 

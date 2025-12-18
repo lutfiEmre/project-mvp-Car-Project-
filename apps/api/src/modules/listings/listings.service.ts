@@ -1,16 +1,42 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateListingReviewDto } from './dto/create-listing-review.dto';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 import { SearchListingsDto } from './dto/search-listings.dto';
 import { ListingStatus, UserRole, Prisma } from '@prisma/client';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 
 @Injectable()
 export class ListingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => NotificationsGateway))
+    private readonly notificationsGateway: NotificationsGateway,
+    private readonly subscriptionsService: SubscriptionsService,
+  ) {}
 
   async create(userId: string, dto: CreateListingDto, dealerId?: string) {
+    if (dealerId) {
+      const limits = await this.subscriptionsService.checkLimits(dealerId);
+      
+      const activeListingsCount = await this.prisma.listing.count({
+        where: {
+          dealerId,
+          status: {
+            in: [ListingStatus.ACTIVE, ListingStatus.PENDING_APPROVAL],
+          },
+        },
+      });
+
+      if (limits.maxListings !== -1 && activeListingsCount >= limits.maxListings) {
+        throw new BadRequestException(
+          `You have reached your listing limit (${limits.maxListings}). Please upgrade your plan to add more listings.`
+        );
+      }
+    }
+
     const slug = this.generateSlug(dto.title);
 
     return this.prisma.listing.create({
@@ -19,9 +45,9 @@ export class ListingsService {
         userId,
         dealerId,
         slug,
-        status: dto.status || ListingStatus.PENDING_APPROVAL, // Use provided status or default to PENDING_APPROVAL
-        features: dto.features || [], // Ensure features is an array
-        safetyFeatures: dto.safetyFeatures || [], // Ensure safetyFeatures is an array
+        status: dto.status || ListingStatus.PENDING_APPROVAL,
+        features: dto.features || [],
+        safetyFeatures: dto.safetyFeatures || [],
       },
       include: {
         media: true,
@@ -48,6 +74,8 @@ export class ListingsService {
       city,
       province,
       dealerId,
+      userId,
+      status,
       featured,
       sortBy = 'createdAt',
       sortOrder = 'desc',
@@ -55,13 +83,22 @@ export class ListingsService {
 
     const where: Prisma.ListingWhereInput = {
       // Admin can see all statuses, regular users only see ACTIVE
-      ...(user?.role !== UserRole.ADMIN && { status: ListingStatus.ACTIVE }),
+      ...(user?.role !== UserRole.ADMIN && !status && { status: ListingStatus.ACTIVE }),
+      ...(status && { status: status as ListingStatus }),
       ...(make && { make: { contains: make, mode: 'insensitive' } }),
       ...(model && { model: { contains: model, mode: 'insensitive' } }),
-      ...(yearMin && { year: { gte: yearMin } }),
-      ...(yearMax && { year: { lte: yearMax } }),
-      ...(priceMin && { price: { gte: priceMin } }),
-      ...(priceMax && { price: { lte: priceMax } }),
+      ...((yearMin || yearMax) && {
+        year: {
+          ...(yearMin && { gte: yearMin }),
+          ...(yearMax && { lte: yearMax }),
+        },
+      }),
+      ...((priceMin || priceMax) && {
+        price: {
+          ...(priceMin && { gte: priceMin }),
+          ...(priceMax && { lte: priceMax }),
+        },
+      }),
       ...(mileageMax && { mileage: { lte: mileageMax } }),
       ...(bodyType && { bodyType }),
       ...(fuelType && { fuelType }),
@@ -71,6 +108,7 @@ export class ListingsService {
       ...(city && { city: { contains: city, mode: 'insensitive' } }),
       ...(province && { province }),
       ...(dealerId && { dealerId }),
+      ...(userId && { userId }),
       ...(featured && { featured: true }),
     };
 
@@ -362,7 +400,10 @@ export class ListingsService {
         ],
       },
       take,
-      orderBy: { createdAt: 'desc' },
+      orderBy: [
+        { featuredOrder: 'asc' },
+        { createdAt: 'desc' },
+      ],
       include: {
         media: {
           where: { isPrimary: true },
@@ -376,6 +417,65 @@ export class ListingsService {
         },
       },
     });
+  }
+
+  async requestFeatured(listingId: string, userId: string) {
+    const listing = await this.prisma.listing.findUnique({
+      where: { id: listingId },
+      include: { dealer: true },
+    });
+
+    if (!listing) {
+      throw new NotFoundException('Listing not found');
+    }
+
+    if (listing.userId !== userId && listing.dealer?.userId !== userId) {
+      throw new ForbiddenException('Not authorized to request featured for this listing');
+    }
+
+    if (!listing.dealerId) {
+      throw new BadRequestException('Only dealer listings can be featured');
+    }
+
+    const limits = await this.subscriptionsService.checkLimits(listing.dealerId);
+    
+    const currentFeaturedCount = await this.prisma.listing.count({
+      where: {
+        dealerId: listing.dealerId,
+        featured: true,
+        OR: [
+          { featuredUntil: null },
+          { featuredUntil: { gt: new Date() } },
+        ],
+      },
+    });
+
+    if (limits.featuredListings !== -1 && currentFeaturedCount >= limits.featuredListings) {
+      throw new BadRequestException(
+        `You have reached your featured listing limit (${limits.featuredListings}). Please upgrade your plan.`
+      );
+    }
+
+    await this.prisma.listing.update({
+      where: { id: listingId },
+      data: { featuredRequestStatus: 'PENDING' },
+    });
+
+    const adminUsers = await this.prisma.user.findMany({
+      where: { role: 'ADMIN' },
+      select: { id: true },
+    });
+
+    for (const admin of adminUsers) {
+      await this.notificationsGateway.sendNotification(admin.id, {
+        type: 'FEATURED_REQUEST',
+        title: 'Featured Listing Request',
+        message: `${listing.dealer?.businessName || 'A dealer'} requested to feature listing: ${listing.title}`,
+        data: { listingId, dealerId: listing.dealerId },
+      });
+    }
+
+    return { message: 'Featured listing request submitted successfully' };
   }
 
   async getRecent(take = 12) {
@@ -566,20 +666,25 @@ export class ListingsService {
         include: { user: true },
       });
 
-      if (dealer?.userId) {
-        await this.prisma.notification.create({
+if (dealer?.userId) {
+      const notification = await this.prisma.notification.create({
+        data: {
+          userId: dealer.userId,
+          type: 'INQUIRY',
+          title: 'New Message Received',
+          message: `${data.name} sent a new message about ${listing.year} ${listing.make} ${listing.model}`,
           data: {
-            userId: dealer.userId,
-            type: 'INQUIRY',
-            title: 'New Message Received',
-            message: `${data.name} sent a new message about ${listing.year} ${listing.make} ${listing.model}`,
-            data: {
-              inquiryId: updatedInquiry.id,
-              listingId: data.listingId,
-            },
+            inquiryId: updatedInquiry.id,
+            listingId: data.listingId,
           },
-        });
-      }
+        },
+      });
+
+      this.notificationsGateway.sendNewInquiry(dealer.userId, {
+        inquiry: updatedInquiry,
+        notification,
+      });
+    }
 
       return {
         success: true,
@@ -649,7 +754,7 @@ export class ListingsService {
     });
 
     if (dealer?.userId) {
-      await this.prisma.notification.create({
+      const notification = await this.prisma.notification.create({
         data: {
           userId: dealer.userId,
           type: 'INQUIRY',
@@ -660,6 +765,11 @@ export class ListingsService {
             listingId: data.listingId,
           },
         },
+      });
+
+      this.notificationsGateway.sendNewInquiry(dealer.userId, {
+        inquiry,
+        notification,
       });
     }
     
@@ -731,7 +841,6 @@ export class ListingsService {
   }
 
   async respondToListingReview(reviewId: string, dealerId: string, response: string) {
-    // Verify the review exists and belongs to a listing owned by this dealer
     const review = await this.prisma.listingReview.findUnique({
       where: { id: reviewId },
       include: {
@@ -758,6 +867,104 @@ export class ListingsService {
         dealerResponseAt: new Date(),
       },
     });
+  }
+
+  async getSavedListings(userId: string) {
+    const savedListings = await this.prisma.savedListing.findMany({
+      where: { userId },
+      include: {
+        listing: {
+          include: {
+            media: {
+              orderBy: [
+                { isPrimary: 'desc' },
+                { order: 'asc' },
+              ],
+              take: 1,
+            },
+            dealer: {
+              select: {
+                id: true,
+                businessName: true,
+                city: true,
+                verified: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return savedListings.map((saved) => saved.listing);
+  }
+
+  async saveListing(listingId: string, userId: string) {
+    const listing = await this.prisma.listing.findUnique({
+      where: { id: listingId },
+    });
+
+    if (!listing) {
+      throw new NotFoundException('Listing not found');
+    }
+
+    const existingSave = await this.prisma.savedListing.findUnique({
+      where: {
+        userId_listingId: {
+          userId,
+          listingId,
+        },
+      },
+    });
+
+    if (existingSave) {
+      return { saved: true, message: 'Listing already saved' };
+    }
+
+    await this.prisma.savedListing.create({
+      data: {
+        userId,
+        listingId,
+      },
+    });
+
+    await this.prisma.listing.update({
+      where: { id: listingId },
+      data: { saves: { increment: 1 } },
+    });
+
+    return { saved: true, message: 'Listing saved successfully' };
+  }
+
+  async unsaveListing(listingId: string, userId: string) {
+    const existingSave = await this.prisma.savedListing.findUnique({
+      where: {
+        userId_listingId: {
+          userId,
+          listingId,
+        },
+      },
+    });
+
+    if (!existingSave) {
+      return { saved: false, message: 'Listing was not saved' };
+    }
+
+    await this.prisma.savedListing.delete({
+      where: {
+        userId_listingId: {
+          userId,
+          listingId,
+        },
+      },
+    });
+
+    await this.prisma.listing.update({
+      where: { id: listingId },
+      data: { saves: { decrement: 1 } },
+    });
+
+    return { saved: false, message: 'Listing removed from saved' };
   }
 }
 

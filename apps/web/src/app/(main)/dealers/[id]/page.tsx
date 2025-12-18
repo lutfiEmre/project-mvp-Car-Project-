@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
@@ -37,6 +37,7 @@ import { VehicleCard } from '@/components/vehicles/vehicle-card';
 import { formatPrice, formatDate } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { toast } from 'sonner';
+import { api } from '@/lib/api';
 
 export default function DealerDetailPage() {
   const params = useParams();
@@ -45,6 +46,7 @@ export default function DealerDetailPage() {
   const { user, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [savedListings, setSavedListings] = useState<Set<string>>(new Set());
   const [reviewForm, setReviewForm] = useState({
     rating: 5,
     title: '',
@@ -92,9 +94,9 @@ export default function DealerDetailPage() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dealer', dealerId] }); // Invalidate dealer public page
-      queryClient.invalidateQueries({ queryKey: ['dealer', 'reviews'] }); // Invalidate dealer's own reviews page
-      queryClient.invalidateQueries({ queryKey: ['dealer', 'me'] }); // Invalidate dealer dashboard data
+      queryClient.invalidateQueries({ queryKey: ['dealer', dealerId] });
+      queryClient.invalidateQueries({ queryKey: ['dealer', 'reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['dealer', 'me'] });
       setReviewForm({ rating: 5, title: '', content: '' });
       setShowReviewForm(false);
       toast.success('Review submitted successfully!');
@@ -103,6 +105,48 @@ export default function DealerDetailPage() {
       toast.error(error.message || 'Failed to submit review');
     },
   });
+
+  const saveMutation = useMutation({
+    mutationFn: (listingId: string) => api.listings.save(listingId),
+    onSuccess: (data, listingId) => {
+      setSavedListings(prev => new Set(prev).add(listingId));
+      toast.success('Vehicle saved to favorites');
+      queryClient.invalidateQueries({ queryKey: ['listings', 'saved'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to save vehicle');
+    },
+  });
+
+  const unsaveMutation = useMutation({
+    mutationFn: (listingId: string) => api.listings.unsave(listingId),
+    onSuccess: (data, listingId) => {
+      setSavedListings(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(listingId);
+        return newSet;
+      });
+      toast.success('Vehicle removed from favorites');
+      queryClient.invalidateQueries({ queryKey: ['listings', 'saved'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to remove vehicle');
+    },
+  });
+
+  const handleToggleSave = async (listingId: string) => {
+    if (!isAuthenticated) {
+      toast.error('Please sign in to save vehicles');
+      router.push('/login');
+      return;
+    }
+
+    if (savedListings.has(listingId)) {
+      await unsaveMutation.mutateAsync(listingId);
+    } else {
+      await saveMutation.mutateAsync(listingId);
+    }
+  };
 
   const handleSubmitReview = (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,6 +160,17 @@ export default function DealerDetailPage() {
       content: reviewForm.content,
     });
   };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      api.listings.getSaved()
+        .then((savedData) => {
+          const savedIds = new Set(savedData.map((listing: any) => listing.id));
+          setSavedListings(savedIds);
+        })
+        .catch(() => {});
+    }
+  }, [isAuthenticated]);
 
   if (isLoading) {
     return (
@@ -515,7 +570,13 @@ export default function DealerDetailPage() {
               ) : (
                 <div className="grid gap-6 sm:grid-cols-2">
                   {listings.map((listing: any, index: number) => (
-                    <VehicleCard key={listing.id} listing={listing} index={index} />
+                    <VehicleCard 
+                      key={listing.id} 
+                      listing={listing} 
+                      index={index}
+                      saved={savedListings.has(listing.id)}
+                      onSave={handleToggleSave}
+                    />
                   ))}
                 </div>
               )}

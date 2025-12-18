@@ -339,7 +339,10 @@ export function Header({ user }: HeaderProps) {
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="gap-2 rounded-xl pl-2 pr-3">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={user.avatar} />
+                          <AvatarImage 
+                            src={user.avatar ? `${user.avatar}${user.avatar.includes('?') ? '&' : '?'}cb=${Date.now()}` : ''} 
+                            alt="Profile" 
+                          />
                           <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                             {user.firstName[0]}{user.lastName[0]}
                           </AvatarFallback>

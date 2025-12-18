@@ -47,6 +47,12 @@ export class NotificationsController {
     return this.notificationsService.markAllAsRead(userId);
   }
 
+  @Post('delete-all')
+  @ApiOperation({ summary: 'Delete all notifications' })
+  deleteAll(@CurrentUser('sub') userId: string) {
+    return this.notificationsService.deleteAll(userId);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a notification' })
   remove(@Param('id') id: string, @CurrentUser('sub') userId: string) {

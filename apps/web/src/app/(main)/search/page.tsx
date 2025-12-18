@@ -3,6 +3,10 @@
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import { toast } from 'sonner';
+import { useAuth } from '@/hooks/use-auth';
 import { 
   Search, 
   SlidersHorizontal, 
@@ -168,15 +172,39 @@ function FilterSidebar({
             max={200000}
             step={5000}
           />
-          <div className="flex items-center justify-between">
-            <div className="rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2">
-              <span className="text-xs text-muted-foreground">Min</span>
-              <p className="font-semibold">${formatNumber(priceRange[0])}</p>
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <label className="text-xs text-muted-foreground mb-1 block">Min</label>
+              <Input
+                type="text"
+                value={formatNumber(priceRange[0])}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  const numValue = value ? parseInt(value) : 0;
+                  if (numValue <= priceRange[1]) {
+                    setPriceRange([numValue, priceRange[1]]);
+                  }
+                }}
+                className="h-9"
+                placeholder="0"
+              />
             </div>
-            <div className="h-px w-4 bg-slate-300" />
-            <div className="rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2 text-right">
-              <span className="text-xs text-muted-foreground">Max</span>
-              <p className="font-semibold">${formatNumber(priceRange[1])}</p>
+            <div className="text-muted-foreground pt-5">—</div>
+            <div className="flex-1">
+              <label className="text-xs text-muted-foreground mb-1 block">Max</label>
+              <Input
+                type="text"
+                value={formatNumber(priceRange[1])}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  const numValue = value ? parseInt(value) : 200000;
+                  if (numValue >= priceRange[0]) {
+                    setPriceRange([priceRange[0], numValue]);
+                  }
+                }}
+                className="h-9"
+                placeholder="200,000"
+              />
             </div>
           </div>
         </CollapsibleContent>
@@ -258,12 +286,13 @@ function FilterSidebar({
 function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
+  const { isAuthenticated } = useAuth();
   
-  // Read filters from URL
   const urlMake = searchParams.get('make') || 'All Makes';
   const urlBody = searchParams.get('bodyType') || 'All Types';
-  const urlMinPrice = parseInt(searchParams.get('minPrice') || '0');
-  const urlMaxPrice = parseInt(searchParams.get('maxPrice') || '200000');
+  const urlMinPrice = parseInt(searchParams.get('priceMin') || searchParams.get('minPrice') || '0');
+  const urlMaxPrice = parseInt(searchParams.get('priceMax') || searchParams.get('maxPrice') || '200000');
   const urlSort = searchParams.get('sort') || 'newest';
   const urlSearch = searchParams.get('q') || '';
   const urlPage = parseInt(searchParams.get('page') || '1');
@@ -280,6 +309,7 @@ function SearchPageContent() {
   const [searchQuery, setSearchQuery] = useState(urlSearch);
   const [currentPage, setCurrentPage] = useState(urlPage);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [savedListings, setSavedListings] = useState<Set<string>>(new Set());
 
   // Build filters for API
   const filters = useMemo(() => {
@@ -347,13 +377,64 @@ function SearchPageContent() {
     return apiFilters;
   }, [selectedMake, selectedBody, priceRange, selectedYear, selectedFuelTypes, sortBy, searchQuery, currentPage]);
 
-  // Fetch listings from API
   const { data: apiData, isLoading } = useListings(filters);
 
-  // Only use API data, no fallback listings - filtering is done by API
   const filteredListings = useMemo(() => {
     return apiData?.data || [];
   }, [apiData]);
+
+  const saveMutation = useMutation({
+    mutationFn: (listingId: string) => api.listings.save(listingId),
+    onSuccess: (data, listingId) => {
+      setSavedListings(prev => new Set(prev).add(listingId));
+      toast.success('Vehicle saved to favorites');
+      queryClient.invalidateQueries({ queryKey: ['listings', 'saved'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to save vehicle');
+    },
+  });
+
+  const unsaveMutation = useMutation({
+    mutationFn: (listingId: string) => api.listings.unsave(listingId),
+    onSuccess: (data, listingId) => {
+      setSavedListings(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(listingId);
+        return newSet;
+      });
+      toast.success('Vehicle removed from favorites');
+      queryClient.invalidateQueries({ queryKey: ['listings', 'saved'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to remove vehicle');
+    },
+  });
+
+  const handleToggleSave = async (listingId: string) => {
+    if (!isAuthenticated) {
+      toast.error('Please sign in to save vehicles');
+      router.push('/login');
+      return;
+    }
+
+    if (savedListings.has(listingId)) {
+      await unsaveMutation.mutateAsync(listingId);
+    } else {
+      await saveMutation.mutateAsync(listingId);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      api.listings.getSaved()
+        .then((savedData) => {
+          const savedIds = new Set(savedData.map((listing: any) => listing.id));
+          setSavedListings(savedIds);
+        })
+        .catch(() => {});
+    }
+  }, [isAuthenticated]);
 
   const updateURL = (page: number = 1) => {
     const params = new URLSearchParams();
@@ -617,7 +698,13 @@ function SearchPageContent() {
             ) : (
               <div className={`grid gap-6 ${viewMode === 'grid' ? 'sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
                 {filteredListings.map((listing, index) => (
-                  <VehicleCard key={listing.id} listing={listing} index={index} />
+                  <VehicleCard 
+                    key={listing.id} 
+                    listing={listing} 
+                    index={index}
+                    saved={savedListings.has(listing.id)}
+                    onSave={handleToggleSave}
+                  />
                 ))}
               </div>
             )}

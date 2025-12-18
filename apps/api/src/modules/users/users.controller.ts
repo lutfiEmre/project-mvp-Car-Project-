@@ -15,6 +15,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
 
@@ -92,6 +93,25 @@ export class UsersController {
     return this.usersService.archiveInquiry(userId, inquiryId);
   }
 
+  @Put('me/inquiries/:id/read')
+  @ApiOperation({ summary: 'Mark inquiry as read' })
+  async markInquiryAsRead(
+    @CurrentUser('sub') userId: string,
+    @Param('id') inquiryId: string,
+  ) {
+    return this.usersService.markInquiryAsRead(userId, inquiryId);
+  }
+
+  @Post('me/inquiries/:id/message')
+  @ApiOperation({ summary: 'Send a message to an existing inquiry' })
+  async sendMessage(
+    @CurrentUser('sub') userId: string,
+    @Param('id') inquiryId: string,
+    @Body() body: { message: string },
+  ) {
+    return this.usersService.sendMessage(userId, inquiryId, body.message);
+  }
+
   @Get('me/saved-listings')
   @ApiOperation({ summary: 'Get saved listings' })
   async getSavedListings(@CurrentUser('sub') userId: string) {
@@ -114,6 +134,60 @@ export class UsersController {
     @Param('listingId') listingId: string,
   ) {
     return this.usersService.unsaveListing(userId, listingId);
+  }
+
+  @Post('me/change-password')
+  @ApiOperation({ summary: 'Change password' })
+  async changePassword(
+    @CurrentUser('sub') userId: string,
+    @Body() body: { currentPassword: string; newPassword: string },
+  ) {
+    return this.usersService.changePassword(userId, body.currentPassword, body.newPassword);
+  }
+
+  @Post('me/request-deletion')
+  @ApiOperation({ summary: 'Request account deletion' })
+  async requestAccountDeletion(
+    @CurrentUser('sub') userId: string,
+    @Body() body: { reason?: string },
+  ) {
+    return this.usersService.requestAccountDeletion(userId, body.reason);
+  }
+
+  @Put('me/avatar')
+  @ApiOperation({ summary: 'Update avatar' })
+  async updateAvatar(
+    @CurrentUser('sub') userId: string,
+    @Body() body: { avatarUrl: string },
+  ) {
+    return this.usersService.updateAvatar(userId, body.avatarUrl);
+  }
+
+  @Get('me/notification-settings')
+  @ApiOperation({ summary: 'Get notification settings' })
+  async getNotificationSettings(@CurrentUser('sub') userId: string) {
+    return this.usersService.getNotificationSettings(userId);
+  }
+
+  @Put('me/notification-settings')
+  @ApiOperation({ summary: 'Update notification settings' })
+  async updateNotificationSettings(
+    @CurrentUser('sub') userId: string,
+    @Body() body: {
+      emailNotifications?: boolean;
+      pushNotifications?: boolean;
+      smsNotifications?: boolean;
+      marketingEmails?: boolean;
+    },
+  ) {
+    return this.usersService.updateNotificationSettings(userId, body);
+  }
+
+  @Public()
+  @Get(':id/profile')
+  @ApiOperation({ summary: 'Get public user profile' })
+  async getUserProfile(@Param('id') id: string) {
+    return this.usersService.getPublicProfile(id);
   }
 
   @Get(':id')

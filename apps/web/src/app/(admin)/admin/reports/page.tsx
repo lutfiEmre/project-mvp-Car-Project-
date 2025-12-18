@@ -42,45 +42,27 @@ import { formatPrice, formatNumber } from '@/lib/utils';
 
 const COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
 
-// Mock revenue data for demonstration
-const generateMockRevenueData = (days: number) => {
-  const data = [];
-  const today = new Date();
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
-    // Generate realistic revenue data with some variation
-    const baseRevenue = 3500 + Math.random() * 2000;
-    const revenue = Math.floor(baseRevenue + Math.sin(i / 7) * 500);
-    data.push({
-      date: dateStr,
-      revenue: revenue,
-    });
-  }
-  return data;
-};
 
 export default function AdminReportsPage() {
   const [days, setDays] = useState(30);
   const { data: dashboardData } = useAdminDashboard();
   const { data: analyticsData, isLoading } = useAdminAnalytics(days);
-  
-  // Generate mock revenue data
-  const mockRevenueData = useMemo(() => generateMockRevenueData(days), [days]);
 
   const stats = useMemo(() => {
-    const data = dashboardData || {
-      totalUsers: 12453,
-      totalListings: 48291,
-      totalRevenue: 128450,
-    };
+    if (!dashboardData) {
+      return [
+        { label: 'Total Users', value: '...', change: '-', trend: 'up', icon: Users },
+        { label: 'Total Listings', value: '...', change: '-', trend: 'up', icon: Car },
+        { label: 'Total Revenue', value: '...', change: '-', trend: 'up', icon: DollarSign },
+        { label: 'Active Listings', value: '...', change: '-', trend: 'up', icon: Eye },
+      ];
+    }
 
     return [
-      { label: 'Total Users', value: formatNumber(data.totalUsers || 0), change: '+12.5%', trend: 'up', icon: Users },
-      { label: 'Total Listings', value: formatNumber(data.totalListings || 0), change: '+8.2%', trend: 'up', icon: Car },
-      { label: 'Total Revenue', value: formatPrice(data.totalRevenue || 0), change: '+15.3%', trend: 'up', icon: DollarSign },
-      { label: 'Active Listings', value: formatNumber((data as any).activeListings || data.totalListings || 0), change: '+5.1%', trend: 'up', icon: Eye },
+      { label: 'Total Users', value: formatNumber(dashboardData.totalUsers || 0), change: `+${dashboardData.newUsersLast30Days || 0}`, trend: 'up', icon: Users },
+      { label: 'Total Listings', value: formatNumber(dashboardData.totalListings || 0), change: `+${dashboardData.newListingsLast30Days || 0}`, trend: 'up', icon: Car },
+      { label: 'Total Revenue', value: formatPrice(dashboardData.totalRevenue || 0), change: '-', trend: 'up', icon: DollarSign },
+      { label: 'Active Listings', value: formatNumber(dashboardData.activeListings || 0), change: `${dashboardData.pendingListings || 0} pending`, trend: 'up', icon: Eye },
     ];
   }, [dashboardData]);
 
@@ -248,17 +230,6 @@ export default function AdminReportsPage() {
             <ResponsiveContainer width="100%" height={256}>
               <BarChart data={analyticsData.revenueOverTime}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip formatter={(value: number) => formatPrice(value)} />
-                <Legend />
-                <Bar dataKey="revenue" fill="#10b981" />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <ResponsiveContainer width="100%" height={256}>
-              <BarChart data={mockRevenueData}>
-                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
                   dataKey="date" 
                   tickFormatter={(value) => {
@@ -278,6 +249,10 @@ export default function AdminReportsPage() {
                 <Bar dataKey="revenue" fill="#10b981" />
               </BarChart>
             </ResponsiveContainer>
+          ) : (
+            <div className="h-64 flex items-center justify-center bg-muted/30 rounded-lg">
+              <p className="text-muted-foreground">No revenue data available</p>
+            </div>
           )}
         </motion.div>
 

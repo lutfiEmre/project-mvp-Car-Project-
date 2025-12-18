@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { 
@@ -15,7 +15,8 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  ArrowLeft
+  ArrowLeft,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,77 +27,94 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-
-const listings = [
-  {
-    id: '1',
-    title: '2023 BMW M4 Competition',
-    price: 89900,
-    status: 'active',
-    views: 234,
-    inquiries: 12,
-    location: 'Toronto, ON',
-    createdAt: '2024-01-15',
-    slug: '2023-bmw-m4-competition',
-  },
-  {
-    id: '2',
-    title: '2022 Audi Q5 Premium Plus',
-    price: 52900,
-    status: 'pending',
-    views: 0,
-    inquiries: 0,
-    location: 'Toronto, ON',
-    createdAt: '2024-01-18',
-    slug: '2022-audi-q5-premium-plus',
-  },
-  {
-    id: '3',
-    title: '2021 Honda Accord Sport',
-    price: 32500,
-    status: 'sold',
-    views: 567,
-    inquiries: 28,
-    location: 'Toronto, ON',
-    createdAt: '2023-12-01',
-    slug: '2021-honda-accord-sport',
-  },
-];
+import { useMyListings } from '@/hooks/use-listings';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import { toast } from 'sonner';
+import { useAuth } from '@/hooks/use-auth';
 
 const statusConfig = {
-  active: {
+  ACTIVE: {
     label: 'Active',
     color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
     icon: CheckCircle,
   },
-  pending: {
+  PENDING_APPROVAL: {
     label: 'Pending Review',
     color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
     icon: Clock,
   },
-  sold: {
+  SOLD: {
     label: 'Sold',
     color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
     icon: CheckCircle,
   },
-  rejected: {
+  REJECTED: {
     label: 'Rejected',
     color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
     icon: XCircle,
   },
-  expired: {
+  EXPIRED: {
     label: 'Expired',
+    color: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
+    icon: AlertCircle,
+  },
+  INACTIVE: {
+    label: 'Inactive',
     color: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
     icon: AlertCircle,
   },
 };
 
 export default function MyListingsPage() {
-  const [items, setItems] = useState(listings);
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { data: myListingsData, isLoading, error } = useMyListings();
 
-  const deleteListing = (id: string) => {
-    setItems(items.filter((item) => item.id !== id));
+  const deleteMutation = useMutation({
+    mutationFn: (listingId: string) => api.listings.delete(listingId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listings', 'my'] });
+      toast.success('Listing deleted successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete listing');
+    },
+  });
+
+  const listings = Array.isArray(myListingsData) 
+    ? myListingsData 
+    : (myListingsData?.data || []);
+
+  const handleDelete = async (listingId: string) => {
+    if (window.confirm('Are you sure you want to delete this listing?')) {
+      await deleteMutation.mutateAsync(listingId);
+    }
   };
+
+  const handleViewListing = (listing: any) => {
+    if (listing.slug) {
+      router.push(`/vehicles/${listing.slug}`);
+    } else {
+      toast.error('Listing slug not available');
+    }
+  };
+
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <Car className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Sign In Required</h2>
+          <p className="text-muted-foreground mb-4">Please sign in to view your listings</p>
+          <Link href="/login">
+            <Button>Sign In</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -122,7 +140,17 @@ export default function MyListingsPage() {
           </div>
         </div>
 
-        {items.length === 0 ? (
+        {authLoading || isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : error ? (
+          <div className="text-center py-12 rounded-xl border bg-card">
+            <AlertCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
+            <p className="text-destructive mb-2">Error loading listings</p>
+            <p className="text-sm text-muted-foreground">{error.message}</p>
+          </div>
+        ) : listings.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -144,9 +172,16 @@ export default function MyListingsPage() {
           </motion.div>
         ) : (
           <div className="space-y-4">
-            {items.map((listing, index) => {
-              const status = statusConfig[listing.status as keyof typeof statusConfig];
+            {listings.map((listing: any, index: number) => {
+              const statusKey = listing.status || 'ACTIVE';
+              const status = statusConfig[statusKey as keyof typeof statusConfig] || statusConfig.ACTIVE;
               const StatusIcon = status.icon;
+              const title = listing.title || 
+                `${listing.year || ''} ${listing.make || ''} ${listing.model || ''}`.trim() ||
+                'Untitled Listing';
+              const firstMedia = listing.media?.[0];
+              const imageUrl = firstMedia?.url || 
+                (typeof firstMedia === 'string' ? firstMedia : '/placeholder-car.jpg');
               
               return (
                 <motion.div
@@ -160,8 +195,8 @@ export default function MyListingsPage() {
                     {/* Image */}
                     <div className="relative aspect-[16/10] sm:aspect-square sm:w-32 shrink-0 overflow-hidden rounded-lg bg-slate-100">
                       <img
-                        src={(listing as any).media?.[0]?.url || '/placeholder-car.jpg'}
-                        alt={listing.title}
+                        src={imageUrl}
+                        alt={title}
                         className="h-full w-full object-cover"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
@@ -172,17 +207,19 @@ export default function MyListingsPage() {
                       />
                     </div>
 
-                    {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <Link href={`/vehicles/${listing.slug}`}>
+                          <button 
+                            onClick={() => handleViewListing(listing)}
+                            className="text-left"
+                          >
                             <h3 className="font-display font-semibold hover:text-primary transition-colors">
-                              {listing.title}
+                              {title}
                             </h3>
-                          </Link>
+                          </button>
                           <p className="text-xl font-bold text-primary mt-1">
-                            ${listing.price.toLocaleString()}
+                            ${(listing.price || 0).toLocaleString()}
                           </p>
                         </div>
                         <DropdownMenu>
@@ -192,22 +229,25 @@ export default function MyListingsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link href={`/vehicles/${listing.slug}`} className="cursor-pointer">
-                                <Eye className="mr-2 h-4 w-4" />
-                                View Listing
-                              </Link>
+                            <DropdownMenuItem 
+                              className="cursor-pointer"
+                              onClick={() => handleViewListing(listing)}
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Listing
                             </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/dashboard/listings/${listing.id}/edit`} className="cursor-pointer">
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit Listing
-                              </Link>
+                            <DropdownMenuItem 
+                              className="cursor-pointer"
+                              onClick={() => router.push(`/dashboard/listings/${listing.id}/edit`)}
+                            >
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit Listing
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-red-600 cursor-pointer"
-                              onClick={() => deleteListing(listing.id)}
+                              onClick={() => handleDelete(listing.id)}
+                              disabled={deleteMutation.isPending}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete Listing
@@ -217,13 +257,15 @@ export default function MyListingsPage() {
                       </div>
 
                       <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <MapPin className="h-4 w-4" />
-                          {listing.location}
-                        </div>
+                        {(listing.city || listing.province) && (
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-4 w-4" />
+                            {[listing.city, listing.province].filter(Boolean).join(', ')}
+                          </div>
+                        )}
                         <div className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
-                          {listing.createdAt}
+                          {new Date(listing.createdAt).toLocaleDateString()}
                         </div>
                       </div>
 
@@ -236,14 +278,14 @@ export default function MyListingsPage() {
                           {status.label}
                         </span>
                         
-                        {listing.status === 'active' && (
+                        {statusKey === 'ACTIVE' && (
                           <>
                             <span className="text-sm text-muted-foreground">
                               <Eye className="inline h-4 w-4 mr-1" />
-                              {listing.views} views
+                              {listing.views || 0} views
                             </span>
                             <span className="text-sm text-muted-foreground">
-                              💬 {listing.inquiries} inquiries
+                              💬 {listing.inquiries || 0} inquiries
                             </span>
                           </>
                         )}

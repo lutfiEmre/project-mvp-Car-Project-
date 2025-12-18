@@ -334,9 +334,10 @@ export default function DashboardPage() {
                 </div>
               ) : recentListings.length > 0 ? (
                 recentListings.map((listing) => (
-                <div
+                <Link
                   key={listing.id}
-                  className="flex items-center gap-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 p-4"
+                  href={`/dashboard/listings/${listing.id}/edit`}
+                  className="flex items-center gap-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 p-4 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   <div className="relative h-16 w-24 overflow-hidden rounded-lg shrink-0">
                     <img
@@ -350,12 +351,9 @@ export default function DashboardPage() {
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <Link 
-                      href={`/dashboard/listings/${listing.id}`}
-                      className="font-medium truncate block hover:text-primary"
-                    >
+                    <span className="font-medium truncate block hover:text-primary">
                       {listing.title}
-                    </Link>
+                    </span>
                     <p className="text-sm text-primary font-semibold">
                       {formatPrice(listing.price)}
                     </p>
@@ -370,7 +368,7 @@ export default function DashboardPage() {
                       {listing.saves.toLocaleString()}
                     </div>
                   </div>
-                </div>
+                </Link>
               ))
               ) : (
                 <div className="text-center py-8">

@@ -11,6 +11,7 @@ const PLAN_DETAILS = {
     xmlImportEnabled: false,
     analyticsEnabled: false,
     prioritySupport: false,
+    description: 'Free plan for getting started',
   },
   [SubscriptionPlan.STARTER]: {
     price: 49.99,
@@ -20,6 +21,7 @@ const PLAN_DETAILS = {
     xmlImportEnabled: false,
     analyticsEnabled: true,
     prioritySupport: false,
+    description: 'Perfect for small dealerships',
   },
   [SubscriptionPlan.PROFESSIONAL]: {
     price: 149.99,
@@ -29,6 +31,7 @@ const PLAN_DETAILS = {
     xmlImportEnabled: true,
     analyticsEnabled: true,
     prioritySupport: true,
+    description: 'For growing businesses',
   },
   [SubscriptionPlan.ENTERPRISE]: {
     price: 399.99,
@@ -38,6 +41,7 @@ const PLAN_DETAILS = {
     xmlImportEnabled: true,
     analyticsEnabled: true,
     prioritySupport: true,
+    description: 'Unlimited listings and premium features',
   },
 };
 
@@ -45,11 +49,49 @@ const PLAN_DETAILS = {
 export class SubscriptionsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async getPlanDetails(plan: SubscriptionPlan) {
+    const settingKey = `plan_${plan.toLowerCase()}_details`;
+    const savedPlan = await this.prisma.systemSetting.findUnique({
+      where: { key: settingKey },
+    });
+
+    if (savedPlan && savedPlan.value) {
+      const savedDetails = typeof savedPlan.value === 'string' 
+        ? JSON.parse(savedPlan.value) 
+        : savedPlan.value;
+      return { ...PLAN_DETAILS[plan], ...savedDetails };
+    }
+
+    return PLAN_DETAILS[plan];
+  }
+
   async getPlans() {
-    return Object.entries(PLAN_DETAILS).map(([plan, details]) => ({
-      plan,
-      ...details,
-    }));
+    const plans = await Promise.all(
+      Object.entries(PLAN_DETAILS).map(async ([plan, defaultDetails]) => {
+        const settingKey = `plan_${plan.toLowerCase()}_details`;
+        const savedPlan = await this.prisma.systemSetting.findUnique({
+          where: { key: settingKey },
+        });
+
+        if (savedPlan && savedPlan.value) {
+          const savedDetails = typeof savedPlan.value === 'string' 
+            ? JSON.parse(savedPlan.value) 
+            : savedPlan.value;
+          return {
+            plan,
+            ...defaultDetails,
+            ...savedDetails,
+          };
+        }
+
+        return {
+          plan,
+          ...defaultDetails,
+        };
+      })
+    );
+
+    return plans;
   }
 
   async getActive(dealerId: string) {
@@ -63,7 +105,7 @@ export class SubscriptionsService {
   }
 
   async create(dealerId: string, plan: SubscriptionPlan, billingCycle: 'monthly' | 'yearly') {
-    const planDetails = PLAN_DETAILS[plan];
+    const planDetails = await this.getPlanDetails(plan);
     
     // Check if already has active subscription
     const existing = await this.getActive(dealerId);
@@ -85,12 +127,14 @@ export class SubscriptionsService {
       ? planDetails.price * 10 
       : planDetails.price;
 
+    const { description, ...planData } = planDetails;
+
     return this.prisma.subscription.create({
       data: {
         dealerId,
         plan,
         status: SubscriptionStatus.ACTIVE,
-        ...planDetails,
+        ...planData,
         price,
         billingCycle,
         startDate,
@@ -128,7 +172,7 @@ export class SubscriptionsService {
       throw new BadRequestException('No active subscription to upgrade');
     }
 
-    const newPlanDetails = PLAN_DETAILS[newPlan];
+    const newPlanDetails = await this.getPlanDetails(newPlan);
 
     // Mark current as cancelled
     await this.prisma.subscription.update({
@@ -141,12 +185,14 @@ export class SubscriptionsService {
     const endDate = new Date();
     endDate.setMonth(endDate.getMonth() + 1);
 
+    const { description, ...planData } = newPlanDetails;
+
     return this.prisma.subscription.create({
       data: {
         dealerId,
         plan: newPlan,
         status: SubscriptionStatus.ACTIVE,
-        ...newPlanDetails,
+        ...planData,
         billingCycle: 'monthly',
         startDate,
         endDate,
@@ -158,10 +204,10 @@ export class SubscriptionsService {
     const subscription = await this.getActive(dealerId);
     
     if (!subscription) {
-      // Return free tier limits
+      const freePlanDetails = await this.getPlanDetails(SubscriptionPlan.FREE);
       return {
         plan: SubscriptionPlan.FREE,
-        ...PLAN_DETAILS[SubscriptionPlan.FREE],
+        ...freePlanDetails,
       };
     }
 

@@ -98,6 +98,16 @@ export class SearchListingsDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsString()
+  userId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  status?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsBoolean()
   @Type(() => Boolean)
   featured?: boolean;

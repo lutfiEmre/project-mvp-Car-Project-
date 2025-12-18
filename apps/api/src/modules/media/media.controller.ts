@@ -8,9 +8,10 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFiles,
+  UploadedFile,
   Patch,
 } from '@nestjs/common';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { MediaService } from './media.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -23,7 +24,28 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 
-  @Post('listings/:listingId')
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload a single file (avatar, logo, etc)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  async uploadSingle(
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.mediaService.uploadSingle(file);
+  }
+
+  @Post('listings/:listingId/upload')
   @UseInterceptors(FilesInterceptor('files', 20))
   @ApiOperation({ summary: 'Upload media for a listing' })
   @ApiConsumes('multipart/form-data')

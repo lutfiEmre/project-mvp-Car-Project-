@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { 
@@ -16,11 +16,12 @@ import {
   Loader2,
   MessageCircle,
   Mail,
-  Phone
+  Phone,
+  Package
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Select,
   SelectContent,
@@ -36,10 +37,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { cn, formatNumber, formatDate, formatPrice } from '@/lib/utils';
 import { useAdminDealers, useVerifyDealer, useSuspendDealer } from '@/hooks/use-admin';
 import { toast } from 'sonner';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 import Image from 'next/image';
 import {
   Dialog,
@@ -73,10 +76,35 @@ export default function AdminDealersPage() {
   const [selectedDealer, setSelectedDealer] = useState<any | null>(null);
   const [selectedInquiry, setSelectedInquiry] = useState<any | null>(null);
   const [inquiriesStatusFilter, setInquiriesStatusFilter] = useState('all');
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<string>('PROFESSIONAL');
+  const [selectedBillingCycle, setSelectedBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
+  const queryClient = useQueryClient();
   const { data: dealersData, isLoading } = useAdminDealers({ limit: 50 });
   const verifyDealer = useVerifyDealer();
   const suspendDealer = useSuspendDealer();
+  
+  const { data: subscriptionsData } = useQuery({
+    queryKey: ['admin', 'subscriptions'],
+    queryFn: () => api.admin.getAllSubscriptions(),
+  });
+
+  const { data: plansData } = useQuery({
+    queryKey: ['admin', 'plans'],
+    queryFn: () => api.admin.getPlans(),
+  });
+  
+  const unverifyDealer = useMutation({
+    mutationFn: (id: string) => api.admin.unverifyDealer(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'dealers'] });
+      toast.success('Dealer verification removed');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to unverify dealer');
+    },
+  });
 
   const dealers = dealersData?.data || [];
 
@@ -123,6 +151,46 @@ export default function AdminDealersPage() {
     },
     enabled: !!selectedInquiry?.id,
   });
+
+  const subscriptionsMap = useMemo(() => {
+    const map: Record<string, any> = {};
+    (subscriptionsData || []).forEach((sub: any) => {
+      const dealerId = sub.dealer?.id;
+      if (dealerId) {
+        // Prefer ACTIVE subscriptions, but if none exist, use the most recent one
+        if (!map[dealerId] || sub.status === 'ACTIVE' || (map[dealerId].status !== 'ACTIVE' && new Date(sub.createdAt) > new Date(map[dealerId].createdAt))) {
+          map[dealerId] = sub;
+        }
+      }
+    });
+    return map;
+  }, [subscriptionsData]);
+
+  const upgradeSubscriptionMutation = useMutation({
+    mutationFn: ({ dealerId, plan, billingCycle }: { dealerId: string; plan: string; billingCycle: 'monthly' | 'yearly' }) =>
+      api.admin.upgradeDealerSubscription(dealerId, plan, billingCycle),
+    onSuccess: async () => {
+      toast.success('Subscription updated successfully');
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['admin', 'subscriptions'] }),
+        queryClient.refetchQueries({ queryKey: ['admin', 'dealers'] }),
+      ]);
+      setUpgradeDialogOpen(false);
+      setSelectedDealer(null);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'Failed to update subscription');
+    },
+  });
+
+  const handleUpgradeSubscription = () => {
+    if (!selectedDealer) return;
+    upgradeSubscriptionMutation.mutate({
+      dealerId: selectedDealer.id,
+      plan: selectedPlan,
+      billingCycle: selectedBillingCycle,
+    });
+  };
 
   const filteredDealers = dealers.filter((dealer: any) => {
     const matchesSearch = dealer.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -246,6 +314,7 @@ export default function AdminDealersPage() {
                   <th className="px-4 py-3 text-left text-sm font-medium">Location</th>
                   <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
                   <th className="px-4 py-3 text-left text-sm font-medium">Verified</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Plan</th>
                   <th className="px-4 py-3 text-left text-sm font-medium">Listings</th>
                   <th className="px-4 py-3 text-right text-sm font-medium">Actions</th>
                 </tr>
@@ -303,6 +372,26 @@ export default function AdminDealersPage() {
                           <Badge variant="secondary">Unverified</Badge>
                         )}
                       </td>
+                      <td className="px-4 py-4">
+                        {subscriptionsMap[dealer.id] ? (
+                          <div className="flex items-center gap-2">
+                            <Badge variant={subscriptionsMap[dealer.id].plan === 'FREE' ? 'secondary' : 'default'}>
+                              {subscriptionsMap[dealer.id].plan}
+                            </Badge>
+                            {subscriptionsMap[dealer.id].status === 'ACTIVE' ? (
+                              <Badge variant="outline" className="text-green-600 text-xs">
+                                Active
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-amber-600 text-xs">
+                                {subscriptionsMap[dealer.id].status}
+                              </Badge>
+                            )}
+                          </div>
+                        ) : (
+                          <Badge variant="secondary">No Subscription</Badge>
+                        )}
+                      </td>
                       <td className="px-4 py-4 text-sm">{dealer._count?.listings || 0}</td>
                       <td className="px-4 py-4 text-right">
                         <DropdownMenu>
@@ -324,7 +413,20 @@ export default function AdminDealersPage() {
                                 View Listings
                               </Link>
                             </DropdownMenuItem>
-                            {!dealer.verified && (
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => {
+                              setSelectedDealer(dealer);
+                              if (subscriptionsMap[dealer.id]) {
+                                setSelectedPlan(subscriptionsMap[dealer.id].plan);
+                                setSelectedBillingCycle(subscriptionsMap[dealer.id].billingCycle || 'monthly');
+                              }
+                              setUpgradeDialogOpen(true);
+                            }}>
+                              <Package className="mr-2 h-4 w-4" />
+                              Manage Subscription
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            {!dealer.verified ? (
                               <DropdownMenuItem 
                                 className="text-green-600"
                                 onClick={() => handleVerifyDealer(dealer.id)}
@@ -336,6 +438,19 @@ export default function AdminDealersPage() {
                                   <CheckCircle className="mr-2 h-4 w-4" />
                                 )}
                                 Verify Dealer
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem 
+                                className="text-amber-600"
+                                onClick={() => unverifyDealer.mutate(dealer.id)}
+                                disabled={unverifyDealer.isPending}
+                              >
+                                {unverifyDealer.isPending ? (
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                  <XCircle className="mr-2 h-4 w-4" />
+                                )}
+                                Remove Verification
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator />
@@ -630,6 +745,96 @@ export default function AdminDealersPage() {
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
               Suspend Dealer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Manage Subscription</DialogTitle>
+            <DialogDescription>
+              Update dealer subscription plan without payment (admin only)
+            </DialogDescription>
+          </DialogHeader>
+          {selectedDealer && (
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
+                <Avatar>
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    {selectedDealer.businessName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2) || 'DE'}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium">{selectedDealer.businessName || 'N/A'}</p>
+                  <p className="text-sm text-muted-foreground">{selectedDealer.user?.email}</p>
+                </div>
+              </div>
+              {subscriptionsMap[selectedDealer.id] && (
+                <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Current Plan</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant={subscriptionsMap[selectedDealer.id].plan === 'FREE' ? 'secondary' : 'default'}>
+                      {subscriptionsMap[selectedDealer.id].plan}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {subscriptionsMap[selectedDealer.id].billingCycle || 'monthly'}
+                    </Badge>
+                    {subscriptionsMap[selectedDealer.id].status === 'ACTIVE' && (
+                      <Badge variant="outline" className="text-green-600 text-xs">
+                        Active
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+              <div>
+                <Label>Select Plan</Label>
+                <Select value={selectedPlan} onValueChange={setSelectedPlan}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="FREE">Free</SelectItem>
+                    <SelectItem value="STARTER">Starter</SelectItem>
+                    <SelectItem value="PROFESSIONAL">Professional</SelectItem>
+                    <SelectItem value="ENTERPRISE">Enterprise</SelectItem>
+                  </SelectContent>
+                </Select>
+                {plansData && plansData[selectedPlan] && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formatPrice(plansData[selectedPlan].price)}/{selectedBillingCycle === 'monthly' ? 'mo' : 'yr'}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label>Billing Cycle</Label>
+                <Select value={selectedBillingCycle} onValueChange={(value) => setSelectedBillingCycle(value as 'monthly' | 'yearly')}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="yearly">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setUpgradeDialogOpen(false);
+              setSelectedDealer(null);
+            }}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpgradeSubscription}
+              disabled={upgradeSubscriptionMutation.isPending || !selectedDealer}
+            >
+              {upgradeSubscriptionMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Update Subscription
             </Button>
           </DialogFooter>
         </DialogContent>

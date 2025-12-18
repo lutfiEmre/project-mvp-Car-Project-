@@ -89,24 +89,34 @@ export default function AdminSettingsPage() {
     }
   }, [settingsData, settings]);
 
-  const handleSaveSetting = async (key: string, value: any) => {
+  const handleSaveSetting = async (key: string, value: any, showToast: boolean = true) => {
     try {
       await updateSetting.mutateAsync({ key, value });
-      toast.success('Setting saved successfully');
+      if (showToast) {
+        toast.success('Setting saved successfully');
+      }
     } catch (error: any) {
       toast.error(error.message || 'Failed to save setting');
+      throw error;
     }
   };
 
-  const handleSaveGeneral = () => {
-    handleSaveSetting('siteName', formData.siteName);
-    handleSaveSetting('siteUrl', formData.siteUrl);
-    handleSaveSetting('defaultLanguage', formData.defaultLanguage);
-    handleSaveSetting('defaultCurrency', formData.defaultCurrency);
-    handleSaveSetting('siteDescription', formData.siteDescription);
-    handleSaveSetting('requireApproval', formData.requireApproval);
-    handleSaveSetting('allowPrivateSellers', formData.allowPrivateSellers);
-    handleSaveSetting('featuredListings', formData.featuredListings);
+  const handleSaveGeneral = async () => {
+    try {
+      await Promise.all([
+        handleSaveSetting('siteName', formData.siteName, false),
+        handleSaveSetting('siteUrl', formData.siteUrl, false),
+        handleSaveSetting('defaultLanguage', formData.defaultLanguage, false),
+        handleSaveSetting('defaultCurrency', formData.defaultCurrency, false),
+        handleSaveSetting('siteDescription', formData.siteDescription, false),
+        handleSaveSetting('requireApproval', formData.requireApproval, false),
+        handleSaveSetting('allowPrivateSellers', formData.allowPrivateSellers, false),
+        handleSaveSetting('featuredListings', formData.featuredListings, false),
+      ]);
+      toast.success('General settings saved successfully');
+    } catch (error: any) {
+      toast.error('Failed to save some settings');
+    }
   };
 
   const handleSaveEmail = () => {
@@ -120,19 +130,46 @@ export default function AdminSettingsPage() {
     handleSaveSetting('fromName', formData.fromName);
   };
 
-  const handleSaveSecurity = () => {
-    handleSaveSetting('twoFactorAuth', formData.twoFactorAuth);
-    handleSaveSetting('sessionTimeout', formData.sessionTimeout);
-    handleSaveSetting('rateLimit', formData.rateLimit);
+  const handleSaveSecurity = async () => {
+    try {
+      await Promise.all([
+        handleSaveSetting('twoFactorAuth', formData.twoFactorAuth, false),
+        handleSaveSetting('sessionTimeout', formData.sessionTimeout, false),
+        handleSaveSetting('rateLimit', formData.rateLimit, false),
+      ]);
+      toast.success('Security settings saved successfully');
+    } catch (error: any) {
+      toast.error('Failed to save some settings');
+    }
   };
 
-  const handleSaveMaintenance = () => {
-    handleSaveSetting('maintenanceMode', formData.maintenanceMode);
-    handleSaveSetting('maintenanceMessage', formData.maintenanceMessage);
+  const handleSaveMaintenance = async () => {
+    try {
+      await Promise.all([
+        handleSaveSetting('maintenanceMode', formData.maintenanceMode, false),
+        handleSaveSetting('maintenanceMessage', formData.maintenanceMessage, false),
+      ]);
+      toast.success('Maintenance settings saved successfully');
+    } catch (error: any) {
+      toast.error('Failed to save some settings');
+    }
   };
 
-  const handleTestEmail = () => {
-    toast.info('Test email functionality would be implemented here');
+  const handleTestEmail = async () => {
+    const email = prompt('Enter email address to send test email:');
+    if (!email) return;
+    
+    if (!email.includes('@')) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    try {
+      await api.admin.sendTestEmail(email);
+      toast.success('Test email sent successfully!');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to send test email');
+    }
   };
 
   const handleClearCache = () => {
@@ -229,11 +266,16 @@ export default function AdminSettingsPage() {
               </div>
               <Button className="mt-6 gap-2" onClick={handleSaveGeneral} disabled={updateSetting.isPending}>
                 {updateSetting.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
                 ) : (
-                  <Save className="h-4 w-4" />
+                  <>
+                    <Save className="h-4 w-4" />
+                    Save Changes
+                  </>
                 )}
-                Save Changes
               </Button>
             </div>
 
@@ -425,17 +467,28 @@ export default function AdminSettingsPage() {
                     className="w-[100px]" 
                     value={formData.rateLimit}
                     onChange={(e) => setFormData({ ...formData, rateLimit: e.target.value })}
+                    onBlur={(e) => {
+                      const value = e.target.value;
+                      if (value && !isNaN(Number(value))) {
+                        handleSaveSetting('rateLimit', Number(value));
+                      }
+                    }}
                     type="number" 
                   />
                 </div>
               </div>
               <Button className="mt-6 gap-2" onClick={handleSaveSecurity} disabled={updateSetting.isPending}>
                 {updateSetting.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
                 ) : (
-                  <Save className="h-4 w-4" />
+                  <>
+                    <Save className="h-4 w-4" />
+                    Save Changes
+                  </>
                 )}
-                Save Changes
               </Button>
             </div>
           </motion.div>
@@ -478,11 +531,16 @@ export default function AdminSettingsPage() {
                 </div>
                 <Button className="mt-4 gap-2" onClick={handleSaveMaintenance} disabled={updateSetting.isPending}>
                   {updateSetting.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
                   ) : (
-                    <Save className="h-4 w-4" />
+                    <>
+                      <Save className="h-4 w-4" />
+                      Save Changes
+                    </>
                   )}
-                  Save Changes
                 </Button>
               </div>
             </div>

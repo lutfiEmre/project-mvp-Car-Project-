@@ -1,17 +1,17 @@
 import { PartialType } from '@nestjs/swagger';
 import { CreateDealerDto } from './create-dealer.dto';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsUrl, IsObject } from 'class-validator';
+import { IsOptional, IsUrl, IsObject, IsString } from 'class-validator';
 
 export class UpdateDealerDto extends PartialType(CreateDealerDto) {
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUrl()
+  @IsString()
   logo?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUrl()
+  @IsString()
   bannerImage?: string;
 
   @ApiPropertyOptional()

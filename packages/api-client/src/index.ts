@@ -233,6 +233,9 @@ class ApiClient {
       const query = new URLSearchParams(stringParams).toString();
       return this.request(`/listings/my?${query}`);
     },
+
+    requestFeatured: (id: string): Promise<{ message: string }> =>
+      this.request(`/listings/${id}/request-featured`, { method: 'POST' }),
   };
 
   vehicleData = {
@@ -285,6 +288,12 @@ class ApiClient {
 
     getInvoice: (id: string): Promise<Payment> =>
       this.request(`/payments/${id}/invoice`),
+
+    createCheckoutSession: (plan: string, billingCycle?: 'monthly' | 'yearly'): Promise<{ sessionId: string; url: string }> =>
+      this.request('/payments/create-checkout', { method: 'POST', body: JSON.stringify({ plan, billingCycle: billingCycle || 'monthly' }) }),
+
+    cancelSubscription: (): Promise<void> =>
+      this.request('/payments/cancel-subscription', { method: 'POST' }),
   };
 
   notifications = {
@@ -309,6 +318,9 @@ class ApiClient {
 
     delete: (id: string): Promise<void> =>
       this.request(`/notifications/${id}`, { method: 'DELETE' }),
+
+    deleteAll: (): Promise<void> =>
+      this.request('/notifications/delete-all', { method: 'POST' }),
   };
 
   media = {
@@ -364,6 +376,26 @@ class ApiClient {
       throw lastError || new Error('Upload failed after retries');
     },
 
+    uploadForListing: async (listingId: string, file: File): Promise<{ url: string; id: string }> => {
+      const formData = new FormData();
+      formData.append('files', file);
+
+      const response = await fetch(`${this.baseUrl}/media/listings/${listingId}/upload`, {
+        method: 'POST',
+        headers: this.accessToken ? { Authorization: `Bearer ${this.accessToken}` } : {},
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Upload failed' }));
+        throw new Error(error.message || 'Upload failed');
+      }
+
+      const result = await response.json();
+      return Array.isArray(result) ? result[0] : result;
+    },
+
     delete: (id: string): Promise<void> =>
       this.request(`/media/${id}`, { method: 'DELETE' }),
   };
@@ -390,6 +422,18 @@ class ApiClient {
       return this.request(`/admin/listings?${query}`);
     },
 
+    getInquiries: (params?: { page?: number; limit?: number; status?: string }): Promise<PaginatedResponse<any>> => {
+      const cleanParams = Object.fromEntries(
+        Object.entries(params || {}).filter(([_, v]) => v !== undefined && v !== null && (typeof v !== 'string' || v !== ''))
+      );
+      const stringParams: Record<string, string> = {};
+      Object.entries(cleanParams).forEach(([k, v]) => {
+        stringParams[k] = String(v);
+      });
+      const query = new URLSearchParams(stringParams).toString();
+      return this.request(`/admin/inquiries?${query}`);
+    },
+
     getPendingListings: (params?: { page?: number; limit?: number }): Promise<PaginatedResponse<Listing>> => {
       const cleanParams = Object.fromEntries(
         Object.entries(params || {}).filter(([_, v]) => v !== undefined && v !== null && (typeof v !== 'string' || v !== ''))
@@ -410,6 +454,9 @@ class ApiClient {
 
     deleteListing: (id: string): Promise<void> =>
       this.request(`/admin/listings/${id}`, { method: 'DELETE' }),
+
+    getListingById: (id: string): Promise<Listing> =>
+      this.request(`/admin/listings/${id}`),
 
     getUsers: (params?: { page?: number; limit?: number; role?: string; status?: string }): Promise<PaginatedResponse<User>> => {
       const cleanParams = Object.fromEntries(
@@ -457,6 +504,39 @@ class ApiClient {
     suspendDealer: (id: string): Promise<Dealer> =>
       this.request(`/admin/dealers/${id}/suspend`, { method: 'POST' }),
 
+    unverifyDealer: (id: string): Promise<Dealer> =>
+      this.request(`/admin/dealers/${id}/unverify`, { method: 'POST' }),
+
+    getDealerById: (id: string): Promise<Dealer> =>
+      this.request(`/admin/dealers/${id}`),
+
+    getUserById: (id: string): Promise<User> =>
+      this.request(`/admin/users/${id}`),
+
+    updateUserRole: (id: string, role: string): Promise<User> =>
+      this.request(`/admin/users/${id}/role`, { method: 'PUT', body: JSON.stringify({ role }) }),
+
+    suspendUser: (id: string, reason: string, duration?: number): Promise<User> =>
+      this.request(`/admin/users/${id}/suspend`, { method: 'POST', body: JSON.stringify({ reason, duration }) }),
+
+    activateUser: (id: string): Promise<User> =>
+      this.request(`/admin/users/${id}/activate`, { method: 'POST' }),
+
+    deleteUser: (id: string): Promise<void> =>
+      this.request(`/admin/users/${id}`, { method: 'DELETE' }),
+
+    getListingById: (id: string): Promise<Listing> =>
+      this.request(`/admin/listings/${id}`),
+
+    updateListingStatus: (id: string, status: string): Promise<Listing> =>
+      this.request(`/admin/listings/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+
+    featureListing: (id: string, featured: boolean, days?: number, featuredOrder?: number): Promise<Listing> =>
+      this.request(`/admin/listings/${id}/feature`, { method: 'POST', body: JSON.stringify({ featured, days, featuredOrder }) }),
+
+    getRecentActivity: (limit?: number): Promise<any[]> =>
+      this.request(`/admin/activity/recent?limit=${limit || 10}`),
+
     getAnalytics: (days?: number): Promise<{
       userGrowth: Array<{ date: string; users: number }>;
       listingsByCategory: Array<{ category: string; count: number }>;
@@ -475,6 +555,9 @@ class ApiClient {
 
     updateSetting: (key: string, value: unknown): Promise<{ key: string; value: unknown }> =>
       this.request(`/admin/settings/${key}`, { method: 'PUT', body: JSON.stringify({ value }) }),
+
+    sendTestEmail: (email: string): Promise<{ message: string }> =>
+      this.request('/admin/email/test', { method: 'POST', body: JSON.stringify({ email }) }),
 
     getActivityLogs: (params?: { 
       page?: number; 
@@ -516,6 +599,78 @@ class ApiClient {
 
     seedActivityLogs: (): Promise<{ message: string; count: number }> =>
       this.request('/activity-logs/seed', { method: 'POST' }),
+
+    getAllPayments: (params?: { page?: number; limit?: number; dealerId?: string }): Promise<PaginatedResponse<Payment>> => {
+      const cleanParams = Object.fromEntries(
+        Object.entries(params || {}).filter(([_, v]) => v !== undefined && v !== null && (typeof v !== 'string' || v !== ''))
+      );
+      const stringParams: Record<string, string> = {};
+      Object.entries(cleanParams).forEach(([k, v]) => {
+        stringParams[k] = String(v);
+      });
+      const query = new URLSearchParams(stringParams).toString();
+      return this.request(`/admin/payments?${query}`);
+    },
+
+    getPlans: (): Promise<Record<string, any>> =>
+      this.request('/admin/plans'),
+
+    updatePlan: (plan: string, data: {
+      price?: number;
+      maxListings?: number;
+      maxPhotosPerListing?: number;
+      featuredListings?: number;
+      xmlImportEnabled?: boolean;
+      analyticsEnabled?: boolean;
+      prioritySupport?: boolean;
+      description?: string;
+    }): Promise<any> =>
+      this.request(`/admin/plans/${plan}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+    getAllSubscriptions: (): Promise<Array<any>> =>
+      this.request('/admin/subscriptions'),
+
+    upgradeDealerSubscription: (dealerId: string, plan: string, billingCycle?: 'monthly' | 'yearly'): Promise<any> =>
+      this.request(`/admin/dealers/${dealerId}/upgrade-subscription`, { 
+        method: 'POST', 
+        body: JSON.stringify({ plan, billingCycle: billingCycle || 'monthly' }) 
+      }),
+
+    upgradeUserSubscription: (userId: string, plan: string, billingCycle?: 'monthly' | 'yearly'): Promise<any> =>
+      this.request(`/admin/users/${userId}/upgrade-subscription`, { 
+        method: 'POST', 
+        body: JSON.stringify({ plan, billingCycle: billingCycle || 'monthly' }) 
+      }),
+
+    getFeaturedRequests: (): Promise<Array<any>> =>
+      this.request('/admin/featured-requests'),
+
+    getFeaturedListings: (): Promise<Array<any>> =>
+      this.request('/admin/featured-listings'),
+
+    updateFeaturedOrder: (listingId: string, order: number): Promise<any> =>
+      this.request(`/admin/listings/${listingId}/featured-order`, {
+        method: 'PUT',
+        body: JSON.stringify({ order }),
+      }),
+  };
+
+  reviews = {
+    getDealerReviews: (dealerId: string, params?: { page?: number; limit?: number }): Promise<PaginatedResponse<any>> => {
+      const cleanParams: Record<string, string> = {};
+      if (params) {
+        if (params.page !== undefined && params.page !== null) cleanParams.page = String(params.page);
+        if (params.limit !== undefined && params.limit !== null) cleanParams.limit = String(params.limit);
+      }
+      const query = new URLSearchParams(cleanParams).toString();
+      return this.request(`/dealers/${dealerId}/reviews?${query}`);
+    },
+
+    createDealerReview: (dealerId: string, data: { rating: number; title?: string; content: string }): Promise<any> =>
+      this.request(`/dealers/${dealerId}/reviews`, { method: 'POST', body: JSON.stringify(data) }),
+
+    createListingReview: (listingId: string, data: { rating: number; title?: string; content: string }): Promise<any> =>
+      this.request(`/listings/${listingId}/reviews`, { method: 'POST', body: JSON.stringify(data) }),
   };
 }
 

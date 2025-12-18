@@ -16,8 +16,8 @@
     --secondary-foreground: 222 47% 11%;
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
-    --accent: 16 85% 62%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 207 90% 95%;
+    --accent-foreground: 207 90% 46%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
     --border: 214 32% 91%;
@@ -39,7 +39,7 @@
     --secondary-foreground: 210 40% 98%;
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
-    --accent: 16 85% 62%;
+    --accent: 207 90% 20%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62% 50%;
     --destructive-foreground: 210 40% 98%;
@@ -165,7 +165,13 @@
   @apply bg-muted-foreground/50;
 }
 
-button:focus{
+button:focus,
+select:focus,
+input:focus,
+a:focus,
+[role="button"]:focus,
+[role="combobox"]:focus {
   outline: none !important;
-  border: none !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
 }

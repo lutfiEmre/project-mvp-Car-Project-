@@ -17,6 +17,8 @@ import {
   User,
   Trash2,
   Building2,
+  Check,
+  CheckCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +38,7 @@ import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSocket } from '@/hooks/use-socket';
 
 export default function DealerMessagesPage() {
   const [selectedInquiry, setSelectedInquiry] = useState<any>(null);
@@ -45,6 +48,32 @@ export default function DealerMessagesPage() {
   const [isReplying, setIsReplying] = useState(false);
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewInquiry = (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['dealer', 'inquiries'] });
+      queryClient.refetchQueries({ queryKey: ['dealer', 'inquiries'] });
+    };
+
+    const handleMessageRead = (data: any) => {
+      if (data.readBy === 'user' && selectedInquiry?.id === data.inquiryId) {
+        setSelectedInquiry((prev: any) => prev ? { ...prev, userReadAt: new Date().toISOString() } : prev);
+      }
+      queryClient.invalidateQueries({ queryKey: ['dealer', 'inquiries'] });
+      queryClient.refetchQueries({ queryKey: ['dealer', 'inquiries'] });
+    };
+
+    socket.on('new_inquiry', handleNewInquiry);
+    socket.on('message_read', handleMessageRead);
+
+    return () => {
+      socket.off('new_inquiry', handleNewInquiry);
+      socket.off('message_read', handleMessageRead);
+    };
+  }, [socket, queryClient, selectedInquiry?.id]);
 
   const { data: inquiriesData, isLoading } = useQuery({
     queryKey: ['dealer', 'inquiries', statusFilter],
@@ -62,8 +91,9 @@ export default function DealerMessagesPage() {
       if (!response.ok) throw new Error('Failed to fetch inquiries');
       return response.json();
     },
-    refetchInterval: 5000, // Refetch every 5 seconds for real-time updates
+    refetchInterval: 3000,
     refetchOnWindowFocus: true,
+    refetchIntervalInBackground: false,
   });
 
   const inquiries = inquiriesData?.data || [];
@@ -214,7 +244,6 @@ export default function DealerMessagesPage() {
         }
       }
       
-      // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ['dealer', 'inquiries'] });
       
       if (variables.status === 'ARCHIVED') {
@@ -225,10 +254,9 @@ export default function DealerMessagesPage() {
         setIsReplying(false);
       }
       
-      // Refetch immediately to get updated data
       setTimeout(() => {
         queryClient.refetchQueries({ queryKey: ['dealer', 'inquiries'] });
-      }, 300);
+      }, 100);
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to update inquiry');
@@ -568,6 +596,8 @@ export default function DealerMessagesPage() {
                       );
                     }
                     
+                    const lastDealerMsgIdx = allMessages.map((m, i) => m.type === 'dealer' ? i : -1).filter(i => i >= 0).pop();
+                    
                     return allMessages.map((msg: any, idx: number) => {
                       if (msg.type === 'user') {
                         return (
@@ -596,6 +626,8 @@ export default function DealerMessagesPage() {
                           </motion.div>
                         );
                       } else {
+                        const isLastDealerMsg = idx === lastDealerMsgIdx;
+                        const isRead = !!selectedInquiry.userReadAt;
                         return (
                           <motion.div
                             key={`dealer-${msg.id}-${idx}`}
@@ -609,11 +641,20 @@ export default function DealerMessagesPage() {
                                 <div className="bg-primary text-primary-foreground rounded-2xl rounded-tr-sm px-4 py-2.5 shadow-md">
                                   <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
                                 </div>
-                                {msg.timestamp && (
-                                  <span className="text-xs text-muted-foreground mt-1 px-2">
-                                    {msg.timestamp}
-                                  </span>
-                                )}
+                                <div className="flex items-center gap-1 mt-1 px-2">
+                                  {msg.timestamp && (
+                                    <span className="text-xs text-muted-foreground">
+                                      {msg.timestamp}
+                                    </span>
+                                  )}
+                                  {isLastDealerMsg && (
+                                    isRead ? (
+                                      <CheckCheck className="h-4 w-4 text-blue-500" />
+                                    ) : (
+                                      <Check className="h-4 w-4 text-muted-foreground" />
+                                    )
+                                  )}
+                                </div>
                               </div>
                               <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                                 <Building2 className="h-4 w-4 text-primary" />

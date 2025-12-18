@@ -116,6 +116,10 @@ model User {
   lastName          String     @map("last_name")
   phone             String?
   avatar            String?
+  bio               String?    @db.Text
+  bannerImage       String?    @map("banner_image")
+  city              String?
+  province          String?
   role              UserRole   @default(USER)
   status            UserStatus @default(PENDING_VERIFICATION)
   emailVerified     Boolean    @default(false) @map("email_verified")
@@ -131,6 +135,8 @@ model User {
 
   // Relations
   dealer            Dealer?
+  subscriptions     Subscription[]
+  payments          Payment[]
   listings          Listing[]
   savedListings     SavedListing[]
   refreshTokens     RefreshToken[]
@@ -177,6 +183,9 @@ model Dealer {
   // Verification
   verified          Boolean  @default(false)
   verifiedAt        DateTime? @map("verified_at")
+  
+  // Stripe
+  stripeCustomerId  String?  @unique @map("stripe_customer_id")
   
   // Stats
   totalListings     Int      @default(0) @map("total_listings")
@@ -260,6 +269,8 @@ model Listing {
   status            ListingStatus @default(DRAFT)
   featured          Boolean       @default(false)
   featuredUntil     DateTime?     @map("featured_until")
+  featuredOrder     Int?          @map("featured_order")
+  featuredRequestStatus String?   @default("NONE") @map("featured_request_status")
   
   // Stats
   views             Int           @default(0)
@@ -354,7 +365,8 @@ model SavedListing {
 
 model Subscription {
   id                String             @id @default(uuid())
-  dealerId          String             @map("dealer_id")
+  dealerId          String?            @map("dealer_id")
+  userId            String?            @map("user_id")
   plan              SubscriptionPlan   @default(FREE)
   status            SubscriptionStatus @default(ACTIVE)
   
@@ -371,6 +383,9 @@ model Subscription {
   currency          String             @default("CAD")
   billingCycle      String             @default("monthly") @map("billing_cycle")
   
+  // Stripe
+  stripeSubscriptionId String?         @unique @map("stripe_subscription_id")
+  
   // Dates
   startDate         DateTime           @map("start_date")
   endDate           DateTime           @map("end_date")
@@ -380,9 +395,12 @@ model Subscription {
   updatedAt         DateTime           @updatedAt @map("updated_at")
 
   // Relations
-  dealer            Dealer             @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  dealer            Dealer?            @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  user              User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
   payments          Payment[]
 
+  @@index([dealerId])
+  @@index([userId])
   @@map("subscriptions")
 }
 
@@ -399,6 +417,12 @@ model Payment {
   paymentMethod     String?       @map("payment_method")
   transactionId     String?       @map("transaction_id")
   invoiceNumber     String?       @unique @map("invoice_number")
+  
+  // Stripe fields
+  stripeCustomerId      String?   @map("stripe_customer_id")
+  stripePaymentIntentId String?   @map("stripe_payment_intent_id")
+  stripeSubscriptionId  String?   @map("stripe_subscription_id")
+  stripeCheckoutSessionId String? @map("stripe_checkout_session_id")
   
   // Metadata
   description       String?
@@ -580,6 +604,10 @@ model Inquiry {
   status            String   @default("NEW") // NEW, READ, REPLIED, ARCHIVED
   isRead            Boolean  @default(false) @map("is_read")
   readAt            DateTime? @map("read_at")
+  
+  // Read status (separate for user and dealer)
+  userReadAt        DateTime? @map("user_read_at")
+  dealerReadAt      DateTime? @map("dealer_read_at")
   
   // Archive flags (separate for user and dealer)
   userArchived      Boolean  @default(false) @map("user_archived")

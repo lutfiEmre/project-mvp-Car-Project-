@@ -10,6 +10,9 @@ import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
+import { ActivityLogService } from '../activity-log/activity-log.service';
+import { EmailService } from '../email/email.service';
+import { ConfigService } from '@nestjs/config';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserRole, UserStatus } from '@prisma/client';
@@ -32,6 +35,8 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly activityLogService: ActivityLogService,
+    private readonly emailService: EmailService,
   ) {}
 
   async register(dto: RegisterDto): Promise<TokenPair & { user: any }> {
@@ -98,6 +103,20 @@ export class AuthService {
         lastLoginIp: ipAddress,
       },
     });
+
+    // Log login activity
+    try {
+      await this.activityLogService.log({
+        userId: user.id,
+        action: 'User Login',
+        entity: 'Auth',
+        ipAddress: ipAddress,
+        userAgent: userAgent,
+      });
+    } catch (error) {
+      // Don't fail login if activity log fails
+      console.error('Failed to log login activity:', error);
+    }
 
     const tokens = await this.generateTokens(user.id, user.email, user.role);
     
@@ -220,10 +239,16 @@ export class AuthService {
       },
     });
 
-    // Note: Email service integration required for production
-    // For now, reset token is generated and stored in database
-    // In production, uncomment and configure mail service:
-    // await this.mailService.sendPasswordReset(user.email, resetToken);
+    // Send password reset email
+    const frontendUrl = this.configService.get('FRONTEND_URL', 'http://localhost:3000');
+    const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
+    
+    try {
+      await this.emailService.sendPasswordReset(user.email, resetToken, resetUrl);
+    } catch (error) {
+      // Log error but don't fail the request
+      console.error('Failed to send password reset email:', error);
+    }
 
     return { message: 'If email exists, reset link will be sent' };
   }

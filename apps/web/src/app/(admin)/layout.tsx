@@ -20,11 +20,15 @@ import {
   FileText,
   Loader2,
   AlertTriangle,
+  Trash2,
+  CreditCard,
+  Star,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -43,6 +47,9 @@ const sidebarLinks = [
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Dealers', href: '/admin/dealers', icon: Building2 },
   { name: 'Listings', href: '/admin/listings', icon: Car },
+  { name: 'Featured', href: '/admin/featured', icon: Star },
+  { name: 'Billing', href: '/admin/billing', icon: CreditCard },
+  { name: 'Payments', href: '/admin/payments', icon: FileText },
   { name: 'Approvals', href: '/admin/approvals', icon: CheckCircle },
   { name: 'Reports', href: '/admin/reports', icon: BarChart3 },
   { name: 'Notifications', href: '/admin/notifications', icon: Bell },
@@ -114,6 +121,7 @@ export default function AdminLayout({
     : 'AD';
 
   function NotificationsDropdown() {
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const { data: notificationsData } = useQuery({
       queryKey: ['notifications'],
       queryFn: () => api.notifications.getAll({ limit: 10 }),
@@ -135,9 +143,31 @@ export default function AdminLayout({
         queryClient.invalidateQueries({ queryKey: ['notifications'] });
       },
     });
+    const deleteAll = useMutation({
+      mutationFn: () => api.notifications.deleteAll(),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+      },
+    });
 
     const notifications = notificationsData?.data || [];
     const count = unreadCount || 0;
+
+    const getNotificationLink = (notification: any) => {
+      switch (notification.type) {
+        case 'NEW_DEALER':
+        case 'DEALER_VERIFIED':
+          return '/admin/dealers';
+        case 'NEW_LISTING':
+        case 'LISTING_PENDING':
+          return '/admin/approvals';
+        case 'NEW_USER':
+          return '/admin/users';
+        default:
+          return '/admin';
+      }
+    };
 
     return (
       <DropdownMenu>
@@ -154,17 +184,33 @@ export default function AdminLayout({
         <DropdownMenuContent align="end" className="w-80">
           <div className="flex items-center justify-between px-2 py-1.5">
             <h3 className="text-sm font-semibold">Notifications</h3>
-            {count > 0 && (
+            <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-auto p-0 text-xs"
-                onClick={() => markAllAsRead.mutate()}
-                disabled={markAllAsRead.isPending}
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => router.push('/admin/settings')}
+                title="Settings"
               >
-                Mark all as read
+                <Settings className="h-4 w-4" />
               </Button>
-            )}
+              {notifications.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-destructive hover:text-destructive"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowDeleteConfirm(true);
+                  }}
+                  disabled={deleteAll.isPending}
+                  title="Delete all"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
           <DropdownMenuSeparator />
           <div className="max-h-[400px] overflow-y-auto">
@@ -176,6 +222,7 @@ export default function AdminLayout({
               <div className="py-1">
                 {notifications.map((notification: any) => {
                   const timeAgo = new Date(notification.createdAt).toLocaleString();
+                  const link = getNotificationLink(notification);
                   return (
                     <DropdownMenuItem
                       key={notification.id}
@@ -184,6 +231,7 @@ export default function AdminLayout({
                         if (!notification.read) {
                           markAsRead.mutate(notification.id);
                         }
+                        router.push(link);
                       }}
                     >
                       <div className="flex items-start justify-between w-full gap-2">
@@ -211,6 +259,17 @@ export default function AdminLayout({
             </Link>
           </DropdownMenuItem>
         </DropdownMenuContent>
+        <ConfirmDialog
+          isOpen={showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={() => deleteAll.mutate()}
+          title="Delete All Notifications?"
+          message="This will permanently delete all your notifications. This action cannot be undone."
+          confirmText="Delete All"
+          cancelText="Cancel"
+          variant="danger"
+          isLoading={deleteAll.isPending}
+        />
       </DropdownMenu>
     );
   }

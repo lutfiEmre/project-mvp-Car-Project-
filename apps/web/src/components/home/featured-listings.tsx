@@ -1,11 +1,17 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { VehicleCard } from '@/components/vehicles/vehicle-card';
 import { useFeaturedListings } from '@/hooks/use-listings';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import { toast } from 'sonner';
+import { useAuth } from '@/hooks/use-auth';
 import type { Listing } from '@carhaus/types';
 
 // Fallback data when API is unavailable
@@ -152,10 +158,66 @@ const fallbackListings: Listing[] = [
 ];
 
 export function FeaturedListings() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { isAuthenticated } = useAuth();
   const { data: listings, isLoading, error } = useFeaturedListings(12);
+  const [savedListings, setSavedListings] = useState<Set<string>>(new Set());
   
-  // Use API data if available, otherwise use fallback
   const displayListings = listings && listings.length > 0 ? listings : fallbackListings;
+
+  const saveMutation = useMutation({
+    mutationFn: (listingId: string) => api.listings.save(listingId),
+    onSuccess: (data, listingId) => {
+      setSavedListings(prev => new Set(prev).add(listingId));
+      toast.success('Vehicle saved to favorites');
+      queryClient.invalidateQueries({ queryKey: ['listings', 'saved'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to save vehicle');
+    },
+  });
+
+  const unsaveMutation = useMutation({
+    mutationFn: (listingId: string) => api.listings.unsave(listingId),
+    onSuccess: (data, listingId) => {
+      setSavedListings(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(listingId);
+        return newSet;
+      });
+      toast.success('Vehicle removed from favorites');
+      queryClient.invalidateQueries({ queryKey: ['listings', 'saved'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to remove vehicle');
+    },
+  });
+
+  const handleToggleSave = async (listingId: string) => {
+    if (!isAuthenticated) {
+      toast.error('Please sign in to save vehicles');
+      router.push('/login');
+      return;
+    }
+
+    if (savedListings.has(listingId)) {
+      await unsaveMutation.mutateAsync(listingId);
+    } else {
+      await saveMutation.mutateAsync(listingId);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      api.listings.getSaved()
+        .then((savedData) => {
+          const savedIds = new Set(savedData.map((listing: any) => listing.id));
+          setSavedListings(savedIds);
+        })
+        .catch(() => {});
+    }
+  }, [isAuthenticated]);
 
   return (
     <section className="py-20">
@@ -188,7 +250,13 @@ export function FeaturedListings() {
             </div>
           ) : (
             displayListings.map((listing, index) => (
-              <VehicleCard key={listing.id} listing={listing} index={index} />
+              <VehicleCard 
+                key={listing.id} 
+                listing={listing} 
+                index={index}
+                saved={savedListings.has(listing.id)}
+                onSave={handleToggleSave}
+              />
             ))
           )}
         </div>

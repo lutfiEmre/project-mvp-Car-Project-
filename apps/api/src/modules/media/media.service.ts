@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MediaType } from '@prisma/client';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -10,16 +11,34 @@ export class MediaService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    private readonly subscriptionsService: SubscriptionsService,
   ) {}
+
+  async uploadSingle(file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('No file provided');
+    }
+
+    const baseUrl = this.configService.get('API_URL', 'http://localhost:3001');
+    const url = `${baseUrl}/uploads/${file.filename}`;
+
+    return {
+      url,
+      filename: file.filename,
+      originalName: file.originalname,
+      mimeType: file.mimetype,
+      size: file.size,
+    };
+  }
 
   async uploadForListing(
     listingId: string,
     files: Express.Multer.File[],
     userId: string,
   ) {
-    // Verify listing ownership
     const listing = await this.prisma.listing.findUnique({
       where: { id: listingId },
+      include: { dealer: true },
     });
 
     if (!listing) {
@@ -30,10 +49,19 @@ export class MediaService {
       throw new BadRequestException('Not authorized to upload to this listing');
     }
 
-    // Get current media count
     const existingCount = await this.prisma.mediaFile.count({
       where: { listingId },
     });
+
+    if (listing.dealerId) {
+      const limits = await this.subscriptionsService.checkLimits(listing.dealerId);
+      
+      if (existingCount + files.length > limits.maxPhotosPerListing) {
+        throw new BadRequestException(
+          `You can only upload ${limits.maxPhotosPerListing} photos per listing. You currently have ${existingCount} photos.`
+        );
+      }
+    }
 
     const mediaFiles = await Promise.all(
       files.map(async (file, index) => {

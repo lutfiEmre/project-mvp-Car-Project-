@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   Plus,
@@ -10,8 +11,8 @@ import {
   Eye,
   Edit,
   Trash2,
-  Copy,
-  ExternalLink,
+  Loader2,
+  Car,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,64 +33,74 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { formatPrice } from '@/lib/utils';
-
-const listings = [
-  {
-    id: '1',
-    title: '2024 BMW M4 Competition',
-    price: 98900,
-    status: 'active',
-    views: 1250,
-    saves: 89,
-    inquiries: 12,
-    createdAt: '2024-01-15',
-    image: 'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=200&q=80',
-  },
-  {
-    id: '2',
-    title: '2023 Mercedes-Benz GLE 450',
-    price: 82500,
-    status: 'active',
-    views: 890,
-    saves: 67,
-    inquiries: 8,
-    createdAt: '2024-01-10',
-    image: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=200&q=80',
-  },
-  {
-    id: '3',
-    title: '2024 Tesla Model Y',
-    price: 67990,
-    status: 'pending',
-    views: 0,
-    saves: 0,
-    inquiries: 0,
-    createdAt: '2024-01-20',
-    image: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=200&q=80',
-  },
-  {
-    id: '4',
-    title: '2022 Toyota RAV4 Hybrid',
-    price: 42500,
-    status: 'sold',
-    views: 2450,
-    saves: 134,
-    inquiries: 28,
-    createdAt: '2023-12-05',
-    image: 'https://images.unsplash.com/photo-1581540222194-0def2dda95b8?w=200&q=80',
-  },
-];
+import { useMyListings } from '@/hooks/use-listings';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import { toast } from 'sonner';
 
 const statusColors: Record<string, string> = {
-  active: 'bg-emerald-500',
-  pending: 'bg-amber-500',
-  sold: 'bg-blue-500',
-  expired: 'bg-slate-500',
-  rejected: 'bg-red-500',
+  ACTIVE: 'bg-emerald-500',
+  PENDING_APPROVAL: 'bg-amber-500',
+  SOLD: 'bg-blue-500',
+  EXPIRED: 'bg-slate-500',
+  REJECTED: 'bg-red-500',
+  INACTIVE: 'bg-slate-400',
+};
+
+const statusLabels: Record<string, string> = {
+  ACTIVE: 'Active',
+  PENDING_APPROVAL: 'Pending',
+  SOLD: 'Sold',
+  EXPIRED: 'Expired',
+  REJECTED: 'Rejected',
+  INACTIVE: 'Inactive',
 };
 
 export default function MyListingsPage() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const { data: myListingsData, isLoading, error } = useMyListings();
+
+  const deleteMutation = useMutation({
+    mutationFn: (listingId: string) => api.listings.delete(listingId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listings', 'my'] });
+      toast.success('Listing deleted successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete listing');
+    },
+  });
+
+  const listings = Array.isArray(myListingsData) 
+    ? myListingsData 
+    : (myListingsData?.data || []);
+
+  const filteredListings = listings.filter((listing: any) => {
+    const matchesStatus = statusFilter === 'all' || listing.status === statusFilter;
+    const matchesSearch = searchQuery === '' || 
+      listing.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      listing.make?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      listing.model?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
+
+  const handleDelete = async (listingId: string) => {
+    if (window.confirm('Are you sure you want to delete this listing?')) {
+      await deleteMutation.mutateAsync(listingId);
+    }
+  };
+
+  const handleViewListing = (listing: any) => {
+    if (listing.slug) {
+      router.push(`/vehicles/${listing.slug}`);
+    } else {
+      toast.error('Listing slug not available');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -113,7 +124,12 @@ export default function MyListingsPage() {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search listings..." className="pl-9" />
+              <Input 
+                placeholder="Search listings..." 
+                className="pl-9"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[150px]">
@@ -121,98 +137,140 @@ export default function MyListingsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="sold">Sold</SelectItem>
-                <SelectItem value="expired">Expired</SelectItem>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="PENDING_APPROVAL">Pending</SelectItem>
+                <SelectItem value="SOLD">Sold</SelectItem>
+                <SelectItem value="EXPIRED">Expired</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {listings.map((listing, index) => (
-              <motion.div
-                key={listing.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="flex items-center gap-4 rounded-xl border bg-card p-4 hover:shadow-md transition-shadow"
-              >
-                <div className="relative h-20 w-32 overflow-hidden rounded-lg shrink-0">
-                  <img
-                    src={listing.image}
-                    alt={listing.title}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <p className="text-destructive mb-2">Error loading listings</p>
+              <p className="text-sm text-muted-foreground">{error.message}</p>
+            </div>
+          ) : filteredListings.length === 0 ? (
+            <div className="text-center py-12">
+              <Car className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground mb-4">
+                {searchQuery || statusFilter !== 'all' 
+                  ? 'No listings match your search' 
+                  : 'No listings yet'}
+              </p>
+              <Link href="/dashboard/listings/new">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Your First Listing
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredListings.map((listing: any, index: number) => {
+                const status = listing.status || 'ACTIVE';
+                const title = listing.title || 
+                  `${listing.year || ''} ${listing.make || ''} ${listing.model || ''}`.trim() ||
+                  'Untitled Listing';
+                const firstMedia = listing.media?.[0];
+                const imageUrl = firstMedia?.url || 
+                  (typeof firstMedia === 'string' ? firstMedia : '/placeholder-car.jpg');
+                
+                return (
+                <motion.div
+                  key={listing.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="flex items-center gap-4 rounded-xl border bg-card p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="relative h-20 w-32 overflow-hidden rounded-lg shrink-0">
+                    <img
+                      src={imageUrl}
+                      alt={title}
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/placeholder-car.jpg';
+                      }}
+                    />
+                  </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold truncate">{listing.title}</h3>
-                    <Badge
-                      variant="secondary"
-                      className={`${statusColors[listing.status]} text-white`}
-                    >
-                      {listing.status}
-                    </Badge>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold truncate">{title}</h3>
+                      <Badge
+                        variant="secondary"
+                        className={`${statusColors[status]} text-white`}
+                      >
+                        {statusLabels[status] || status}
+                      </Badge>
+                    </div>
+                    <p className="text-lg font-bold text-primary mt-1">
+                      {formatPrice(listing.price || 0)}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Listed on {new Date(listing.createdAt).toLocaleDateString()}
+                    </p>
                   </div>
-                  <p className="text-lg font-bold text-primary mt-1">
-                    {formatPrice(listing.price)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Listed on {new Date(listing.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
 
-                <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
-                  <div className="text-center">
-                    <p className="font-semibold text-foreground">{listing.views}</p>
-                    <p>Views</p>
+                  <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
+                    <div className="text-center">
+                      <p className="font-semibold text-foreground">{listing.views || 0}</p>
+                      <p>Views</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="font-semibold text-foreground">{listing.saves || 0}</p>
+                      <p>Saves</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="font-semibold text-foreground">{listing.inquiries || 0}</p>
+                      <p>Inquiries</p>
+                    </div>
                   </div>
-                  <div className="text-center">
-                    <p className="font-semibold text-foreground">{listing.saves}</p>
-                    <p>Saves</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="font-semibold text-foreground">{listing.inquiries}</p>
-                    <p>Inquiries</p>
-                  </div>
-                </div>
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreHorizontal className="h-5 w-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem className="gap-2">
-                      <Eye className="h-4 w-4" />
-                      View Listing
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="gap-2">
-                      <Edit className="h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="gap-2">
-                      <Copy className="h-4 w-4" />
-                      Duplicate
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="gap-2">
-                      <ExternalLink className="h-4 w-4" />
-                      Share
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </motion.div>
-            ))}
-          </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreHorizontal className="h-5 w-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem 
+                        className="gap-2 cursor-pointer"
+                        onClick={() => handleViewListing(listing)}
+                      >
+                        <Eye className="h-4 w-4" />
+                        View Listing
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        className="gap-2 cursor-pointer"
+                        onClick={() => router.push(`/dashboard/listings/${listing.id}/edit`)}
+                      >
+                        <Edit className="h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        className="gap-2 text-destructive focus:text-destructive cursor-pointer"
+                        onClick={() => handleDelete(listing.id)}
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </motion.div>
+              );
+            })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

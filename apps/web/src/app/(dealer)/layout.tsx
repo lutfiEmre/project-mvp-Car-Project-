@@ -2,31 +2,30 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Car,
   LayoutDashboard,
+  Package,
   ListPlus,
-  FileUp,
+  MessageCircle,
+  Bell,
+  Star,
   BarChart3,
   CreditCard,
+  FileInput,
   Settings,
-  Bell,
   LogOut,
   ChevronRight,
   Menu,
+  Trash2,
   X,
-  Building2,
-  Users,
-  Star,
   Loader2,
-  AlertTriangle,
-  MessageCircle,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -41,16 +40,176 @@ import {
 
 const sidebarLinks = [
   { name: 'Dashboard', href: '/dealer/dashboard', icon: LayoutDashboard },
-  { name: 'Inventory', href: '/dealer/inventory', icon: Car },
-  { name: 'Add Vehicle', href: '/dealer/inventory/new', icon: ListPlus },
-  { name: 'Import', href: '/dealer/import', icon: FileUp },
-  { name: 'Analytics', href: '/dealer/analytics', icon: BarChart3 },
-  { name: 'Reviews', href: '/dealer/reviews', icon: Star },
+  { name: 'Inventory', href: '/dealer/inventory', icon: Package },
+  { name: 'Add Listing', href: '/dealer/inventory/new', icon: ListPlus },
   { name: 'Messages', href: '/dealer/messages', icon: MessageCircle },
+  { name: 'Reviews', href: '/dealer/reviews', icon: Star },
+  { name: 'Analytics', href: '/dealer/analytics', icon: BarChart3 },
+  { name: 'Import', href: '/dealer/import', icon: FileInput },
   { name: 'Notifications', href: '/dealer/notifications', icon: Bell },
   { name: 'Billing', href: '/dealer/billing', icon: CreditCard },
   { name: 'Settings', href: '/dealer/settings', icon: Settings },
 ];
+
+function NotificationsDropdown() {
+  const router = useRouter();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const { data: notificationsData } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => api.notifications.getAll({ limit: 10 }),
+  });
+  const { data: unreadCount } = useQuery({
+    queryKey: ['notifications', 'unread-count'],
+    queryFn: () => api.notifications.getUnreadCount(),
+  });
+  const queryClient = useQueryClient();
+  const markAsRead = useMutation({
+    mutationFn: (id: string) => api.notifications.markAsRead(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+  const markAllAsRead = useMutation({
+    mutationFn: () => api.notifications.markAllAsRead(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+
+  const deleteAll = useMutation({
+    mutationFn: () => api.notifications.deleteAll(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+    },
+  });
+
+  const notifications = notificationsData?.data || [];
+  const count = unreadCount || 0;
+
+  const getNotificationLink = (notification: any) => {
+    switch (notification.type) {
+      case 'NEW_MESSAGE':
+      case 'MESSAGE_REPLY':
+        return '/dealer/messages';
+      case 'NEW_REVIEW':
+      case 'REVIEW_REPLY':
+        return '/dealer/reviews';
+      case 'NEW_INQUIRY':
+        return '/dealer/leads';
+      case 'LISTING_APPROVED':
+      case 'LISTING_REJECTED':
+        return '/dealer/inventory';
+      default:
+        return '/dealer/notifications';
+    }
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative">
+          <Bell className="h-5 w-5" />
+          {count > 0 && (
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+              {count > 9 ? '9+' : count}
+            </span>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-80">
+        <div className="flex items-center justify-between px-2 py-1.5">
+          <h3 className="text-sm font-semibold">Notifications</h3>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => router.push('/dealer/notifications')}
+              title="Settings"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+            {notifications.length > 0 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-destructive hover:text-destructive"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowDeleteConfirm(true);
+                }}
+                disabled={deleteAll.isPending}
+                title="Delete all"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+        <DropdownMenuSeparator />
+        <div className="max-h-[400px] overflow-y-auto">
+          {notifications.length === 0 ? (
+            <div className="px-2 py-8 text-center text-sm text-muted-foreground">
+              No notifications
+            </div>
+          ) : (
+            <div className="py-1">
+              {notifications.map((notification: any) => {
+                const timeAgo = new Date(notification.createdAt).toLocaleString();
+                const link = getNotificationLink(notification);
+                return (
+                  <DropdownMenuItem
+                    key={notification.id}
+                    className="flex flex-col items-start gap-1 px-3 py-2 cursor-pointer"
+                    onClick={() => {
+                      if (!notification.isRead) {
+                        markAsRead.mutate(notification.id);
+                      }
+                      router.push(link);
+                    }}
+                  >
+                    <div className="flex items-start justify-between w-full gap-2">
+                      <p className="text-sm font-medium flex-1">{notification.title || 'Notification'}</p>
+                      {!notification.isRead && (
+                        <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1" />
+                      )}
+                    </div>
+                    {notification.message && (
+                      <p className="text-xs text-muted-foreground line-clamp-2">{notification.message}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      {timeAgo}
+                    </p>
+                  </DropdownMenuItem>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/dealer/notifications" className="w-full text-center">
+            View all notifications
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={() => deleteAll.mutate()}
+        title="Delete All Notifications?"
+        message="This will permanently delete all your notifications. This action cannot be undone."
+        confirmText="Delete All"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={deleteAll.isPending}
+      />
+    </DropdownMenu>
+  );
+}
 
 export default function DealerLayout({
   children,
@@ -62,278 +221,170 @@ export default function DealerLayout({
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Fetch dealer data for reviews count (MUST be before any conditional returns)
-  const { data: dealerData } = useQuery({
-    queryKey: ['dealer', 'me'],
-    queryFn: async () => {
-      const token = localStorage.getItem('accessToken');
-      if (!token) throw new Error('Not authenticated');
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/dealers/me`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      if (!response.ok) throw new Error('Failed to fetch dealer');
-      return response.json();
-    },
-    enabled: isAuthenticated && user?.role === 'DEALER',
-  });
-
-  const reviewsCount = dealerData?._count?.reviews || 0;
-  const userInitials = user?.firstName && user?.lastName 
-    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-    : 'DL';
-
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
     }
   }, [isLoading, isAuthenticated, router]);
 
-  // Show loading state
+  useEffect(() => {
+    if (!isLoading && user?.role === 'USER') {
+      router.push('/dashboard');
+    }
+  }, [isLoading, user?.role, router]);
+
+  useEffect(() => {
+    if (!isLoading && user?.role === 'ADMIN') {
+      router.push('/admin');
+    }
+  }, [isLoading, user?.role, router]);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-slate-400">Loading dealer panel...</p>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
   }
 
-  // Don't render if not authenticated
   if (!isAuthenticated) {
     return null;
   }
 
-  // Check if user is dealer
-  if (user?.role !== 'DEALER') {
+  if (!isLoading && (user?.role === 'USER' || user?.role === 'ADMIN')) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900">
-        <div className="text-center max-w-md p-8">
-          <AlertTriangle className="h-16 w-16 text-amber-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">Dealer Access Required</h1>
-          <p className="text-slate-400 mb-6">
-            This area is restricted to registered dealers only. 
-            If you're a dealer, please register as a dealer account.
-          </p>
-          <div className="space-x-4">
-            <Button onClick={() => router.push('/')} variant="outline">
-              Go Home
-            </Button>
-            <Button onClick={() => router.push('/register?type=dealer')} className="bg-primary">
-              Register as Dealer
-            </Button>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Redirecting...</p>
         </div>
       </div>
     );
   }
 
-  function NotificationsDropdown() {
-    const { data: notificationsData } = useQuery({
-      queryKey: ['notifications'],
-      queryFn: () => api.notifications.getAll({ limit: 10 }),
-    });
-    const { data: unreadCount } = useQuery({
-      queryKey: ['notifications', 'unread-count'],
-      queryFn: () => api.notifications.getUnreadCount(),
-    });
-    const queryClient = useQueryClient();
-    const markAsRead = useMutation({
-      mutationFn: (id: string) => api.notifications.markAsRead(id),
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      },
-    });
-    const markAllAsRead = useMutation({
-      mutationFn: () => api.notifications.markAllAsRead(),
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      },
-    });
-
-    const notifications = notificationsData?.data || [];
-    const count = unreadCount || 0;
-
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            {count > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-coral-500 text-[10px] font-bold text-white">
-                {count > 9 ? '9+' : count}
-              </span>
-            )}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-80">
-          <div className="flex items-center justify-between px-2 py-1.5">
-            <h3 className="text-sm font-semibold">Notifications</h3>
-            {count > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto p-0 text-xs"
-                onClick={() => markAllAsRead.mutate()}
-                disabled={markAllAsRead.isPending}
-              >
-                Mark all as read
-              </Button>
-            )}
-          </div>
-          <DropdownMenuSeparator />
-          <div className="max-h-[400px] overflow-y-auto">
-            {notifications.length === 0 ? (
-              <div className="px-2 py-8 text-center text-sm text-muted-foreground">
-                No notifications
-              </div>
-            ) : (
-              <div className="py-1">
-                {notifications.map((notification: any) => {
-                  const timeAgo = new Date(notification.createdAt).toLocaleString();
-                  return (
-                    <DropdownMenuItem
-                      key={notification.id}
-                      className="flex flex-col items-start gap-1 px-3 py-2 cursor-pointer"
-                      onClick={() => {
-                        if (!notification.read) {
-                          markAsRead.mutate(notification.id);
-                        }
-                      }}
-                    >
-                      <div className="flex items-start justify-between w-full gap-2">
-                        <p className="text-sm font-medium flex-1">{notification.title || 'Notification'}</p>
-                        {!notification.read && (
-                          <div className="h-2 w-2 rounded-full bg-coral-500 shrink-0 mt-1" />
-                        )}
-                      </div>
-                      {notification.message && (
-                        <p className="text-xs text-muted-foreground line-clamp-2">{notification.message}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground">
-                        {timeAgo}
-                      </p>
-                    </DropdownMenuItem>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link href="/dealer/notifications" className="w-full text-center">
-              View all notifications
-            </Link>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  }
+  const userInitials = user?.firstName && user?.lastName 
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    : 'D';
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-white transition-transform duration-300 lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-800 border-r shadow-xl transition-transform duration-300 lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         <div className="flex h-full flex-col">
-          <div className="flex h-16 items-center justify-between px-6 border-b border-slate-800">
-            <Link href="/dealer/dashboard" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-coral-500">
-                <Building2 className="h-5 w-5 text-white" />
+          <div className="flex h-16 items-center justify-between px-6 border-b">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80">
+                <Car className="h-5 w-5 text-white" />
               </div>
-              <div>
-                <span className="font-display text-lg font-bold">CarHaus</span>
-                <Badge variant="secondary" className="ml-2 text-[10px]">
-                  Dealer
-                </Badge>
-              </div>
+              <span className="font-display text-lg font-bold gradient-text">
+                CarHaus
+              </span>
             </Link>
             <button
-              className="lg:hidden text-slate-400"
+              className="lg:hidden"
               onClick={() => setSidebarOpen(false)}
             >
               <X className="h-5 w-5" />
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto py-6 px-4">
-            <nav className="space-y-1">
-              {sidebarLinks.map((link) => {
-                const isActive = pathname === link.href || pathname.startsWith(link.href + '/');
-                const showBadge = link.name === 'Reviews' && reviewsCount > 0;
+          <div className="flex-1 overflow-y-auto scrollbar-hide py-6 px-4">
+            <nav className="space-y-2">
+              {sidebarLinks.map((link, index) => {
+                let isActive = false;
+                if (pathname === link.href) {
+                  isActive = true;
+                } else if (pathname.startsWith(link.href + '/')) {
+                  if (link.href === '/dealer/dashboard') {
+                    isActive = false;
+                  } else {
+                    isActive = true;
+                  }
+                }
+                
                 return (
-                  <Link
+                  <motion.div
                     key={link.name}
-                    href={link.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={cn(
-                      'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors',
-                      isActive
-                        ? 'bg-white/10 text-white'
-                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                    )}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
                   >
-                    <link.icon className="h-5 w-5" />
-                    {link.name}
-                    {showBadge && (
-                      <Badge variant="secondary" className="ml-auto bg-primary/20 text-primary border-primary/30">
-                        {reviewsCount}
-                      </Badge>
-                    )}
-                    {isActive && !showBadge && (
-                      <ChevronRight className="ml-auto h-4 w-4" />
-                    )}
-                  </Link>
+                    <Link
+                      href={link.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={cn(
+                        'relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 group',
+                        isActive
+                          ? 'text-primary font-semibold bg-primary/5'
+                          : 'text-muted-foreground hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/50'
+                      )}
+                    >
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeIndicator"
+                          className="absolute left-0 top-[5px] -translate-y-1/2  h-8 w-1.5 rounded-full bg-primary"
+                          initial={false}
+                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        />
+                      )}
+                      
+                      <motion.div
+                        animate={isActive ? { scale: 1.1 } : { scale: 1 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <link.icon className={cn(
+                          "h-5 w-5 transition-colors",
+                          isActive 
+                            ? "text-primary" 
+                            : "text-muted-foreground group-hover:text-slate-700 dark:group-hover:text-slate-200"
+                        )} />
+                      </motion.div>
+                      
+                      <span className="flex-1">{link.name}</span>
+                      
+                      {isActive && (
+                        <motion.div
+                          initial={{ opacity: 0, x: -5 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <ChevronRight className="h-4 w-4 text-primary" />
+                        </motion.div>
+                      )}
+                    </Link>
+                  </motion.div>
                 );
               })}
             </nav>
-
-            <div className="mt-8 rounded-xl bg-gradient-to-br from-primary/20 to-coral-500/20 p-4">
-              <h4 className="font-semibold text-white">Professional Plan</h4>
-              <p className="mt-1 text-sm text-slate-400">
-                45 of 100 listings used
-              </p>
-              <div className="mt-3 h-2 rounded-full bg-slate-700">
-                <div className="h-full w-[45%] rounded-full bg-gradient-to-r from-primary to-coral-500" />
-              </div>
-              <Link href="/dealer/billing">
-                <Button size="sm" variant="secondary" className="mt-4 w-full">
-                  Upgrade Plan
-                </Button>
-              </Link>
-            </div>
           </div>
 
-          <div className="border-t border-slate-800 p-4">
-            <div className="flex items-center gap-3 rounded-xl bg-slate-800/50 p-3">
+          <div className="border-t p-4">
+            <div className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 p-3">
               <Avatar>
-                <AvatarImage src={user?.avatar || ''} />
-                <AvatarFallback className="bg-primary text-white">
-                  {userInitials}
+                <AvatarImage src={user?.dealer?.logo || ''} />
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {user?.dealer?.businessName?.substring(0, 2).toUpperCase() || userInitials}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">
-                  {user?.firstName} {user?.lastName}
+                <p className="text-sm font-medium truncate">
+                  {user?.dealer?.businessName || `${user?.firstName} ${user?.lastName}`}
                 </p>
-                <p className="text-xs text-slate-400 truncate">
+                <p className="text-xs text-muted-foreground truncate">
                   {user?.email}
                 </p>
               </div>
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="shrink-0 text-slate-400 hover:text-white"
+                className="shrink-0"
                 onClick={() => logout()}
               >
                 <LogOut className="h-4 w-4" />
@@ -343,12 +394,18 @@ export default function DealerLayout({
         </div>
       </aside>
 
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       <div className="lg:pl-72">
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-white/95 backdrop-blur dark:bg-slate-800/95 px-6">
@@ -375,4 +432,3 @@ export default function DealerLayout({
     </div>
   );
 }
-
