@@ -12,7 +12,6 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { EmailService } from '../email/email.service';
-import { ConfigService } from '@nestjs/config';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserRole, UserStatus } from '@prisma/client';
