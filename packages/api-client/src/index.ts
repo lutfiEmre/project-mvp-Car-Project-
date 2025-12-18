@@ -527,9 +527,6 @@ class ApiClient {
     deleteUser: (id: string): Promise<void> =>
       this.request(`/admin/users/${id}`, { method: 'DELETE' }),
 
-    getListingById: (id: string): Promise<Listing> =>
-      this.request(`/admin/listings/${id}`),
-
     updateListingStatus: (id: string, status: string): Promise<Listing> =>
       this.request(`/admin/listings/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
 

@@ -8,9 +8,13 @@ export interface User {
   lastName: string;
   phone?: string;
   avatar?: string;
+  bio?: string;
+  city?: string;
+  province?: string;
   role: UserRole;
   status: UserStatus;
   emailVerified: boolean;
+  dealer?: Dealer;
   createdAt: string;
   updatedAt: string;
 }

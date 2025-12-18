@@ -311,7 +311,7 @@ export default function DealerBillingPage() {
                     </div>
 
                     <ul className="mt-6 space-y-3">
-                      {plan.features.map((feature) => (
+                      {plan.features.map((feature: string) => (
                         <li key={feature} className="flex items-center gap-2 text-sm">
                           <Check className="h-4 w-4 text-green-500 shrink-0" />
                           {feature}

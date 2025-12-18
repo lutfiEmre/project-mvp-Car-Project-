@@ -48,6 +48,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useAuthStore } from '@/stores/auth';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import type { User as UserType } from '@carhaus/types';
 
 export default function SettingsPage() {
   const { user, refreshUser } = useAuth();
@@ -186,13 +187,22 @@ export default function SettingsPage() {
     onSuccess: async (updatedUser) => {
       console.log('Updated user from backend:', updatedUser);
       
-      if (updatedUser) {
-        const newUserData = {
-          ...user,
+      if (updatedUser && user) {
+        const newUserData: UserType = {
+          id: user.id,
+          email: user.email,
           firstName: updatedUser.firstName,
           lastName: updatedUser.lastName,
           phone: updatedUser.phone,
           avatar: updatedUser.avatar,
+          bio: updatedUser.bio,
+          city: updatedUser.city,
+          province: updatedUser.province,
+          role: user.role,
+          status: user.status,
+          emailVerified: user.emailVerified,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
         };
         console.log('Setting new user:', newUserData);
         setUser(newUserData);

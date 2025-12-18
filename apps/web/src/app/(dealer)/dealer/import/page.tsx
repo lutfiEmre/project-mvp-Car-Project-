@@ -397,7 +397,7 @@ export default function ImportPage() {
                   Download Template
                 </Button>
                 <Button
-                  onClick={handleImport}
+                  onClick={handleXmlImport}
                   disabled={importing}
                   className="gap-2"
                 >
