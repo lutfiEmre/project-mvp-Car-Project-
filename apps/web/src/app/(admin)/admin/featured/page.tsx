@@ -271,7 +271,7 @@ export default function AdminFeaturedPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {requests.map((request: any) => (
+                {(requests || []).map((request: any) => (
                   <motion.div
                     key={request.id}
                     initial={{ opacity: 0, y: 10 }}
