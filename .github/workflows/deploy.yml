@@ -20,23 +20,38 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd /root/carhaus
-            CHANGED_FILES=$(git pull origin main 2>&1)
+            # Get the commit hash before pull
+            OLD_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "")
+            # Pull latest changes
+            git pull origin main
+            # Get changed files between old and new commit
+            if [ -n "$OLD_COMMIT" ]; then
+              CHANGED_FILES=$(git diff --name-only $OLD_COMMIT HEAD 2>&1 || git diff --name-only HEAD~1 HEAD 2>&1)
+            else
+              CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>&1)
+            fi
+            
+            echo "Changed files detected: $CHANGED_FILES"
             
             if echo "$CHANGED_FILES" | grep -q "apps/api/"; then
+              echo "Rebuilding API..."
               docker compose build api
               docker compose up -d api
             fi
             
             if echo "$CHANGED_FILES" | grep -q "apps/web/"; then
+              echo "Rebuilding Web..."
               docker compose build web
               docker compose up -d web
             fi
             
             if echo "$CHANGED_FILES" | grep -q "nginx.conf"; then
+              echo "Restarting Nginx..."
               docker compose restart nginx
             fi
             
             if echo "$CHANGED_FILES" | grep -q "docker-compose.yml"; then
+              echo "Rebuilding all services..."
               docker compose up -d
             fi
             
