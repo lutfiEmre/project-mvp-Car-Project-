@@ -408,6 +408,8 @@ class ApiClient {
       activeListings: number;
       pendingListings: number;
       totalRevenue: number;
+      newUsersLast30Days: number;
+      newListingsLast30Days: number;
     }> => this.request('/admin/dashboard'),
 
     getAllListings: (params?: { page?: number; limit?: number; status?: string }): Promise<PaginatedResponse<Listing>> => {
