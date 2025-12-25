@@ -23,12 +23,17 @@ async function bootstrap() {
       },
     },
     crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
   }));
 
-  // Serve static files from uploads directory
+  // Serve static files from uploads directory with CORS headers
   const uploadDir = configService.get('UPLOAD_DIR', './uploads');
   app.useStaticAssets(join(process.cwd(), uploadDir), {
     prefix: '/uploads/',
+    setHeaders: (res) => {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    },
   });
 
   // CORS - Production için daha sıkı

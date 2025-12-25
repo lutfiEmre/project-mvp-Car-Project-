@@ -29,10 +29,10 @@ async function main() {
 
   // Create Dealer users and profiles
   const dealer1User = await prisma.user.upsert({
-    where: { email: 'dealer@carhaus.com' },
+    where: { email: 'dealer@drivingaway.com' },
     update: {},
     create: {
-      email: 'dealer@carhaus.com',
+      email: 'dealer@drivingaway.com',
       password: hashedPassword,
       firstName: 'Dealer',
       lastName: 'User',
@@ -48,7 +48,7 @@ async function main() {
     update: {},
     create: {
       userId: dealer1User.id,
-      businessName: 'CarHaus Test Dealership',
+      businessName: 'DrivingAway Test Dealership',
       contactPhone: '+1-555-0123',
       address: '123 Test Street',
       city: 'Toronto',
@@ -231,10 +231,10 @@ async function main() {
 
   // Create Regular Users
   const user1 = await prisma.user.upsert({
-    where: { email: 'test@carhaus.com' },
+    where: { email: 'test@drivingaway.com' },
     update: {},
     create: {
-      email: 'test@carhaus.com',
+      email: 'test@drivingaway.com',
       password: hashedPassword,
       firstName: 'Test',
       lastName: 'User',

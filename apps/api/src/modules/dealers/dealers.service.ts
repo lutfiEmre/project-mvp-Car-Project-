@@ -158,6 +158,11 @@ export class DealersService {
       const dealer = await this.prisma.dealer.findUnique({
         where: { id: dealerId },
         include: {
+          user: {
+            select: {
+              email: true,
+            },
+          },
           _count: {
             select: {
               reviews: true,
@@ -181,7 +186,10 @@ export class DealersService {
 
       console.log(`[getMyReviews] Found ${listingIds.length} listings for dealer`);
 
+      const dealerEmail = dealer.user?.email;
+
       // Get both dealer reviews and listing reviews
+      // Include all listing reviews (published and unpublished) so dealer can see their own reviews
       const [dealerReviews, listingReviews, dealerReviewsCount, listingReviewsCount] = await Promise.all([
         this.prisma.dealerReview.findMany({
           where: { dealerId },
@@ -190,7 +198,11 @@ export class DealersService {
         listingIds.length > 0 ? this.prisma.listingReview.findMany({
           where: { 
             listingId: { in: listingIds },
-            isPublished: true,
+            // Show published reviews OR dealer's own reviews (even if unpublished)
+            OR: [
+              { isPublished: true },
+              ...(dealerEmail ? [{ reviewerEmail: dealerEmail }] : []),
+            ],
           },
           include: {
             listing: {
@@ -209,7 +221,10 @@ export class DealersService {
         listingIds.length > 0 ? this.prisma.listingReview.count({
           where: { 
             listingId: { in: listingIds },
-            isPublished: true,
+            OR: [
+              { isPublished: true },
+              ...(dealerEmail ? [{ reviewerEmail: dealerEmail }] : []),
+            ],
           },
         }) : 0,
       ]);
@@ -222,6 +237,7 @@ export class DealersService {
           ...r,
           type: 'dealer' as const,
           listing: null,
+          isOwnReview: false, // Dealer reviews are not "own" reviews
         })),
         ...listingReviews.map(r => ({
           ...r,
@@ -229,6 +245,7 @@ export class DealersService {
           // dealerResponse and dealerResponseAt are now in ListingReview schema
           listingId: r.listingId,
           listing: r.listing || null, // Include listing info
+          isOwnReview: dealerEmail ? r.reviewerEmail === dealerEmail : false, // Mark if dealer's own review
         })),
       ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
@@ -567,6 +584,95 @@ export class DealersService {
     }
 
     return updated;
+  }
+
+  async deleteReview(reviewId: string, reviewType: 'dealer' | 'listing', dealerId: string) {
+    try {
+      // First, verify the review exists and belongs to dealer's listings
+      if (reviewType === 'listing') {
+        const review = await this.prisma.listingReview.findUnique({
+          where: { id: reviewId },
+          include: {
+            listing: {
+              select: {
+                dealerId: true,
+              },
+            },
+          },
+        });
+
+        if (!review) {
+          throw new NotFoundException('Review not found');
+        }
+
+        // Check if review is for dealer's listing OR if dealer wrote the review
+        const dealer = await this.prisma.dealer.findUnique({
+          where: { id: dealerId },
+          include: {
+            user: {
+              select: {
+                email: true,
+              },
+            },
+          },
+        });
+
+        if (!dealer) {
+          throw new NotFoundException('Dealer not found');
+        }
+
+        const isDealerListing = review.listing.dealerId === dealerId;
+        const isDealerOwnReview = dealer.user?.email === review.reviewerEmail;
+
+        if (!isDealerListing && !isDealerOwnReview) {
+          throw new ForbiddenException('Not authorized to delete this review');
+        }
+
+        await this.prisma.listingReview.delete({
+          where: { id: reviewId },
+        });
+      } else {
+        // Dealer review
+        const review = await this.prisma.dealerReview.findUnique({
+          where: { id: reviewId },
+        });
+
+        if (!review) {
+          throw new NotFoundException('Review not found');
+        }
+
+        if (review.dealerId !== dealerId) {
+          throw new ForbiddenException('Not authorized to delete this review');
+        }
+
+        await this.prisma.dealerReview.delete({
+          where: { id: reviewId },
+        });
+
+        // Update dealer rating
+        const allReviews = await this.prisma.dealerReview.findMany({
+          where: { dealerId, isPublished: true },
+          select: { rating: true },
+        });
+
+        const avgRating = allReviews.length > 0
+          ? allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length
+          : 0;
+
+        await this.prisma.dealer.update({
+          where: { id: dealerId },
+          data: {
+            rating: Math.round(avgRating * 10) / 10,
+            reviewCount: allReviews.length,
+          },
+        });
+      }
+
+      return { message: 'Review deleted successfully' };
+    } catch (error) {
+      console.error('[deleteReview] Error:', error);
+      throw error;
+    }
   }
 
   async respondToReview(reviewId: string, dealerId: string, response: string) {

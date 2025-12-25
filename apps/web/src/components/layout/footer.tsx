@@ -1,8 +1,11 @@
+'use client';
+
 import Link from 'next/link';
 import { Car, Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { useTranslations } from 'next-intl';
 
 const footerLinks = {
   browse: [
@@ -40,6 +43,8 @@ const provinces = [
 ];
 
 export function Footer() {
+  const t = useTranslations('footer');
+  
   return (
     <footer className="bg-slate-900 text-slate-300">
       <div className="container mx-auto px-4 py-16">
@@ -50,7 +55,7 @@ export function Footer() {
                 <Car className="h-6 w-6 text-white" />
               </div>
               <span className="font-display text-xl font-bold text-white">
-                CarHaus
+                DrivingAway
               </span>
             </Link>
             <p className="max-w-md text-slate-400">
@@ -63,11 +68,11 @@ export function Footer() {
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-primary" />
-                <span>1-800-CAR-HAUS</span>
+                <span>1-800-DRIVING</span>
               </div>
               <div className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-primary" />
-                <span>hello@carhaus.ca</span>
+                <span>hello@drivingaway.ca</span>
               </div>
             </div>
             <div className="flex gap-3">
@@ -175,11 +180,11 @@ export function Footer() {
         <Separator className="my-12 bg-slate-800" />
 
         <div className="flex flex-col items-center justify-between gap-4 text-sm text-slate-500 sm:flex-row">
-          <p>© {new Date().getFullYear()} CarHaus. All rights reserved.</p>
+          <p>{t('copyright', { year: new Date().getFullYear() })}</p>
           <div className="flex gap-6">
-            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-            <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>
+            <Link href="/terms" className="hover:text-white transition-colors">{t('terms')}</Link>
+            <Link href="/privacy" className="hover:text-white transition-colors">{t('privacy')}</Link>
+            <Link href="/cookies" className="hover:text-white transition-colors">{t('cookies')}</Link>
           </div>
         </div>
       </div>

@@ -28,8 +28,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { formatPrice, formatMileage } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { useTranslations } from 'next-intl';
 
 export default function SavedVehiclesPage() {
+  const t = useTranslations('dashboard');
+  const ts = useTranslations('search');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('recent');
   const queryClient = useQueryClient();
@@ -89,9 +92,9 @@ export default function SavedVehiclesPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="font-display text-2xl font-bold">Saved Vehicles</h1>
+        <h1 className="font-display text-2xl font-bold">{t('savedVehicles')}</h1>
         <p className="text-muted-foreground">
-          Your favorite vehicles in one place
+          {t('savedVehiclesSubtitle')}
         </p>
       </div>
 

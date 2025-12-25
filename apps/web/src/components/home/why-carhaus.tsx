@@ -54,7 +54,7 @@ export function WhyCarhaus() {
       <div className="container mx-auto px-4">
         <div className="text-center">
           <h2 className="font-display text-3xl font-bold sm:text-4xl">
-            Why Choose CarHaus?
+            Why Choose DrivingAway?
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
             We&apos;re building the most trusted automotive marketplace in Canada

@@ -7,22 +7,35 @@ import { cn } from '@/lib/utils';
 const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
->(({ className, ...props }, ref) => (
-  <SliderPrimitive.Root
-    ref={ref}
-    className={cn(
-      'relative flex w-full touch-none select-none items-center px-1',
-      className
-    )}
-    {...props}
-  >
-    <SliderPrimitive.Track className="relative h-2.5 w-full grow rounded-full bg-blue-100 dark:bg-blue-900/20">
-      <SliderPrimitive.Range className="absolute h-full bg-primary rounded-full" />
-    </SliderPrimitive.Track>
-    <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-primary bg-white shadow-lg cursor-pointer hover:scale-105 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:pointer-events-none disabled:opacity-50" />
-  </SliderPrimitive.Root>
-));
+>(({ className, value, defaultValue, ...props }, ref) => {
+  // Determine number of thumbs based on value array length
+  const values = value || defaultValue || [0];
+  const thumbCount = Array.isArray(values) ? values.length : 1;
+
+  return (
+    <SliderPrimitive.Root
+      ref={ref}
+      className={cn(
+        'relative flex w-full touch-none select-none items-center px-1',
+        className
+      )}
+      value={value}
+      defaultValue={defaultValue}
+      {...props}
+    >
+      <SliderPrimitive.Track className="relative h-2.5 w-full grow rounded-full bg-blue-100 dark:bg-blue-900/20">
+        <SliderPrimitive.Range className="absolute h-full bg-primary rounded-full" />
+      </SliderPrimitive.Track>
+      {/* Render a thumb for each value */}
+      {Array.from({ length: thumbCount }).map((_, index) => (
+        <SliderPrimitive.Thumb
+          key={index}
+          className="block h-5 w-5 rounded-full border-2 border-primary bg-white shadow-lg cursor-pointer hover:scale-110 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:pointer-events-none disabled:opacity-50"
+        />
+      ))}
+    </SliderPrimitive.Root>
+  );
+});
 Slider.displayName = SliderPrimitive.Root.displayName;
 
 export { Slider };
-

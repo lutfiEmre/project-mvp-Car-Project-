@@ -224,5 +224,19 @@ export class DealersController {
     const dealer = await this.dealersService.findByUserId(user.sub);
     return this.dealersService.respondToReview(reviewId, dealer.id, body.response);
   }
+
+  @Delete('me/reviews/:reviewId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.DEALER)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Delete a review (dealer can delete reviews on their listings or their own reviews)' })
+  async deleteReview(
+    @CurrentUser() user: any,
+    @Param('reviewId') reviewId: string,
+    @Query('type') reviewType: 'dealer' | 'listing' = 'listing',
+  ) {
+    const dealer = await this.dealersService.findByUserId(user.sub);
+    return this.dealersService.deleteReview(reviewId, reviewType, dealer.id);
+  }
 }
 

@@ -289,7 +289,7 @@ export default function AdminLayout({
                 <Shield className="h-5 w-5 text-white" />
               </div>
               <div>
-                <span className="font-display text-lg font-bold">CarHaus</span>
+                <span className="font-display text-lg font-bold">DrivingAway</span>
                 <Badge className="ml-2 bg-red-500 text-[10px]">
                   Admin
                 </Badge>

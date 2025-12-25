@@ -23,8 +23,10 @@ import { formatPrice } from '@/lib/utils';
 import { useMyListings } from '@/hooks/use-listings';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 
 export default function DashboardPage() {
+  const t = useTranslations('dashboard');
   const { data: myListingsData, isLoading, error } = useMyListings();
   
   // Fetch inquiries for user
@@ -98,7 +100,7 @@ export default function DashboardPage() {
     
     return [
       {
-        name: 'Active Listings',
+        name: t('activeListings'),
         value: activeListings.toString(),
         change: listingsChange !== '0' ? `+${listingsChange}%` : '0%',
         changeType: Number(listingsChange) > 0 ? 'increase' : Number(listingsChange) < 0 ? 'decrease' : 'neutral',
@@ -107,7 +109,7 @@ export default function DashboardPage() {
         bg: 'bg-blue-500/10',
       },
       {
-        name: 'Total Views',
+        name: t('totalViews'),
         value: totalViews.toLocaleString(),
         change: `+${viewsChange}%`,
         changeType: 'increase',
@@ -116,7 +118,7 @@ export default function DashboardPage() {
         bg: 'bg-emerald-500/10',
       },
       {
-        name: 'Saved by Users',
+        name: t('savedByUsers'),
         value: totalSaves.toLocaleString(),
         change: `+${savesChange}%`,
         changeType: 'increase',
@@ -125,7 +127,7 @@ export default function DashboardPage() {
         bg: 'bg-rose-500/10',
       },
       {
-        name: 'Inquiries',
+        name: t('inquiries'),
         value: totalInquiries.toString(),
         change: inquiriesChange !== '0' ? (Number(inquiriesChange) > 0 ? `+${inquiriesChange}%` : `${inquiriesChange}%`) : '0%',
         changeType: Number(inquiriesChange) > 0 ? 'increase' : Number(inquiriesChange) < 0 ? 'decrease' : 'neutral',
@@ -208,9 +210,9 @@ export default function DashboardPage() {
         
         return {
           id: listing.id,
-          type: listing.status === 'ACTIVE' ? 'Listing Active' : 
-                listing.status === 'PENDING_APPROVAL' || listing.status === 'PENDING' ? 'Pending Approval' : 
-                'Listing Updated',
+          type: listing.status === 'ACTIVE' ? t('listingActive') : 
+                listing.status === 'PENDING_APPROVAL' || listing.status === 'PENDING' ? t('pendingApproval') : 
+                t('listingUpdated'),
           title,
           time: new Date(listing.updatedAt || listing.createdAt).toLocaleString(),
           status: listing.status,
@@ -222,9 +224,9 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold">Dashboard</h1>
+          <h1 className="font-display text-3xl font-bold">{t('overview')}</h1>
           <p className="text-muted-foreground mt-1">
-            Welcome back! Here&apos;s what&apos;s happening with your listings.
+            {t('welcome')}
           </p>
         </div>
         <div className="flex gap-3">
@@ -232,14 +234,14 @@ export default function DashboardPage() {
             <Link href="/dashboard/listings?status=pending">
               <Button variant="outline" className="gap-2">
                 <Clock className="h-4 w-4" />
-                Pending ({pendingListings})
+                {t('pending')} ({pendingListings})
               </Button>
             </Link>
           )}
           <Link href="/dashboard/listings/new">
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
-              New Listing
+              {t('createListing')}
             </Button>
           </Link>
         </div>
@@ -256,16 +258,15 @@ export default function DashboardPage() {
             <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
             <div className="flex-1">
               <h3 className="font-semibold text-amber-900 dark:text-amber-100">
-                {pendingListings} listing{pendingListings > 1 ? 's' : ''} pending approval
+                {pendingListings} {pendingListings > 1 ? t('pendingListingsPlural') : t('pendingListings')} {t('pendingListingsText')}
               </h3>
               <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                Your listing{pendingListings > 1 ? 's are' : ' is'} waiting for admin approval. 
-                You&apos;ll be notified once they&apos;re reviewed.
+                {pendingListings > 1 ? t('pendingListingsNoticePlural') : t('pendingListingsNotice')}
               </p>
             </div>
             <Link href="/dashboard/listings?status=pending">
               <Button variant="outline" size="sm" className="border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300">
-                View
+                {t('view')}
               </Button>
             </Link>
           </div>
@@ -316,9 +317,9 @@ export default function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Recent Listings</CardTitle>
+            <CardTitle>{t('recentListings')}</CardTitle>
             <Link href="/dashboard/listings">
-              <Button variant="ghost" size="sm">View All</Button>
+              <Button variant="ghost" size="sm">{t('viewAll')}</Button>
             </Link>
           </CardHeader>
           <CardContent>
@@ -329,7 +330,7 @@ export default function DashboardPage() {
                 </div>
               ) : error ? (
                 <div className="text-center py-8">
-                  <p className="text-sm text-red-600 mb-2">Error loading listings</p>
+                  <p className="text-sm text-red-600 mb-2">{t('errorLoadingListings')}</p>
                   <p className="text-xs text-muted-foreground">{error.message}</p>
                 </div>
               ) : recentListings.length > 0 ? (
@@ -373,11 +374,11 @@ export default function DashboardPage() {
               ) : (
                 <div className="text-center py-8">
                   <Car className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No listings yet</p>
+                  <p className="text-sm text-muted-foreground">{t('noListingsYet')}</p>
                   <Link href="/dashboard/listings/new">
                     <Button size="sm" className="mt-4">
                       <Plus className="h-4 w-4 mr-2" />
-                      Create Your First Listing
+                      {t('createFirstListing')}
                     </Button>
                   </Link>
                 </div>
@@ -390,7 +391,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
-              Performance Overview
+              {t('performanceOverview')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -434,7 +435,7 @@ export default function DashboardPage() {
                 <div className="space-y-6">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Views this week</span>
+                      <span className="text-sm text-muted-foreground">{t('viewsThisWeek')}</span>
                       <span className="font-semibold">{thisWeekViews.toLocaleString()}</span>
                     </div>
                     <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-700">
@@ -446,7 +447,7 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Inquiries this week</span>
+                      <span className="text-sm text-muted-foreground">{t('inquiriesThisWeek')}</span>
                       <span className="font-semibold">{thisWeekInquiries}</span>
                     </div>
                     <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-700">
@@ -458,7 +459,7 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Conversion rate</span>
+                      <span className="text-sm text-muted-foreground">{t('conversionRate')}</span>
                       <span className="font-semibold">{conversionRate}%</span>
                     </div>
                     <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-700">
@@ -473,10 +474,9 @@ export default function DashboardPage() {
             })()}
 
             <div className="mt-8 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 p-4">
-              <h4 className="font-semibold">Pro Tip</h4>
+              <h4 className="font-semibold">{t('proTip')}</h4>
               <p className="mt-1 text-sm text-muted-foreground">
-                Listings with more than 10 photos get 3x more views. 
-                Add more photos to increase visibility.
+                {t('proTipText')}
               </p>
             </div>
           </CardContent>
@@ -489,7 +489,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5" />
-              Recent Activity
+              {t('recentActivity')}
             </CardTitle>
           </CardHeader>
           <CardContent>

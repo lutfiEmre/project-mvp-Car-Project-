@@ -7,6 +7,24 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth';
+import { useTranslations } from 'next-intl';
+
+// Custom debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 import { 
   Search, 
   SlidersHorizontal, 
@@ -163,13 +181,13 @@ function FilterSidebar({
           Price Range
           {openSections.price ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </CollapsibleTrigger>
-        <CollapsibleContent className="pb-4 -mt-2  space-y-4">
+        <CollapsibleContent className="pb-4 -mt-2 space-y-4">
           <Slider
-          className='mt-2'
+            className="mt-2"
             value={priceRange}
             onValueChange={setPriceRange}
             min={0}
-            max={200000}
+            max={500000}
             step={5000}
           />
           <div className="flex items-center gap-2">
@@ -181,9 +199,7 @@ function FilterSidebar({
                 onChange={(e) => {
                   const value = e.target.value.replace(/[^0-9]/g, '');
                   const numValue = value ? parseInt(value) : 0;
-                  if (numValue <= priceRange[1]) {
-                    setPriceRange([numValue, priceRange[1]]);
-                  }
+                  setPriceRange([Math.min(numValue, priceRange[1]), priceRange[1]]);
                 }}
                 className="h-9"
                 placeholder="0"
@@ -197,13 +213,11 @@ function FilterSidebar({
                 value={formatNumber(priceRange[1])}
                 onChange={(e) => {
                   const value = e.target.value.replace(/[^0-9]/g, '');
-                  const numValue = value ? parseInt(value) : 200000;
-                  if (numValue >= priceRange[0]) {
-                    setPriceRange([priceRange[0], numValue]);
-                  }
+                  const numValue = value ? parseInt(value) : 500000;
+                  setPriceRange([priceRange[0], Math.max(numValue, priceRange[0])]);
                 }}
                 className="h-9"
-                placeholder="200,000"
+                placeholder="500,000"
               />
             </div>
           </div>
@@ -292,7 +306,7 @@ function SearchPageContent() {
   const urlMake = searchParams.get('make') || 'All Makes';
   const urlBody = searchParams.get('bodyType') || 'All Types';
   const urlMinPrice = parseInt(searchParams.get('priceMin') || searchParams.get('minPrice') || '0');
-  const urlMaxPrice = parseInt(searchParams.get('priceMax') || searchParams.get('maxPrice') || '200000');
+  const urlMaxPrice = parseInt(searchParams.get('priceMax') || searchParams.get('maxPrice') || '500000');
   const urlSort = searchParams.get('sort') || 'newest';
   const urlSearch = searchParams.get('q') || '';
   const urlPage = parseInt(searchParams.get('page') || '1');
@@ -310,6 +324,9 @@ function SearchPageContent() {
   const [currentPage, setCurrentPage] = useState(urlPage);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [savedListings, setSavedListings] = useState<Set<string>>(new Set());
+  
+  // Use debounced price range for filtering to prevent page jumping
+  const debouncedPriceRange = useDebounce(priceRange, 500);
 
   // Build filters for API
   const filters = useMemo(() => {
@@ -326,12 +343,12 @@ function SearchPageContent() {
       apiFilters.bodyType = selectedBody.toUpperCase();
     }
     
-    if (priceRange[0] > 0) {
-      apiFilters.priceMin = priceRange[0];
+    if (debouncedPriceRange[0] > 0) {
+      apiFilters.priceMin = debouncedPriceRange[0];
     }
     
-    if (priceRange[1] < 200000) {
-      apiFilters.priceMax = priceRange[1];
+    if (debouncedPriceRange[1] < 500000) {
+      apiFilters.priceMax = debouncedPriceRange[1];
     }
     
     if (selectedYear !== 'all') {
@@ -375,7 +392,7 @@ function SearchPageContent() {
     }
     
     return apiFilters;
-  }, [selectedMake, selectedBody, priceRange, selectedYear, selectedFuelTypes, sortBy, searchQuery, currentPage]);
+  }, [selectedMake, selectedBody, debouncedPriceRange, selectedYear, selectedFuelTypes, sortBy, searchQuery, currentPage]);
 
   const { data: apiData, isLoading } = useListings(filters);
 
@@ -441,7 +458,7 @@ function SearchPageContent() {
     if (selectedMake !== 'All Makes') params.set('make', selectedMake);
     if (selectedBody !== 'All Types') params.set('bodyType', selectedBody);
     if (priceRange[0] > 0) params.set('minPrice', priceRange[0].toString());
-    if (priceRange[1] < 200000) params.set('maxPrice', priceRange[1].toString());
+    if (priceRange[1] < 500000) params.set('maxPrice', priceRange[1].toString());
     if (selectedYear !== 'all') params.set('year', selectedYear);
     if (selectedFuelTypes.length > 0) params.set('fuelType', selectedFuelTypes[0]);
     if (sortBy !== 'newest') params.set('sort', sortBy);
@@ -468,7 +485,7 @@ function SearchPageContent() {
     selectedMake !== 'All Makes' && selectedMake,
     selectedBody !== 'All Types' && selectedBody,
     priceRange[0] > 0 && `Min $${formatNumber(priceRange[0])}`,
-    priceRange[1] < 200000 && `Max $${formatNumber(priceRange[1])}`,
+    priceRange[1] < 500000 && `Max $${formatNumber(priceRange[1])}`,
     ...selectedFuelTypes,
     selectedYear !== 'all' && `Year: ${selectedYear}`,
   ].filter(Boolean);
@@ -495,7 +512,7 @@ function SearchPageContent() {
       setPriceRange([0, priceRange[1]]);
       updateURL(1);
     } else if (filter.startsWith('Max')) {
-      setPriceRange([priceRange[0], 200000]);
+      setPriceRange([priceRange[0], 500000]);
       updateURL(1);
     } else if (filter.startsWith('Year')) {
       setSelectedYear('all');
@@ -661,7 +678,7 @@ function SearchPageContent() {
           </aside>
 
           {/* Results */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 min-h-[600px]">
             <div className="mb-6 flex items-center justify-between">
               <p className="text-muted-foreground">
                 <span className="font-semibold text-foreground">
@@ -674,7 +691,7 @@ function SearchPageContent() {
             </div>
 
             {isLoading ? (
-              <div className="flex justify-center py-12">
+              <div className="flex justify-center py-12 min-h-[400px] items-start pt-20">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : filteredListings.length === 0 ? (

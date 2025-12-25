@@ -9,11 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/use-auth';
+import { useTranslations } from 'next-intl';
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, user } = useAuth();
+  const t = useTranslations('auth');
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -52,9 +54,9 @@ function LoginForm() {
       transition={{ duration: 0.4 }}
     >
       <div className="text-center mb-8">
-        <h1 className="font-display text-3xl font-bold">Welcome Back</h1>
+        <h1 className="font-display text-3xl font-bold">{t('loginTitle')}</h1>
         <p className="mt-2 text-muted-foreground">
-          Sign in to your account to continue
+          {t('loginSubtitle')}
         </p>
       </div>
 
@@ -67,12 +69,12 @@ function LoginForm() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium">Email</label>
+          <label className="text-sm font-medium">{t('email')}</label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="email"
-              placeholder="name@example.com"
+              placeholder={t('enterEmail')}
               className="pl-10"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -83,19 +85,19 @@ function LoginForm() {
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium">Password</label>
+            <label className="text-sm font-medium">{t('password')}</label>
             <Link
               href="/forgot-password"
               className="text-sm text-primary hover:underline"
             >
-              Forgot password?
+              {t('forgotPassword')}
             </Link>
           </div>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
               type={showPassword ? 'text' : 'password'}
-              placeholder="••••••••"
+              placeholder={t('enterPassword')}
               className="pl-10 pr-10"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -120,7 +122,7 @@ function LoginForm() {
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
           ) : (
             <>
-              Sign In
+              {t('signIn')}
               <ArrowRight className="h-4 w-4" />
             </>
           )}
@@ -130,7 +132,7 @@ function LoginForm() {
       <div className="relative my-8">
         <Separator />
         <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-4 text-sm text-muted-foreground">
-          or continue with
+          {t('orContinueWith')}
         </span>
       </div>
 
@@ -165,9 +167,9 @@ function LoginForm() {
       </div>
 
       <p className="mt-8 text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{' '}
+        {t('noAccount')}{' '}
         <Link href="/register" className="font-medium text-primary hover:underline">
-          Sign up
+          {t('signUpWith').replace(' with', '')}
         </Link>
       </p>
 
@@ -176,8 +178,8 @@ function LoginForm() {
         <p className="text-xs font-medium text-muted-foreground mb-2">Test Accounts:</p>
         <div className="space-y-1 text-xs">
           <p><span className="font-medium">Admin:</span> test@emrelutfi.com / test1234</p>
-          <p><span className="font-medium">Dealer:</span> dealer@carhaus.com / test1234</p>
-          <p><span className="font-medium">User:</span> test@carhaus.com / test1234</p>
+          <p><span className="font-medium">Dealer:</span> dealer@drivingaway.com / test1234</p>
+          <p><span className="font-medium">User:</span> test@drivingaway.com / test1234</p>
           <p className="mt-2 pt-2 border-t"><span className="font-medium text-primary">Auto Finance Team:</span> wally@tabangigroup.com / test1234</p>
         </div>
       </div>

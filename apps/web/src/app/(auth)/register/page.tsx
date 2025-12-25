@@ -10,11 +10,13 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/use-auth';
+import { useTranslations } from 'next-intl';
 
 function RegisterForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { register, isLoading: authLoading } = useAuth();
+  const t = useTranslations('auth');
   
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -87,12 +89,9 @@ function RegisterForm() {
       transition={{ duration: 0.4 }}
     >
       <div className="text-center mb-8">
-        <h1 className="font-display text-3xl font-bold">Create Account</h1>
+        <h1 className="font-display text-3xl font-bold">{t('registerTitle')}</h1>
         <p className="mt-2 text-muted-foreground">
-          {accountType === 'dealer' 
-            ? 'Register as a dealer to list your inventory'
-            : 'Join CarHaus and start your journey'
-          }
+          {t('registerSubtitle')}
         </p>
       </div>
 
@@ -100,11 +99,11 @@ function RegisterForm() {
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="user" className="gap-2">
             <User className="h-4 w-4" />
-            Individual
+            {t('individual')}
           </TabsTrigger>
           <TabsTrigger value="dealer" className="gap-2">
             <Building2 className="h-4 w-4" />
-            Dealer
+            {t('dealer')}
           </TabsTrigger>
         </TabsList>
       </Tabs>
@@ -118,7 +117,7 @@ function RegisterForm() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">First Name</label>
+            <label className="text-sm font-medium">{t('firstName')}</label>
             <Input 
               placeholder="John" 
               required 
@@ -127,7 +126,7 @@ function RegisterForm() {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Last Name</label>
+            <label className="text-sm font-medium">{t('lastName')}</label>
             <Input 
               placeholder="Doe" 
               required 
@@ -140,11 +139,11 @@ function RegisterForm() {
         {accountType === 'dealer' && (
           <>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Business Name</label>
+              <label className="text-sm font-medium">{t('businessName')}</label>
               <div className="relative">
                 <Building2 className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Your Dealership Name"
+                  placeholder={t('businessName')}
                   className="pl-10"
                   required
                   value={businessName}
@@ -154,12 +153,12 @@ function RegisterForm() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Business Phone</label>
+              <label className="text-sm font-medium">{t('businessPhone')}</label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   type="tel"
-                  placeholder="1-800-123-4567"
+                  placeholder={t('businessPhone')}
                   className="pl-10"
                   required
                   value={phone}
@@ -169,11 +168,11 @@ function RegisterForm() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Business Address</label>
+              <label className="text-sm font-medium">{t('businessAddress')}</label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="123 Auto Drive"
+                  placeholder={t('businessAddress')}
                   className="pl-10"
                   required
                   value={address}
@@ -184,18 +183,18 @@ function RegisterForm() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">City</label>
+                <label className="text-sm font-medium">{t('city')}</label>
                 <Input 
-                  placeholder="Toronto" 
+                  placeholder={t('city')} 
                   required 
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Province</label>
+                <label className="text-sm font-medium">{t('province')}</label>
                 <Input 
-                  placeholder="Ontario" 
+                  placeholder={t('province')} 
                   required 
                   value={province}
                   onChange={(e) => setProvince(e.target.value)}
@@ -206,7 +205,7 @@ function RegisterForm() {
         )}
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Email</label>
+          <label className="text-sm font-medium">{t('email')}</label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -221,7 +220,7 @@ function RegisterForm() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Password</label>
+          <label className="text-sm font-medium">{t('password')}</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -245,7 +244,7 @@ function RegisterForm() {
             </button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Must be at least 8 characters with a number and symbol
+            {t('passwordHint')}
           </p>
         </div>
 
@@ -257,19 +256,19 @@ function RegisterForm() {
             required
           />
           <label htmlFor="terms" className="text-sm text-muted-foreground">
-            I agree to the{' '}
+            {t('termsAgreement')}{' '}
             <Link href="/terms" className="text-primary hover:underline">
-              Terms of Service
+              {t('termsOfService')}
             </Link>{' '}
-            and{' '}
+            {t('and')}{' '}
             <Link href="/privacy" className="text-primary hover:underline">
-              Privacy Policy
+              {t('privacyPolicy')}
             </Link>
             {accountType === 'dealer' && (
               <>
-                {' '}and{' '}
+                {' '}{t('and')}{' '}
                 <Link href="/dealer-terms" className="text-primary hover:underline">
-                  Dealer Agreement
+                  {t('dealerAgreement')}
                 </Link>
               </>
             )}
@@ -281,7 +280,7 @@ function RegisterForm() {
             <Loader2 className="h-5 w-5 animate-spin" />
           ) : (
             <>
-              {accountType === 'dealer' ? 'Create Dealer Account' : 'Create Account'}
+              {accountType === 'dealer' ? t('createDealerAccount') : t('createAccount')}
               <ArrowRight className="h-4 w-4" />
             </>
           )}
@@ -293,7 +292,7 @@ function RegisterForm() {
           <div className="relative my-8">
             <Separator />
             <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-4 text-sm text-muted-foreground">
-              or continue with
+              {t('orContinueWith')}
             </span>
           </div>
 
@@ -331,20 +330,20 @@ function RegisterForm() {
 
       {accountType === 'dealer' && (
         <div className="mt-6 rounded-lg bg-muted/50 p-4">
-          <h4 className="font-semibold text-sm">Dealer Benefits:</h4>
+          <h4 className="font-semibold text-sm">{t('dealerBenefits')}</h4>
           <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-            <li>• List unlimited vehicles with premium visibility</li>
-            <li>• Access to analytics and lead management</li>
-            <li>• Bulk import via XML/JSON</li>
-            <li>• Priority customer support</li>
+            <li>• {t('dealerBenefit1')}</li>
+            <li>• {t('dealerBenefit2')}</li>
+            <li>• {t('dealerBenefit3')}</li>
+            <li>• {t('dealerBenefit4')}</li>
           </ul>
         </div>
       )}
 
       <p className="mt-8 text-center text-sm text-muted-foreground">
-        Already have an account?{' '}
+        {t('hasAccount')}{' '}
         <Link href="/login" className="font-medium text-primary hover:underline">
-          Sign in
+          {t('signInWith').replace(' with', '')}
         </Link>
       </p>
     </motion.div>

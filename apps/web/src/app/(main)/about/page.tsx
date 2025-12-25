@@ -4,50 +4,54 @@ import { motion } from 'framer-motion';
 import { Car, Users, Shield, Award, Heart, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-
-const stats = [
-  { value: '50K+', label: 'Active Listings' },
-  { value: '2.5K+', label: 'Trusted Dealers' },
-  { value: '100K+', label: 'Happy Customers' },
-  { value: '10+', label: 'Years Experience' },
-];
-
-const values = [
-  {
-    icon: Shield,
-    title: 'Trust & Transparency',
-    description: 'We believe in honest dealings. Every listing is verified, and we provide complete vehicle history.',
-  },
-  {
-    icon: Users,
-    title: 'Customer First',
-    description: 'Our customers are at the heart of everything we do. We are committed to exceptional service.',
-  },
-  {
-    icon: Award,
-    title: 'Quality Assurance',
-    description: 'We partner only with reputable dealers who meet our strict quality standards.',
-  },
-  {
-    icon: Heart,
-    title: 'Community',
-    description: 'We are building a community of car enthusiasts who share our passion for great vehicles.',
-  },
-];
-
-const team = [
-  { name: 'Sarah Chen', role: 'CEO & Founder', image: '👩‍💼' },
-  { name: 'Michael Roberts', role: 'CTO', image: '👨‍💻' },
-  { name: 'Emily Davis', role: 'Head of Operations', image: '👩‍🔧' },
-  { name: 'EmreLutfi', role: 'Senior Full Stack Developer', image: '👨‍💼' },
-];
+import { useTranslations } from 'next-intl';
 
 export default function AboutPage() {
+  const t = useTranslations('about');
+  const tc = useTranslations('common');
+  
+  const stats = [
+    { value: '50K+', label: t('activeListings') },
+    { value: '2.5K+', label: t('trustedDealers') },
+    { value: '100K+', label: t('happyCustomers') },
+    { value: '10+', label: t('yearsExperience') },
+  ];
+
+  const values = [
+    {
+      icon: Shield,
+      title: t('value1Title'),
+      description: t('value1Desc'),
+    },
+    {
+      icon: Users,
+      title: t('value2Title'),
+      description: t('value2Desc'),
+    },
+    {
+      icon: Award,
+      title: t('value3Title'),
+      description: t('value3Desc'),
+    },
+    {
+      icon: Heart,
+      title: t('value4Title'),
+      description: t('value4Desc'),
+    },
+  ];
+
+  const team = [
+    { name: 'Sarah Chen', role: 'CEO & Founder', image: '👩‍💼' },
+    { name: 'Michael Roberts', role: 'CTO', image: '👨‍💻' },
+    { name: 'Emily Davis', role: 'Head of Operations', image: '👩‍🔧' },
+    { name: 'EmreLutfi', role: 'Senior Full Stack Developer', image: '👨‍💼' },
+  ];
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-primary to-slate-900 py-24">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-coral-500/20 via-transparent to-transparent" />
+      <section className="relative overflow-hidden py-24">
+        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/bgnew.png)' }} />
+        <div className="absolute inset-0 bg-black/40" />
         <div className="container relative mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -56,17 +60,16 @@ export default function AboutPage() {
           >
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white backdrop-blur-sm">
               <Car className="h-4 w-4" />
-              <span>Our Story</span>
+              <span>{t('ourStory')}</span>
             </div>
             <h1 className="mt-6 font-display text-4xl font-bold text-white sm:text-5xl lg:text-6xl">
-              Driving the Future of
+              {t('heroTitle')}
               <span className="block bg-gradient-to-r from-coral-400 to-coral-300 bg-clip-text text-transparent">
-                Car Shopping
+                {t('heroHighlight')}
               </span>
             </h1>
             <p className="mt-6 text-lg text-white/80">
-              CarHaus was founded with a simple mission: to make buying and selling vehicles 
-              a seamless, transparent, and enjoyable experience for everyone.
+              {t('subtitle')}
             </p>
           </motion.div>
         </div>
@@ -99,22 +102,19 @@ export default function AboutPage() {
       <section className="container mx-auto px-4 py-20">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div>
-            <h2 className="font-display text-3xl font-bold sm:text-4xl">Our Mission</h2>
+            <h2 className="font-display text-3xl font-bold sm:text-4xl">{t('missionTitle')}</h2>
             <p className="mt-4 text-muted-foreground leading-relaxed">
-              At CarHaus, we are on a mission to transform the automotive marketplace in Canada. 
-              We believe that buying or selling a vehicle should be simple, secure, and stress-free.
+              {t('missionText1')}
             </p>
             <p className="mt-4 text-muted-foreground leading-relaxed">
-              Our platform connects buyers with trusted dealers and private sellers, 
-              providing all the tools and information needed to make confident decisions. 
-              From detailed vehicle histories to secure payment options, we have got you covered.
+              {t('missionText2')}
             </p>
             <div className="mt-8 flex items-center gap-4">
               <Globe className="h-12 w-12 text-primary" />
               <div>
-                <p className="font-semibold">Serving All of Canada</p>
+                <p className="font-semibold">{t('servingCanada')}</p>
                 <p className="text-sm text-muted-foreground">
-                  From coast to coast, we are here for you
+                  {t('coastToCoast')}
                 </p>
               </div>
             </div>
@@ -137,9 +137,9 @@ export default function AboutPage() {
       <section className="bg-slate-50 py-20 dark:bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="text-center">
-            <h2 className="font-display text-3xl font-bold sm:text-4xl">Our Values</h2>
+            <h2 className="font-display text-3xl font-bold sm:text-4xl">{t('valuesTitle')}</h2>
             <p className="mt-3 text-muted-foreground">
-              The principles that guide everything we do
+              {t('valuesSubtitle')}
             </p>
           </div>
 
@@ -167,9 +167,9 @@ export default function AboutPage() {
       {/* Team */}
       <section className="container mx-auto px-4 py-20">
         <div className="text-center">
-          <h2 className="font-display text-3xl font-bold sm:text-4xl">Meet Our Team</h2>
+          <h2 className="font-display text-3xl font-bold sm:text-4xl">{t('teamTitle')}</h2>
           <p className="mt-3 text-muted-foreground">
-            The passionate people behind CarHaus
+            {t('teamSubtitle')}
           </p>
         </div>
 
@@ -197,20 +197,20 @@ export default function AboutPage() {
       <section className="container mx-auto px-4 pb-20">
         <div className="rounded-3xl bg-gradient-to-r from-primary to-primary/80 p-8 text-center sm:p-12">
           <h2 className="font-display text-2xl font-bold text-white sm:text-3xl">
-            Ready to Get Started?
+            {t('ctaTitle')}
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-white/80">
-            Join thousands of Canadians who trust CarHaus for their vehicle needs.
+            {t('ctaSubtitle')}
           </p>
           <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:justify-center">
             <Link href="/search">
               <Button size="xl" variant="secondary" className="w-full rounded-xl sm:w-auto">
-                Browse Vehicles
+                {t('browseVehicles')}
               </Button>
             </Link>
             <Link href="/register">
               <Button size="xl" variant="outline" className="w-full !text-black rounded-xl border-white/30 text-white hover:bg-white/10 sm:w-auto">
-                Create Account
+                {t('createAccount')}
               </Button>
             </Link>
           </div>

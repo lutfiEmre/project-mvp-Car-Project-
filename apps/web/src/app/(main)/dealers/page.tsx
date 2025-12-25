@@ -7,6 +7,7 @@ import { Building2, MapPin, Star, Phone, Search, Loader2, CheckCircle } from 'lu
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useDealers } from '@/hooks/use-dealer';
+import { useTranslations } from 'next-intl';
 
 // Fallback dealers
 const fallbackDealers = [
@@ -102,6 +103,8 @@ const getDealerImage = (dealer: any) => {
 };
 
 export default function DealersPage() {
+  const t = useTranslations('dealers');
+  const tc = useTranslations('common');
   const [searchTerm, setSearchTerm] = useState('');
   const { data: dealersData, isLoading, isError } = useDealers({ limit: 50 });
 
@@ -128,8 +131,9 @@ export default function DealersPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-primary py-20">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-coral-500/30 via-transparent to-transparent" />
+      <section className="relative overflow-hidden py-20">
+        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/bgnew.png)' }} />
+        <div className="absolute inset-0 bg-black/40" />
         <div className="container relative mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -137,24 +141,24 @@ export default function DealersPage() {
             className="mx-auto max-w-2xl text-center"
           >
             <h1 className="font-display text-4xl font-bold text-white sm:text-5xl">
-              Find Trusted Dealers
+              {t('title')}
             </h1>
             <p className="mt-4 text-lg text-white/80">
-              Browse verified dealerships across Canada with quality vehicles and exceptional service.
+              {t('subtitle')}
             </p>
             
             <div className="mt-8 flex gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search dealers by name or location..."
+                  placeholder={t('searchPlaceholder')}
                   className="h-14 rounded-xl bg-white pl-12 text-base"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <Button size="lg" variant="secondary" className="h-14 rounded-xl px-8">
-                Search
+                {tc('search')}
               </Button>
             </div>
           </motion.div>
@@ -166,7 +170,7 @@ export default function DealersPage() {
         <div className="mb-8 flex items-center justify-between">
           <h2 className="font-display text-2xl font-bold">Featured Dealers</h2>
           <p className="text-muted-foreground">
-            {isLoading ? '...' : dealers.length} dealers found
+            {isLoading ? '...' : t('dealersFound', { count: dealers.length })}
           </p>
         </div>
 
@@ -176,9 +180,9 @@ export default function DealersPage() {
           </div>
         ) : dealers.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-lg font-semibold">No dealers found</p>
+            <p className="text-lg font-semibold">{t('noDealers')}</p>
             <p className="text-muted-foreground mt-2">
-              Try adjusting your search criteria
+              {t('subtitle')}
             </p>
           </div>
         ) : (
@@ -201,7 +205,7 @@ export default function DealersPage() {
                   {dealer.verified && (
                     <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-green-500 px-2 py-1 text-xs font-medium text-white z-10">
                       <CheckCircle className="h-3 w-3" />
-                      Verified
+                      {tc('verified')}
                     </div>
                   )}
                 </div>
@@ -221,18 +225,18 @@ export default function DealersPage() {
                       <span className="text-sm text-muted-foreground">({dealer.reviewCount || 0})</span>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {dealer.totalListings || 0} listings
+                      {dealer.totalListings || 0} {tc('listings')}
                     </div>
                   </div>
                   
                   <div className="mt-4 flex gap-2">
                     <Button variant="outline" size="sm" className="flex-1 rounded-lg">
                       <Phone className="mr-1 h-4 w-4" />
-                      Contact
+                      {tc('contact')}
                     </Button>
                     <Link href={`/dealers/${dealer.slug || dealer.id}`} className="flex-1">
                       <Button size="sm" className="w-full rounded-lg">
-                        View Inventory
+                        {tc('viewInventory')}
                       </Button>
                     </Link>
                   </div>

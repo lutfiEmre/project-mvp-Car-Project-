@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Star, Loader2, MessageSquare, Reply } from 'lucide-react';
+import { Star, Loader2, MessageSquare, Reply, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
@@ -64,6 +64,35 @@ export default function ReviewsPage() {
   const reviews = reviewsData?.data || [];
   console.log('Parsed reviews:', reviews);
   console.log('Reviews length:', reviews.length);
+
+  const deleteReviewMutation = useMutation({
+    mutationFn: async ({ reviewId, reviewType }: { reviewId: string; reviewType: 'dealer' | 'listing' }) => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) throw new Error('Not authenticated');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/dealers/me/reviews/${reviewId}?type=${reviewType}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete review');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dealer', 'reviews'] });
+      toast.success('Review deleted successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete review');
+    },
+  });
 
   const respondToReviewMutation = useMutation({
     mutationFn: async ({ reviewId, response, reviewType, listingId }: { reviewId: string; response: string; reviewType?: string; listingId?: string }) => {
@@ -307,11 +336,31 @@ export default function ReviewsPage() {
                     </div>
                   </div>
                 </div>
-                {review.isPublished ? (
-                  <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">Published</span>
-                ) : (
-                  <span className="text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded">Pending</span>
-                )}
+                <div className="flex items-center gap-2">
+                  {review.isPublished ? (
+                    <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">Published</span>
+                  ) : (
+                    <span className="text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded">Pending</span>
+                  )}
+                  {(review.isOwnReview || review.type === 'listing') && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => {
+                        if (confirm('Are you sure you want to delete this review?')) {
+                          deleteReviewMutation.mutate({
+                            reviewId: review.id,
+                            reviewType: review.type,
+                          });
+                        }
+                      }}
+                      disabled={deleteReviewMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
 
               {review.title && (

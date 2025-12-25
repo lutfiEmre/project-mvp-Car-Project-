@@ -43,8 +43,8 @@ export default function AdminSettingsPage() {
   }, [settingsData]);
 
   const [formData, setFormData] = useState({
-    siteName: 'CarHaus',
-    siteUrl: 'https://carhaus.ca',
+    siteName: 'DrivingAway',
+    siteUrl: 'https://drivingaway.ca',
     defaultLanguage: 'en',
     defaultCurrency: 'cad',
     siteDescription: "Canada's premier vehicle marketplace",
@@ -53,10 +53,10 @@ export default function AdminSettingsPage() {
     featuredListings: true,
     smtpHost: 'smtp.mailgun.org',
     smtpPort: '587',
-    smtpUsername: 'postmaster@carhaus.ca',
+    smtpUsername: 'postmaster@drivingaway.ca',
     smtpPassword: '',
-    fromEmail: 'noreply@carhaus.ca',
-    fromName: 'CarHaus',
+    fromEmail: 'noreply@drivingaway.ca',
+    fromName: 'DrivingAway',
     twoFactorAuth: true,
     sessionTimeout: '30',
     rateLimit: '100',
@@ -67,8 +67,8 @@ export default function AdminSettingsPage() {
   useEffect(() => {
     if (settingsData && settingsData.length > 0) {
       setFormData({
-        siteName: settings.siteName || 'CarHaus',
-        siteUrl: settings.siteUrl || 'https://carhaus.ca',
+        siteName: settings.siteName || 'DrivingAway',
+        siteUrl: settings.siteUrl || 'https://drivingaway.ca',
         defaultLanguage: settings.defaultLanguage || 'en',
         defaultCurrency: settings.defaultCurrency || 'cad',
         siteDescription: settings.siteDescription || "Canada's premier vehicle marketplace",
@@ -77,10 +77,10 @@ export default function AdminSettingsPage() {
         featuredListings: settings.featuredListings !== false,
         smtpHost: settings.smtpHost || 'smtp.mailgun.org',
         smtpPort: settings.smtpPort || '587',
-        smtpUsername: settings.smtpUsername || 'postmaster@carhaus.ca',
+        smtpUsername: settings.smtpUsername || 'postmaster@drivingaway.ca',
         smtpPassword: '',
-        fromEmail: settings.fromEmail || 'noreply@carhaus.ca',
-        fromName: settings.fromName || 'CarHaus',
+        fromEmail: settings.fromEmail || 'noreply@drivingaway.ca',
+        fromName: settings.fromName || 'DrivingAway',
         twoFactorAuth: settings.twoFactorAuth !== false,
         sessionTimeout: settings.sessionTimeout || '30',
         rateLimit: settings.rateLimit || '100',

@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Search, ChevronDown, Sparkles, Volume2, VolumeX } from 'lucide-react';
+import { Search, ChevronDown, Sparkles, Volume2, VolumeX, Car, Truck, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedCounter } from '@/components/ui/animated-counter';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -13,11 +14,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import { useTranslations } from 'next-intl';
 
 const popularMakes = [
   'Toyota', 'Honda', 'Ford', 'BMW', 'Mercedes-Benz', 'Audi',
   'Chevrolet', 'Hyundai', 'Kia', 'Nissan', 'Mazda', 'Subaru',
 ];
+
+// Models by make
+const modelsByMake: Record<string, string[]> = {
+  'Toyota': ['Camry', 'Corolla', 'RAV4', 'Highlander', 'Tacoma', 'Tundra', 'Prius', '4Runner', 'Sienna'],
+  'Honda': ['Civic', 'Accord', 'CR-V', 'Pilot', 'HR-V', 'Odyssey', 'Ridgeline', 'Passport'],
+  'Ford': ['F-150', 'Mustang', 'Explorer', 'Escape', 'Bronco', 'Edge', 'Ranger', 'Expedition'],
+  'BMW': ['3 Series', '5 Series', 'X3', 'X5', 'X7', '7 Series', 'M3', 'M5', 'i4'],
+  'Mercedes-Benz': ['C-Class', 'E-Class', 'S-Class', 'GLC', 'GLE', 'GLS', 'A-Class', 'AMG GT'],
+  'Audi': ['A4', 'A6', 'Q5', 'Q7', 'Q3', 'e-tron', 'A3', 'RS6', 'TT'],
+  'Chevrolet': ['Silverado', 'Equinox', 'Tahoe', 'Camaro', 'Corvette', 'Traverse', 'Colorado', 'Blazer'],
+  'Hyundai': ['Tucson', 'Santa Fe', 'Elantra', 'Sonata', 'Palisade', 'Kona', 'Ioniq 5', 'Venue'],
+  'Kia': ['Sportage', 'Sorento', 'Telluride', 'Forte', 'K5', 'Soul', 'EV6', 'Seltos'],
+  'Nissan': ['Altima', 'Rogue', 'Sentra', 'Pathfinder', 'Murano', 'Frontier', 'Titan', 'Leaf'],
+  'Mazda': ['CX-5', 'CX-30', 'Mazda3', 'CX-50', 'CX-9', 'MX-5 Miata', 'CX-90'],
+  'Subaru': ['Outback', 'Forester', 'Crosstrek', 'Impreza', 'WRX', 'Ascent', 'Legacy'],
+};
 
 const priceRanges = [
   { label: 'Under $15,000', value: '0-15000' },
@@ -28,46 +48,63 @@ const priceRanges = [
   { label: 'Over $100,000', value: '100000-999999' },
 ];
 
-const bodyTypes = [
-  { label: 'SUV', value: 'SUV' },
-  { label: 'Sedan', value: 'SEDAN' },
-  { label: 'Truck', value: 'PICKUP' },
-  { label: 'Coupe', value: 'COUPE' },
-  { label: 'Hatchback', value: 'HATCHBACK' },
-  { label: 'Convertible', value: 'CONVERTIBLE' },
+const carStyles = [
+  { name: 'SUV', value: 'SUV' },
+  { name: 'Sedan', value: 'SEDAN' },
+  { name: 'Truck', value: 'PICKUP' },
+  { name: 'Coupe', value: 'COUPE' },
+  { name: 'Hatchback', value: 'HATCHBACK' },
+  { name: 'Electric', value: 'ELECTRIC' },
+  { name: 'Luxury', value: 'LUXURY' },
+  { name: 'Convertible', value: 'CONVERTIBLE' },
 ];
 
 export function SearchHero() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [condition, setCondition] = useState('');
   const [make, setMake] = useState('');
+  const [model, setModel] = useState('');
   const [priceRange, setPriceRange] = useState('');
-  const [bodyType, setBodyType] = useState('');
+  const [postalCode, setPostalCode] = useState('');
   const [isMuted, setIsMuted] = useState(true);
+  const t = useTranslations('home');
+  const tSearch = useTranslations('search');
+  const tCommon = useTranslations('common');
+
+  // Get available models based on selected make
+  const availableModels = useMemo(() => {
+    if (!make) return [];
+    return modelsByMake[make] || [];
+  }, [make]);
+
+  // Reset model when make changes
+  useEffect(() => {
+    setModel('');
+  }, [make]);
 
   useEffect(() => {
     const video = videoRef.current;
     if (video) {
       const setStartTime = () => {
         if (video.readyState >= 2) {
-          video.currentTime = 40;
+          video.currentTime = 42;
         }
       };
 
       const handleLoadedData = () => {
-        video.currentTime = 40;
+        video.currentTime = 42;
       };
 
       const handleCanPlay = () => {
-        if (video.currentTime < 40) {
-          video.currentTime = 40;
+        if (video.currentTime < 42) {
+          video.currentTime = 42;
         }
       };
 
       const handleTimeUpdate = () => {
-        // Video başlangıçta 0'dan başlarsa 40'a atla
-        if (video.currentTime < 40 && video.currentTime > 0 && video.currentTime < 1) {
-          video.currentTime = 40;
+        if (video.currentTime < 42 && video.currentTime > 0 && video.currentTime < 1) {
+          video.currentTime = 42;
         }
       };
 
@@ -75,7 +112,6 @@ export function SearchHero() {
       video.addEventListener('canplay', handleCanPlay);
       video.addEventListener('timeupdate', handleTimeUpdate);
       
-      // Eğer video zaten yüklenmişse
       if (video.readyState >= 2) {
         setStartTime();
       }
@@ -90,18 +126,31 @@ export function SearchHero() {
 
   const handleSearch = () => {
     const params = new URLSearchParams();
+    if (condition) params.set('condition', condition);
     if (make) params.set('make', make);
+    if (model) params.set('model', model);
     if (priceRange) {
       const [min, max] = priceRange.split('-');
       params.set('priceMin', min);
       params.set('priceMax', max);
     }
-    if (bodyType) params.set('bodyType', bodyType);
+    if (postalCode) params.set('postalCode', postalCode);
     router.push(`/search?${params.toString()}`);
+  };
+
+  const handleStyleClick = (styleValue: string) => {
+    if (styleValue === 'ELECTRIC') {
+      router.push('/search?fuelType=ELECTRIC');
+    } else if (styleValue === 'LUXURY') {
+      router.push('/search?make=BMW&make=Mercedes-Benz&make=Audi&make=Lexus&make=Porsche');
+    } else {
+      router.push(`/search?bodyType=${styleValue}`);
+    }
   };
 
   return (
     <section className="relative min-h-[95vh] flex items-center overflow-hidden">
+      {/* Video Background */}
       <video
         ref={videoRef}
         autoPlay
@@ -109,38 +158,55 @@ export function SearchHero() {
         muted={isMuted}
         playsInline
         onLoadedData={(e) => {
-          e.currentTarget.currentTime = 40;
+          e.currentTarget.currentTime = 42;
         }}
         onCanPlay={(e) => {
-          if (e.currentTarget.currentTime < 40) {
-            e.currentTarget.currentTime = 40;
+          if (e.currentTarget.currentTime < 42) {
+            e.currentTarget.currentTime = 42;
           }
         }}
         onEnded={(e) => {
-          // Video bittiğinde başa dön
-          e.currentTarget.currentTime = 40;
+          e.currentTarget.currentTime = 42;
           e.currentTarget.play();
         }}
         className="absolute inset-0 z-0 h-full w-full object-cover"
       >
         <source src="/carvideo.mp4" type="video/mp4" />
       </video>
+
+      {/* Gradient Overlay */}
       <div className="absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
       
+      {/* Mute Button */}
       <button
         onClick={() => setIsMuted(!isMuted)}
-        className="absolute top-6 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm transition-all hover:bg-white/20"
+        className="absolute top-24 right-6 z-30 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm transition-all hover:bg-white/20"
         aria-label={isMuted ? 'Unmute video' : 'Mute video'}
       >
         {isMuted ? (
-          <VolumeX className="h-6 w-6 text-white" />
+          <VolumeX className="h-4 w-4 text-white" />
         ) : (
-          <Volume2 className="h-6 w-6 text-white" />
+          <Volume2 className="h-4 w-4 text-white" />
         )}
       </button>
       
-      <div className="absolute top-20 left-10 z-10 h-72 w-72 rounded-full bg-coral-500/20 blur-3xl" />
-      <div className="absolute bottom-20 right-10 z-10 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
+      {/* Decorative Blurs */}
+      <motion.div 
+        animate={{ 
+          scale: [1, 1.2, 1],
+          opacity: [0.2, 0.3, 0.2],
+        }}
+        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute top-20 left-10 z-10 h-72 w-72 rounded-full bg-coral-500/20 blur-3xl" 
+      />
+      <motion.div 
+        animate={{ 
+          scale: [1, 1.3, 1],
+          opacity: [0.2, 0.4, 0.2],
+        }}
+        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+        className="absolute bottom-20 right-10 z-10 h-96 w-96 rounded-full bg-primary/20 blur-3xl" 
+      />
 
       <div className="container relative z-20 mx-auto px-4 py-20">
         <div className="mx-auto max-w-4xl text-center">
@@ -151,19 +217,18 @@ export function SearchHero() {
           >
             <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white backdrop-blur-sm">
               <Sparkles className="h-4 w-4 text-coral-400" />
-              <span>Over 50,000 vehicles available across Canada</span>
+              <span>{t('heroSubtitle')}</span>
             </div>
             
             <h1 className="font-display text-5xl font-bold tracking-tight text-white sm:text-6xl lg:text-7xl">
-              Find Your
+              {t('heroTitle')}
               <span className="block bg-gradient-to-r from-coral-400 to-coral-300 bg-clip-text text-transparent">
                 Perfect Drive
               </span>
             </h1>
             
             <p className="mx-auto mt-6 max-w-2xl text-lg text-white/80">
-              Discover thousands of quality vehicles from trusted dealers and private sellers.
-              Your next car is just a search away.
+              {t('heroSubtitle')}
             </p>
           </motion.div>
 
@@ -173,11 +238,23 @@ export function SearchHero() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mt-10"
           >
-            <div className="mx-auto max-w-3xl rounded-2xl bg-white/55 p-3 shadow-2xl backdrop-blur-sm dark:bg-slate-900/95">
-              <div className="grid gap-3 sm:grid-cols-4">
+            <div className="mx-auto max-w-3xl rounded-2xl bg-white/95 p-3 shadow-2xl backdrop-blur-sm dark:bg-slate-900/95">
+              <div className="grid gap-2 grid-cols-3 sm:grid-cols-6">
+                {/* Condition */}
+                <Select value={condition} onValueChange={setCondition}>
+                  <SelectTrigger className="h-10 border-0 bg-slate-100 text-sm dark:bg-slate-800">
+                    <SelectValue placeholder={tSearch('condition')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NEW">{tSearch('new')}</SelectItem>
+                    <SelectItem value="USED">{tSearch('used')}</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Make */}
                 <Select value={make} onValueChange={setMake}>
-                  <SelectTrigger className="h-14 border-0 bg-slate-50 text-base dark:bg-slate-800">
-                    <SelectValue placeholder="Any Make" />
+                  <SelectTrigger className="h-10 border-0 bg-slate-100 text-sm dark:bg-slate-800">
+                    <SelectValue placeholder={tSearch('make')} />
                   </SelectTrigger>
                   <SelectContent>
                     {popularMakes.map((m) => (
@@ -186,9 +263,22 @@ export function SearchHero() {
                   </SelectContent>
                 </Select>
 
+                {/* Model */}
+                <Select value={model} onValueChange={setModel} disabled={!make}>
+                  <SelectTrigger className="h-10 border-0 bg-slate-100 text-sm dark:bg-slate-800">
+                    <SelectValue placeholder={tSearch('model')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableModels.map((m) => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Price Range */}
                 <Select value={priceRange} onValueChange={setPriceRange}>
-                  <SelectTrigger className="h-14 border-0 bg-slate-50 text-base dark:bg-slate-800">
-                    <SelectValue placeholder="Price Range" />
+                  <SelectTrigger className="h-10 border-0 bg-slate-100 text-sm dark:bg-slate-800">
+                    <SelectValue placeholder="Price" />
                   </SelectTrigger>
                   <SelectContent>
                     {priceRanges.map((p) => (
@@ -197,26 +287,36 @@ export function SearchHero() {
                   </SelectContent>
                 </Select>
 
-                <Select value={bodyType} onValueChange={setBodyType}>
-                  <SelectTrigger className="h-14 border-0 bg-slate-50 text-base dark:bg-slate-800">
-                    <SelectValue placeholder="Body Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {bodyTypes.map((b) => (
-                      <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {/* Postal Code */}
+                <Input
+                  value={postalCode}
+                  onChange={(e) => setPostalCode(e.target.value.toUpperCase())}
+                  placeholder="Postal"
+                  className="h-10 border-0 bg-slate-100 text-sm dark:bg-slate-800"
+                  maxLength={7}
+                />
 
                 <Button
-                  size="xl"
-                  className="h-14 gap-2 text-base"
+                  className="h-10 gap-2 text-sm"
                   onClick={handleSearch}
                 >
-                  <Search className="h-5 w-5" />
-                  Search
+                  <Search className="h-4 w-4" />
+                  {tCommon('search')}
                 </Button>
               </div>
+            </div>
+
+            {/* Browse by Car Styles */}
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+              {carStyles.map((style) => (
+                <button
+                  key={style.value}
+                  onClick={() => handleStyleClick(style.value)}
+                  className="rounded-full border border-white/30 bg-white/10 px-4 py-2 text-sm text-white font-medium backdrop-blur-sm transition-all hover:bg-white hover:text-primary hover:border-white hover:scale-105"
+                >
+                  {style.name}
+                </button>
+              ))}
             </div>
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm text-white/70">
@@ -238,7 +338,7 @@ export function SearchHero() {
           initial={{ opacity: 0, y: 60 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="mt-16 grid grid-cols-2 gap-4 sm:grid-cols-4"
+          className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4"
         >
           {[
             { value: '50K+', label: 'Active Listings' },
@@ -273,4 +373,3 @@ export function SearchHero() {
     </section>
   );
 }
-

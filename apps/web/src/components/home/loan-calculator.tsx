@@ -66,8 +66,10 @@ export function LoanCalculator() {
   };
 
   return (
-    <section className="py-20 bg-gradient-to-b from-background to-muted/20 min-h-screen">
-      <div className="container mx-auto px-4">
+    <section className="relative py-20 min-h-screen">
+      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/bgnew.png)' }} />
+      <div className="absolute inset-0 bg-black/50" />
+      <div className="container relative z-10 mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -75,13 +77,13 @@ export function LoanCalculator() {
           transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
-            <Calculator className="h-8 w-8 text-primary" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 mb-4">
+            <Calculator className="h-8 w-8 text-white" />
           </div>
-          <h2 className="font-display text-3xl font-bold sm:text-4xl mb-4">
+          <h2 className="font-display text-3xl font-bold sm:text-4xl mb-4 text-white">
             Loan Calculator
           </h2>
-          <p className="mx-auto max-w-2xl text-muted-foreground">
+          <p className="mx-auto max-w-2xl text-white/80">
             Use our loan calculator to calculate payments over the life of your loan. Enter your information to see how much your monthly payments could be. You can adjust length of loan, down payment and interest rate to see how those changes raise or lower your payments.
           </p>
         </motion.div>

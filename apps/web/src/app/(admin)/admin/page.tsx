@@ -26,8 +26,10 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { formatDistanceToNow } from 'date-fns';
+import { useTranslations } from 'next-intl';
 
 export default function AdminDashboardPage() {
+  const t = useTranslations('admin');
   const { data: dashboardData, isLoading: isDashboardLoading } = useAdminDashboard();
   const { data: pendingData, isLoading: isPendingLoading } = usePendingListings({ limit: 3 });
   

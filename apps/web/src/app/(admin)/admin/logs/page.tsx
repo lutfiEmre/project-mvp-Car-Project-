@@ -104,7 +104,7 @@ export default function AdminLogsPage() {
       ipAddress: '192.168.1.2',
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
       createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-      user: { id: 'dealer-1', email: 'dealer@carhaus.com', firstName: 'Dealer', lastName: 'User' },
+      user: { id: 'dealer-1', email: 'dealer@drivingaway.com', firstName: 'Dealer', lastName: 'User' },
     },
     {
       id: '3',
@@ -164,7 +164,7 @@ export default function AdminLogsPage() {
       ipAddress: '192.168.1.4',
       userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
       createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      user: { id: 'dealer-1', email: 'dealer@carhaus.com', firstName: 'Dealer', lastName: 'User' },
+      user: { id: 'dealer-1', email: 'dealer@drivingaway.com', firstName: 'Dealer', lastName: 'User' },
     },
     {
       id: '9',
@@ -184,7 +184,7 @@ export default function AdminLogsPage() {
       ipAddress: '192.168.1.2',
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
       createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-      user: { id: 'dealer-1', email: 'dealer@carhaus.com', firstName: 'Dealer', lastName: 'User' },
+      user: { id: 'dealer-1', email: 'dealer@drivingaway.com', firstName: 'Dealer', lastName: 'User' },
     },
   ];
 

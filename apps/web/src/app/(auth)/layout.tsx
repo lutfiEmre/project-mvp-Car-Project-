@@ -4,12 +4,15 @@ import Link from 'next/link';
 import { Car } from 'lucide-react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const t = useTranslations('authLayout');
+  
   return (
     <div className="min-h-screen flex">
       <div className="hidden lg:flex relative lg:w-1/2 bg-hero-pattern relative overflow-hidden">
@@ -110,11 +113,10 @@ export default function AuthLayout({
             className="max-w-md"
           >
             <h1 className="font-display text-4xl font-bold leading-tight">
-              Find Your Perfect Vehicle in Canada
+              {t('findPerfectVehicle')}
             </h1>
             <p className="mt-4 text-lg text-white/80">
-              Join thousands of buyers and sellers on Canada&apos;s fastest-growing 
-              automotive marketplace.
+              {t('joinThousands')}
             </p>
             
             <div className="mt-8 flex gap-6">
@@ -124,7 +126,7 @@ export default function AuthLayout({
                 transition={{ duration: 0.5, delay: 0.7 }}
               >
                 <p className="text-3xl font-bold">50K+</p>
-                <p className="text-sm text-white/70">Active Listings</p>
+                <p className="text-sm text-white/70">{t('activeListings')}</p>
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
@@ -132,7 +134,7 @@ export default function AuthLayout({
                 transition={{ duration: 0.5, delay: 0.8 }}
               >
                 <p className="text-3xl font-bold">2.5K+</p>
-                <p className="text-sm text-white/70">Trusted Dealers</p>
+                <p className="text-sm text-white/70">{t('trustedDealers')}</p>
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
@@ -140,7 +142,7 @@ export default function AuthLayout({
                 transition={{ duration: 0.5, delay: 0.9 }}
               >
                 <p className="text-3xl font-bold">98%</p>
-                <p className="text-sm text-white/70">Satisfaction</p>
+                <p className="text-sm text-white/70">{t('satisfaction')}</p>
               </motion.div>
             </div>
           </motion.div>

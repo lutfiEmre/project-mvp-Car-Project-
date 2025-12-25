@@ -26,6 +26,10 @@ import { formatPrice, formatNumber } from '@/lib/utils';
 import { useDealerInventory } from '@/hooks/use-dealer';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { useTranslations } from 'next-intl';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { Trash2 } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -40,6 +44,8 @@ import {
 } from 'recharts';
 
 export default function DealerDashboardPage() {
+  const t = useTranslations('dealer');
+  const queryClient = useQueryClient();
   const { data: inventoryData, isLoading } = useDealerInventory();
   const { data: paymentsData } = useQuery({
     queryKey: ['dealer', 'payments'],
@@ -109,6 +115,36 @@ export default function DealerDashboardPage() {
       if (!response.ok) throw new Error('Failed to fetch reviews');
       const data = await response.json();
       return data.data || [];
+    },
+  });
+
+  // Delete review mutation
+  const deleteReviewMutation = useMutation({
+    mutationFn: async ({ reviewId, reviewType }: { reviewId: string; reviewType: 'dealer' | 'listing' }) => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) throw new Error('Not authenticated');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/dealers/me/reviews/${reviewId}?type=${reviewType}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete review');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dealer', 'reviews'] });
+      toast.success('Review deleted successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete review');
     },
   });
 
@@ -238,12 +274,12 @@ export default function DealerDashboardPage() {
       .slice(0, 5)
       .map((listing: any) => ({
         id: listing.id,
-        type: listing.status === 'ACTIVE' ? 'Listing Active' : listing.status === 'PENDING_APPROVAL' ? 'Pending Approval' : 'Listing Updated',
+        type: listing.status === 'ACTIVE' ? t('listingActive') : listing.status === 'PENDING_APPROVAL' ? t('pendingApproval') : t('listingUpdated'),
         title: listing.title,
         time: new Date(listing.updatedAt || listing.createdAt).toLocaleString(),
         status: listing.status,
       }));
-  }, [inventoryData]);
+  }, [inventoryData, t]);
 
   const stats = useMemo(() => {
     const listings = inventoryData?.data || [];
@@ -297,7 +333,7 @@ export default function DealerDashboardPage() {
 
     return [
       {
-        name: 'Active Inventory',
+        name: t('activeInventory'),
         value: activeCount,
         change: inventoryChange,
         changeType: recentListings > 0 ? 'increase' : 'neutral',
@@ -306,7 +342,7 @@ export default function DealerDashboardPage() {
         bg: 'bg-blue-500/10',
       },
       {
-        name: 'Total Views',
+        name: t('totalViews'),
         value: totalViews,
         change: `+${viewsChange}%`,
         changeType: 'increase',
@@ -315,7 +351,7 @@ export default function DealerDashboardPage() {
         bg: 'bg-emerald-500/10',
       },
       {
-        name: 'New Leads',
+        name: t('newLeads'),
         value: totalInquiries,
         change: inquiriesChange !== '0' ? `+${inquiriesChange}%` : '0%',
         changeType: Number(inquiriesChange) > 0 ? 'increase' : 'neutral',
@@ -324,7 +360,7 @@ export default function DealerDashboardPage() {
         bg: 'bg-amber-500/10',
       },
       {
-        name: 'This Month Revenue',
+        name: t('thisMonthRevenue'),
         value: currentMonthRevenue,
         change: revenueChange !== '0' ? `+${revenueChange}%` : '0%',
         changeType: Number(revenueChange) > 0 ? 'increase' : 'neutral',
@@ -354,19 +390,19 @@ export default function DealerDashboardPage() {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold">Dealer Dashboard</h1>
+          <h1 className="font-display text-3xl font-bold">{t('dashboard')}</h1>
           <p className="text-muted-foreground mt-1">
-            Welcome back! Here&apos;s your dealership overview.
+            {t('welcomeBack')} {t('dealershipOverview')}
           </p>
         </div>
         <div className="flex gap-3">
           <Link href="/dealer/import">
-            <Button variant="outline">Import Inventory</Button>
+            <Button variant="outline">{t('importInventory')}</Button>
           </Link>
           <Link href="/dealer/inventory/new">
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
-              Add Vehicle
+              {t('addVehicle')}
             </Button>
           </Link>
         </div>
@@ -410,7 +446,7 @@ export default function DealerDashboardPage() {
                   </div>
                   <div className="mt-4">
                     <p className="text-2xl font-bold">
-                      {stat.name === 'This Month Revenue' 
+                      {stat.name === t('thisMonthRevenue')
                         ? formatPrice(stat.value) 
                         : formatNumber(stat.value)}
                     </p>
@@ -429,7 +465,7 @@ export default function DealerDashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Views & Inquiries (Last 7 Days)
+              {t('viewsInquiries')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -451,7 +487,7 @@ export default function DealerDashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5" />
-              Recent Activity
+              {t('recentActivity')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -479,7 +515,7 @@ export default function DealerDashboardPage() {
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
+                <p className="text-sm text-muted-foreground text-center py-4">{t('noRecentActivity')}</p>
               )}
             </div>
           </CardContent>
@@ -489,9 +525,9 @@ export default function DealerDashboardPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Recent Messages</CardTitle>
+            <CardTitle>{t('recentMessages')}</CardTitle>
             <Link href="/dealer/messages">
-              <Button variant="ghost" size="sm">View All</Button>
+              <Button variant="ghost" size="sm">{t('viewAll')}</Button>
             </Link>
           </CardHeader>
           <CardContent>
@@ -506,12 +542,12 @@ export default function DealerDashboardPage() {
                     const diffHours = Math.floor(diffMs / 3600000);
                     const diffDays = Math.floor(diffMs / 86400000);
                     
-                    if (diffMins < 60) return `${diffMins} minutes ago`;
-                    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-                    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+                    if (diffMins < 60) return `${diffMins} ${t('minutesAgo')}`;
+                    if (diffHours < 24) return `${diffHours} ${diffHours > 1 ? t('hoursAgoPlural') : t('hoursAgo')}`;
+                    return `${diffDays} ${diffDays > 1 ? t('daysAgoPlural') : t('daysAgo')}`;
                   })();
 
-                  const inquiryType = inquiry.phone ? 'Phone Inquiry' : inquiry.email ? 'Email' : 'Message';
+                  const inquiryType = inquiry.phone ? t('phoneInquiry') : inquiry.email ? t('email') : t('message');
                   
                   return (
                     <div
@@ -526,20 +562,20 @@ export default function DealerDashboardPage() {
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground truncate">
-                          {inquiry.listing?.title || inquiry.listing?.make + ' ' + inquiry.listing?.model || 'Vehicle Inquiry'}
+                          {inquiry.listing?.title || inquiry.listing?.make + ' ' + inquiry.listing?.model || t('vehicleInquiry')}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
                           {timeAgo}
                         </p>
                       </div>
                       <Link href="/dealer/messages">
-                        <Button size="sm">Respond</Button>
+                        <Button size="sm">{t('respond')}</Button>
                       </Link>
                     </div>
                   );
                 })
               ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">No recent messages</p>
+                <p className="text-sm text-muted-foreground text-center py-4">{t('noRecentMessages')}</p>
               )}
             </div>
           </CardContent>
@@ -547,9 +583,9 @@ export default function DealerDashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Top Performing Vehicles</CardTitle>
+            <CardTitle>{t('topPerformingVehicles')}</CardTitle>
             <Link href="/dealer/analytics">
-              <Button variant="ghost" size="sm">View Analytics</Button>
+              <Button variant="ghost" size="sm">{t('viewAnalytics')}</Button>
             </Link>
           </CardHeader>
           <CardContent>
@@ -589,7 +625,7 @@ export default function DealerDashboardPage() {
                 </div>
               ))
               ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">No vehicles yet</p>
+                <p className="text-sm text-muted-foreground text-center py-4">{t('noVehicles')}</p>
               )}
             </div>
           </CardContent>
@@ -600,7 +636,7 @@ export default function DealerDashboardPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Star className="h-5 w-5 text-amber-500" />
-            Recent Reviews
+            {t('recentReviews')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -611,7 +647,7 @@ export default function DealerDashboardPage() {
               return (
                 <div className="text-center py-8">
                   <Star className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No reviews yet</p>
+                  <p className="text-sm text-muted-foreground">{t('noReviews')}</p>
                 </div>
               );
             }
@@ -636,8 +672,26 @@ export default function DealerDashboardPage() {
                       </span>
                       {review.type === 'listing' && review.listing && (
                         <Badge variant="outline" className="text-xs ml-auto">
-                          Listing Review
+                          {t('listingReview')}
                         </Badge>
+                      )}
+                      {(review.isOwnReview || review.type === 'listing') && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 ml-auto"
+                          onClick={() => {
+                            if (confirm('Are you sure you want to delete this review?')) {
+                              deleteReviewMutation.mutate({
+                                reviewId: review.id,
+                                reviewType: review.type,
+                              });
+                            }
+                          }}
+                          disabled={deleteReviewMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       )}
                     </div>
                     {review.title && (
@@ -653,7 +707,7 @@ export default function DealerDashboardPage() {
                           href={`/vehicles/${review.listing.slug || review.listing.id}`}
                           className="text-xs text-primary hover:underline"
                         >
-                          View Listing
+                          {t('viewListing')}
                         </Link>
                       )}
                     </div>
@@ -662,7 +716,7 @@ export default function DealerDashboardPage() {
                 {reviewsData && reviewsData.length >= 5 && (
                   <Link href="/dealer/reviews">
                     <Button variant="outline" className="w-full">
-                      View All Reviews
+                      {t('viewAllReviews')}
                     </Button>
                   </Link>
                 )}

@@ -278,7 +278,7 @@ export default function DashboardLayout({
                 <Car className="h-5 w-5 text-white" />
               </div>
               <span className="font-display text-lg font-bold gradient-text">
-                CarHaus
+                DrivingAway
               </span>
             </Link>
             <button

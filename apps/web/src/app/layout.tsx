@@ -5,6 +5,9 @@ import { Providers } from '@/components/providers';
 import { Toaster } from 'sonner';
 import { MaintenanceCheck } from '@/components/maintenance-check';
 import { ServiceWorkerCleanup } from '@/components/service-worker-cleanup';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages } from 'next-intl/server';
+import { isRtlLocale, type Locale } from '@/i18n/config';
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -19,28 +22,33 @@ const sora = Sora({
 });
 
 export const metadata: Metadata = {
-  title: 'CarHaus | Find Your Perfect Vehicle',
+  title: 'DrivingAway | Find Your Perfect Vehicle',
   description: 'Premium vehicle marketplace for Canada. Browse thousands of new and used cars from trusted dealers and private sellers.',
   keywords: ['cars', 'vehicles', 'automotive', 'canada', 'used cars', 'new cars', 'dealers'],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+  const isRtl = isRtlLocale(locale as Locale);
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} dir={isRtl ? 'rtl' : 'ltr'} suppressHydrationWarning>
       <body className={`${outfit.variable} ${sora.variable} font-sans`}>
         <ServiceWorkerCleanup />
-        <Providers>
-          <MaintenanceCheck>
-            {children}
-          </MaintenanceCheck>
-          <Toaster richColors position="top-right" />
-        </Providers>
+        <NextIntlClientProvider messages={messages}>
+          <Providers>
+            <MaintenanceCheck>
+              {children}
+            </MaintenanceCheck>
+            <Toaster richColors position="top-right" />
+          </Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   );
 }
-

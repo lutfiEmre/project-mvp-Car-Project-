@@ -4,45 +4,49 @@ import { motion } from 'framer-motion';
 import { Car, Camera, DollarSign, Users, CheckCircle2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-
-const steps = [
-  {
-    icon: Car,
-    title: 'Enter Vehicle Details',
-    description: 'Tell us about your car - make, model, year, mileage, and condition.',
-  },
-  {
-    icon: Camera,
-    title: 'Add Photos',
-    description: 'Upload high-quality photos to showcase your vehicle to potential buyers.',
-  },
-  {
-    icon: DollarSign,
-    title: 'Set Your Price',
-    description: 'Choose a competitive price or let us suggest one based on market data.',
-  },
-  {
-    icon: Users,
-    title: 'Connect with Buyers',
-    description: 'Receive inquiries and connect with serious buyers ready to purchase.',
-  },
-];
-
-const benefits = [
-  'Reach millions of potential buyers',
-  'Free basic listings available',
-  'Secure messaging system',
-  'Price guidance tools',
-  'Professional listing support',
-  'Verified buyer protection',
-];
+import { useTranslations } from 'next-intl';
 
 export default function SellPage() {
+  const t = useTranslations('sell');
+  const tc = useTranslations('common');
+  
+  const steps = [
+    {
+      icon: Car,
+      title: t('step1Title'),
+      description: t('step1Desc'),
+    },
+    {
+      icon: Camera,
+      title: t('step2Title'),
+      description: t('step2Desc'),
+    },
+    {
+      icon: DollarSign,
+      title: t('step3Title'),
+      description: t('step3Desc'),
+    },
+    {
+      icon: Users,
+      title: t('step4Title'),
+      description: t('step4Desc'),
+    },
+  ];
+
+  const benefits = [
+    t('benefit1'),
+    t('benefit2'),
+    t('benefit3'),
+    t('benefit4'),
+    t('benefit5'),
+    t('benefit6'),
+  ];
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-slate-900 py-20">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-coral-500/30 via-transparent to-transparent" />
+      <section className="relative overflow-hidden py-20">
+        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/bgnew.png)' }} />
+        <div className="absolute inset-0 bg-black/40" />
         <div className="container relative mx-auto px-4">
           <div className="mx-auto max-w-3xl text-center">
             <motion.div
@@ -50,27 +54,26 @@ export default function SellPage() {
               animate={{ opacity: 1, y: 0 }}
             >
               <span className="inline-block rounded-full bg-white/10 px-4 py-2 text-sm text-white backdrop-blur-sm">
-                🚗 Over 10,000 vehicles sold monthly
+                🚗 {t('soldMonthly')}
               </span>
               <h1 className="mt-6 font-display text-4xl font-bold text-white sm:text-5xl lg:text-6xl">
-                Sell Your Car
+                {t('title')}
                 <span className="block bg-gradient-to-r from-coral-400 to-coral-300 bg-clip-text text-transparent">
-                  Fast & Easy
+                  {t('titleHighlight')}
                 </span>
               </h1>
               <p className="mt-6 text-lg text-white/80">
-                List your vehicle for free and connect with thousands of buyers across Canada.
-                Get the best price with our trusted marketplace.
+                {t('subtitle')}
               </p>
               <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
                 <Link href="/dashboard/listings/new">
                   <Button size="xl" variant="secondary" className="w-full rounded-xl sm:w-auto">
-                    Start Selling Now
+                    {t('getStarted')}
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
                 <Button size="xl" variant="outline" className="w-full rounded-xl border-white/30 text-black hover:bg-white/10 sm:w-auto">
-                  Get a Price Estimate
+                  {t('getPriceEstimate')}
                 </Button>
               </div>
             </motion.div>
@@ -81,9 +84,9 @@ export default function SellPage() {
       {/* How It Works */}
       <section className="container mx-auto px-4 py-20">
         <div className="text-center">
-          <h2 className="font-display text-3xl font-bold sm:text-4xl">How It Works</h2>
+          <h2 className="font-display text-3xl font-bold sm:text-4xl">{t('howItWorks')}</h2>
           <p className="mt-3 text-muted-foreground">
-            Selling your car has never been easier. Follow these simple steps.
+            {t('howItWorksSubtitle')}
           </p>
         </div>
 
@@ -116,10 +119,10 @@ export default function SellPage() {
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <div>
               <h2 className="font-display text-3xl font-bold sm:text-4xl">
-                Why Sell on CarHaus?
+                {t('whySellTitle')}
               </h2>
               <p className="mt-4 text-muted-foreground">
-                Join thousands of sellers who trust CarHaus to help them find the right buyer for their vehicle.
+                {t('whySellSubtitle')}
               </p>
               
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -133,7 +136,7 @@ export default function SellPage() {
 
               <Link href="/register" className="mt-8 inline-block">
                 <Button size="lg" className="rounded-xl">
-                  Create Free Account
+                  {t('createAccount')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -158,14 +161,14 @@ export default function SellPage() {
       <section className="container mx-auto px-4 py-20">
         <div className="rounded-3xl bg-gradient-to-r from-coral-500 to-coral-600 p-8 text-center sm:p-12">
           <h2 className="font-display text-2xl font-bold text-white sm:text-3xl">
-            Ready to Sell Your Vehicle?
+            {t('ctaTitle')}
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-white/90">
-            Create your listing in minutes and start receiving offers from interested buyers.
+            {t('ctaSubtitle')}
           </p>
           <Link href="/dashboard/listings/new">
             <Button size="xl" variant="secondary" className="mt-6 rounded-xl">
-              List Your Vehicle Now
+              {t('ctaButton')}
             </Button>
           </Link>
         </div>

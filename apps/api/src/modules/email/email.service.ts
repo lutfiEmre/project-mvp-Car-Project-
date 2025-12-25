@@ -11,8 +11,8 @@ export class EmailService {
 
   constructor(private readonly configService: ConfigService) {
     const apiKey = this.configService.get<string>('SENDGRID_API_KEY');
-    this.fromEmail = this.configService.get<string>('SENDGRID_FROM_EMAIL', 'noreply@carhaus.ca');
-    this.fromName = this.configService.get<string>('SENDGRID_FROM_NAME', 'CarHaus');
+    this.fromEmail = this.configService.get<string>('SENDGRID_FROM_EMAIL', 'noreply@drivingaway.ca');
+    this.fromName = this.configService.get<string>('SENDGRID_FROM_NAME', 'DrivingAway');
     this.isEnabled = !!apiKey;
 
     if (apiKey) {
@@ -60,7 +60,7 @@ export class EmailService {
         </head>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0;">CarHaus</h1>
+            <h1 style="color: white; margin: 0;">DrivingAway</h1>
           </div>
           <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
             <h2 style="color: #333; margin-top: 0;">Reset Your Password</h2>
@@ -76,7 +76,7 @@ export class EmailService {
             </p>
             <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
             <p style="color: #999; font-size: 12px; text-align: center;">
-              © ${new Date().getFullYear()} CarHaus. All rights reserved.
+              © ${new Date().getFullYear()} DrivingAway. All rights reserved.
             </p>
           </div>
         </body>
@@ -85,7 +85,7 @@ export class EmailService {
 
     await this.sendEmail(
       email,
-      'Reset Your Password - CarHaus',
+      'Reset Your Password - DrivingAway',
       html,
     );
   }
@@ -97,15 +97,15 @@ export class EmailService {
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Welcome to CarHaus</title>
+          <title>Welcome to DrivingAway</title>
         </head>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0;">Welcome to CarHaus!</h1>
+            <h1 style="color: white; margin: 0;">Welcome to DrivingAway!</h1>
           </div>
           <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
             <h2 style="color: #333; margin-top: 0;">Hello ${firstName},</h2>
-            <p>Thank you for joining CarHaus - Canada's premier vehicle marketplace!</p>
+            <p>Thank you for joining DrivingAway - Canada's premier vehicle marketplace!</p>
             <p>Your account has been successfully created. You can now:</p>
             <ul>
               <li>Browse thousands of vehicles</li>
@@ -114,11 +114,11 @@ export class EmailService {
               <li>Create and manage your own listings</li>
             </ul>
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${this.configService.get('FRONTEND_URL', 'https://carhaus.ca')}" style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">Get Started</a>
+              <a href="${this.configService.get('FRONTEND_URL', 'https://drivingaway.ca')}" style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">Get Started</a>
             </div>
             <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
             <p style="color: #999; font-size: 12px; text-align: center;">
-              © ${new Date().getFullYear()} CarHaus. All rights reserved.
+              © ${new Date().getFullYear()} DrivingAway. All rights reserved.
             </p>
           </div>
         </body>
@@ -127,7 +127,7 @@ export class EmailService {
 
     await this.sendEmail(
       email,
-      'Welcome to CarHaus!',
+      'Welcome to DrivingAway!',
       html,
     );
   }
@@ -147,14 +147,14 @@ export class EmailService {
           </div>
           <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
             <h2 style="color: #333; margin-top: 0;">Hello ${firstName},</h2>
-            <p>Great news! Your listing <strong>"${listingTitle}"</strong> has been approved and is now live on CarHaus.</p>
+            <p>Great news! Your listing <strong>"${listingTitle}"</strong> has been approved and is now live on DrivingAway.</p>
             <div style="text-align: center; margin: 30px 0;">
               <a href="${listingUrl}" style="background: #10b981; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">View Listing</a>
             </div>
             <p>Your listing is now visible to thousands of potential buyers. Good luck with your sale!</p>
             <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
             <p style="color: #999; font-size: 12px; text-align: center;">
-              © ${new Date().getFullYear()} CarHaus. All rights reserved.
+              © ${new Date().getFullYear()} DrivingAway. All rights reserved.
             </p>
           </div>
         </body>
@@ -163,7 +163,7 @@ export class EmailService {
 
     await this.sendEmail(
       email,
-      'Your Listing Has Been Approved - CarHaus',
+      'Your Listing Has Been Approved - DrivingAway',
       html,
     );
   }
@@ -187,11 +187,11 @@ export class EmailService {
             ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
             <p>Please review your listing and make the necessary changes. You can resubmit it for review from your dashboard.</p>
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${this.configService.get('FRONTEND_URL', 'https://carhaus.ca')}/dashboard/listings" style="background: #ef4444; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">View My Listings</a>
+              <a href="${this.configService.get('FRONTEND_URL', 'https://drivingaway.ca')}/dashboard/listings" style="background: #ef4444; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">View My Listings</a>
             </div>
             <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
             <p style="color: #999; font-size: 12px; text-align: center;">
-              © ${new Date().getFullYear()} CarHaus. All rights reserved.
+              © ${new Date().getFullYear()} DrivingAway. All rights reserved.
             </p>
           </div>
         </body>
@@ -200,7 +200,7 @@ export class EmailService {
 
     await this.sendEmail(
       email,
-      'Listing Review Update - CarHaus',
+      'Listing Review Update - DrivingAway',
       html,
     );
   }
@@ -216,17 +216,17 @@ export class EmailService {
         </head>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0;">CarHaus</h1>
+            <h1 style="color: white; margin: 0;">DrivingAway</h1>
           </div>
           <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
             <h2 style="color: #333; margin-top: 0;">Test Email</h2>
-            <p>This is a test email from CarHaus. If you're receiving this, your email configuration is working correctly!</p>
+            <p>This is a test email from DrivingAway. If you're receiving this, your email configuration is working correctly!</p>
             <p style="color: #666; font-size: 14px; margin-top: 30px;">
               Sent at: ${new Date().toLocaleString()}
             </p>
             <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
             <p style="color: #999; font-size: 12px; text-align: center;">
-              © ${new Date().getFullYear()} CarHaus. All rights reserved.
+              © ${new Date().getFullYear()} DrivingAway. All rights reserved.
             </p>
           </div>
         </body>
@@ -235,7 +235,7 @@ export class EmailService {
 
     await this.sendEmail(
       to,
-      'Test Email - CarHaus',
+      'Test Email - DrivingAway',
       html,
     );
   }
