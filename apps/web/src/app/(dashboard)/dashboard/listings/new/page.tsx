@@ -34,15 +34,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { useVehicleMakes } from '@/hooks/use-vehicle-data';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 import type { FuelType, TransmissionType, DriveType, BodyType, Condition } from '@carhaus/types';
-
-const steps = [
-  { id: 1, name: 'Vehicle Info', icon: Car },
-  { id: 2, name: 'Specifications', icon: Settings2 },
-  { id: 3, name: 'Photos', icon: Upload },
-  { id: 4, name: 'Description', icon: FileText },
-  { id: 5, name: 'Pricing', icon: DollarSign },
-];
 
 const allFeatures = [
   'Leather Seats', 'Heated Seats', 'Ventilated Seats', 'Navigation',
@@ -175,7 +168,7 @@ export default function NewListingPage() {
           const parsed = JSON.parse(savedDraft);
           // Don't restore photos from localStorage (they're files)
           setFormData({ ...parsed, photos: [] });
-          toast.info('Draft restored. Continue where you left off.');
+          toast.info(t('draftRestored'));
         } catch (e) {
           console.error('Failed to parse draft:', e);
         }
@@ -259,7 +252,7 @@ export default function NewListingPage() {
         ...prev,
         photos: [...prev.photos, ...newPhotos],
       }));
-      toast.success(`${newPhotos.length} photo(s) added.`);
+      toast.success(t('photosAdded', { count: newPhotos.length }));
     }
 
     // Reset input
@@ -294,7 +287,7 @@ export default function NewListingPage() {
       if (formData.photos.length === 0) newErrors.photos = 'At least one photo is required';
     } else if (step === 4) {
       if (!formData.title) newErrors.title = 'Title is required';
-      if (!formData.description) newErrors.description = 'Description is required';
+      if (!formData.description) newErrors.description = t('descriptionRequired');
       if (!formData.city) newErrors.city = 'City is required';
       if (!formData.province) newErrors.province = 'Province is required';
     } else if (step === 5) {
@@ -538,7 +531,7 @@ export default function NewListingPage() {
         {currentStep === 1 && (
           <Card>
             <CardHeader>
-              <CardTitle>Vehicle Information</CardTitle>
+              <CardTitle>{t('vehicleInformation')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -867,7 +860,7 @@ export default function NewListingPage() {
                 </p>
                 <Button variant="outline" type="button">
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Photos
+                  {t('addPhotos')}
                 </Button>
               </div>
               {errors.photos && (
@@ -920,7 +913,7 @@ export default function NewListingPage() {
         {currentStep === 4 && (
           <Card>
             <CardHeader>
-              <CardTitle>Description & Location</CardTitle>
+              <CardTitle>{t('descriptionAndLocation')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">

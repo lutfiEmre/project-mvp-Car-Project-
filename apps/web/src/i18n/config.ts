@@ -29,3 +29,4 @@ export const rtlLocales: Locale[] = ['ar'];
 export const isRtlLocale = (locale: Locale) => rtlLocales.includes(locale);
 
 
+

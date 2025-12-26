@@ -30,6 +30,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useMyListings } from '@/hooks/use-listings';
 import { formatPrice } from '@/lib/utils';
 import { Car, FileText, Clock } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface PhotoFile {
   file: File;
@@ -57,6 +58,8 @@ interface FormData {
 }
 
 export default function NewInventoryPage() {
+  const t = useTranslations('dealer.addListing');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -99,7 +102,7 @@ export default function NewInventoryPage() {
     
     Array.from(files).forEach(file => {
       if (file.size > 10 * 1024 * 1024) {
-        toast.error(`${file.name} is too large. Max 10MB.`);
+        toast.error(t('fileSizeLimit'));
         return;
       }
       if (!file.type.startsWith('image/')) {
@@ -119,7 +122,7 @@ export default function NewInventoryPage() {
 
     if (newPhotos.length > 0) {
       setImages(prev => [...prev, ...newPhotos]);
-      toast.success(`${newPhotos.length} photo(s) added.`);
+      toast.success(t('photosAdded', { count: newPhotos.length }));
     }
 
     // Reset input
@@ -135,7 +138,7 @@ export default function NewInventoryPage() {
       newPhotos.splice(index, 1);
       return newPhotos;
     });
-    toast.success('Photo removed');
+    toast.success(t('photoRemoved'));
   };
 
   const updateFormData = (field: keyof FormData, value: string) => {
@@ -147,47 +150,47 @@ export default function NewInventoryPage() {
 
     // Validation
     if (!formData.make) {
-      toast.error('Make is required');
+      toast.error(t('makeRequired'));
       return;
     }
     if (!formData.model) {
-      toast.error('Model is required');
+      toast.error(t('modelRequired'));
       return;
     }
     if (!formData.year) {
-      toast.error('Year is required');
+      toast.error(t('yearRequired'));
       return;
     }
     if (!formData.stockNumber) {
-      toast.error('Stock Number is required');
+      toast.error(t('stockNumberRequired'));
       return;
     }
     if (!formData.mileage) {
-      toast.error('Mileage is required');
+      toast.error(t('mileageRequired'));
       return;
     }
     if (!formData.fuelType) {
-      toast.error('Fuel Type is required');
+      toast.error(t('fuelTypeRequired'));
       return;
     }
     if (!formData.transmission) {
-      toast.error('Transmission is required');
+      toast.error(t('transmissionRequired'));
       return;
     }
     if (!formData.driveType) {
-      toast.error('Drive Type is required');
+      toast.error(t('driveTypeRequired'));
       return;
     }
     if (!formData.bodyType) {
-      toast.error('Body Type is required');
+      toast.error(t('bodyTypeRequired'));
       return;
     }
     if (!formData.price) {
-      toast.error('Price is required');
+      toast.error(t('priceRequired'));
       return;
     }
     if (images.length === 0) {
-      toast.error('At least one photo is required');
+      toast.error(t('atLeastOnePhoto'));
       return;
     }
 
@@ -261,7 +264,7 @@ export default function NewInventoryPage() {
         }
       }
 
-      toast.success('Vehicle added successfully!');
+      toast.success(t('vehicleAddedSuccess'));
       router.push('/dealer/inventory');
     } catch (error: any) {
       console.error('Submit error:', error);
@@ -295,11 +298,11 @@ export default function NewInventoryPage() {
         <div className="mb-8">
           <Link href="/dealer/inventory" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4">
             <ArrowLeft className="h-4 w-4" />
-            Back to Inventory
+            {t('backToInventory')}
           </Link>
-          <h1 className="font-display text-2xl font-bold">Add New Vehicle</h1>
+          <h1 className="font-display text-2xl font-bold">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Fill in the details to list a new vehicle
+            {t('subtitle')}
           </p>
         </div>
 
@@ -310,13 +313,13 @@ export default function NewInventoryPage() {
           animate={{ opacity: 1, y: 0 }}
           className="rounded-xl border bg-card p-6"
         >
-          <h2 className="font-semibold mb-4">Basic Information</h2>
+          <h2 className="font-semibold mb-4">{t('basicInformation')}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Make *</Label>
+              <Label>{t('make')} *</Label>
               <Select value={formData.make} onValueChange={(value) => updateFormData('make', value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select make" />
+                  <SelectValue placeholder={t('selectMake')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="BMW">BMW</SelectItem>
@@ -328,10 +331,10 @@ export default function NewInventoryPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Model *</Label>
+              <Label>{t('model')} *</Label>
               <Select value={formData.model} onValueChange={(value) => updateFormData('model', value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select model" />
+                  <SelectValue placeholder={t('selectModel')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="3 Series">3 Series</SelectItem>
@@ -342,10 +345,10 @@ export default function NewInventoryPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Year *</Label>
+              <Label>{t('year')} *</Label>
               <Select value={formData.year} onValueChange={(value) => updateFormData('year', value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select year" />
+                  <SelectValue placeholder={t('selectYear')} />
                 </SelectTrigger>
                 <SelectContent>
                   {[2024, 2023, 2022, 2021, 2020, 2019, 2018].map((year) => (
@@ -355,25 +358,25 @@ export default function NewInventoryPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Trim</Label>
+              <Label>{t('trim')}</Label>
               <Input 
-                placeholder="e.g., Competition, Premium Plus" 
+                placeholder={t('trimPlaceholder')} 
                 value={formData.trim}
                 onChange={(e) => updateFormData('trim', e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label>Stock Number *</Label>
+              <Label>{t('stockNumber')} *</Label>
               <Input 
-                placeholder="e.g., STK-001" 
+                placeholder={t('stockNumberPlaceholder')} 
                 value={formData.stockNumber}
                 onChange={(e) => updateFormData('stockNumber', e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label>VIN</Label>
+              <Label>{t('vin')}</Label>
               <Input 
-                placeholder="17-character VIN" 
+                placeholder={t('vinPlaceholder')} 
                 value={formData.vin}
                 onChange={(e) => updateFormData('vin', e.target.value)}
               />
@@ -388,22 +391,22 @@ export default function NewInventoryPage() {
           transition={{ delay: 0.1 }}
           className="rounded-xl border bg-card p-6"
         >
-          <h2 className="font-semibold mb-4">Specifications</h2>
+          <h2 className="font-semibold mb-4">{t('specifications')}</h2>
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
-              <Label>Mileage *</Label>
+              <Label>{t('mileage')} *</Label>
               <Input 
                 type="number" 
-                placeholder="e.g., 15000" 
+                placeholder={t('mileagePlaceholder')} 
                 value={formData.mileage}
                 onChange={(e) => updateFormData('mileage', e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label>Fuel Type *</Label>
+              <Label>{t('fuelType')} *</Label>
               <Select value={formData.fuelType} onValueChange={(value) => updateFormData('fuelType', value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder={t('select')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="GASOLINE">Gasoline</SelectItem>
@@ -414,10 +417,10 @@ export default function NewInventoryPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Transmission *</Label>
+              <Label>{t('transmission')} *</Label>
               <Select value={formData.transmission} onValueChange={(value) => updateFormData('transmission', value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder={t('select')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="AUTOMATIC">Automatic</SelectItem>
@@ -427,10 +430,10 @@ export default function NewInventoryPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Drive Type</Label>
+              <Label>{t('driveType')}</Label>
               <Select value={formData.driveType} onValueChange={(value) => updateFormData('driveType', value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder={t('select')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="FWD">FWD</SelectItem>
@@ -441,10 +444,10 @@ export default function NewInventoryPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Body Type</Label>
+              <Label>{t('bodyType')}</Label>
               <Select value={formData.bodyType} onValueChange={(value) => updateFormData('bodyType', value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder={t('select')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="SEDAN">Sedan</SelectItem>
@@ -456,30 +459,30 @@ export default function NewInventoryPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Condition</Label>
+              <Label>{t('condition')}</Label>
               <Select value={formData.condition} onValueChange={(value) => updateFormData('condition', value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder={t('select')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="NEW">New</SelectItem>
-                  <SelectItem value="USED">Used</SelectItem>
-                  <SelectItem value="CPO">Certified Pre-Owned</SelectItem>
+                  <SelectItem value="NEW">{t('new')}</SelectItem>
+                  <SelectItem value="USED">{t('used')}</SelectItem>
+                  <SelectItem value="CPO">{t('certifiedPreOwned')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Exterior Color</Label>
+              <Label>{t('exteriorColor')}</Label>
               <Input 
-                placeholder="e.g., Alpine White" 
+                placeholder={t('exteriorColorPlaceholder')} 
                 value={formData.exteriorColor}
                 onChange={(e) => updateFormData('exteriorColor', e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label>Interior Color</Label>
+              <Label>{t('interiorColor')}</Label>
               <Input 
-                placeholder="e.g., Black Leather" 
+                placeholder={t('interiorColorPlaceholder')} 
                 value={formData.interiorColor}
                 onChange={(e) => updateFormData('interiorColor', e.target.value)}
               />
@@ -494,22 +497,22 @@ export default function NewInventoryPage() {
           transition={{ delay: 0.2 }}
           className="rounded-xl border bg-card p-6"
         >
-          <h2 className="font-semibold mb-4">Pricing</h2>
+          <h2 className="font-semibold mb-4">{t('pricing')}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Price (CAD) *</Label>
+              <Label>{t('price')} *</Label>
               <Input 
                 type="number" 
-                placeholder="e.g., 45000" 
+                placeholder={t('pricePlaceholder')} 
                 value={formData.price}
                 onChange={(e) => updateFormData('price', e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label>Original MSRP</Label>
+              <Label>{t('originalMsrp')}</Label>
               <Input 
                 type="number" 
-                placeholder="e.g., 52000" 
+                placeholder={t('originalMsrpPlaceholder')} 
                 value={formData.originalPrice}
                 onChange={(e) => updateFormData('originalPrice', e.target.value)}
               />
@@ -524,7 +527,7 @@ export default function NewInventoryPage() {
           transition={{ delay: 0.3 }}
           className="rounded-xl border bg-card p-6"
         >
-          <h2 className="font-semibold mb-4">Photos</h2>
+          <h2 className="font-semibold mb-4">{t('photos')}</h2>
           <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
             {/* Add Photo Button - Always on the left */}
             <button
@@ -533,7 +536,7 @@ export default function NewInventoryPage() {
               className="aspect-square w-32 h-32 shrink-0 rounded-lg border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
             >
               <Camera className="h-8 w-8" />
-              <span className="text-xs">Add Photo</span>
+              <span className="text-xs">{t('addPhoto')}</span>
             </button>
             <input
               ref={fileInputRef}
@@ -562,7 +565,7 @@ export default function NewInventoryPage() {
                   />
                   {index === 0 && (
                     <div className="absolute top-2 left-2 bg-primary text-white text-xs px-2 py-1 rounded">
-                      Main
+                      {t('main')}
                     </div>
                   )}
                   <button
@@ -578,7 +581,7 @@ export default function NewInventoryPage() {
           </div>
           <p className="text-xs text-muted-foreground mt-3">
             <Info className="inline h-3 w-3 mr-1" />
-            Upload up to 50 photos. First photo will be the main image.
+            {t('uploadInfo')}
           </p>
         </motion.div>
 
@@ -589,9 +592,9 @@ export default function NewInventoryPage() {
           transition={{ delay: 0.4 }}
           className="rounded-xl border bg-card p-6"
         >
-          <h2 className="font-semibold mb-4">Description</h2>
+          <h2 className="font-semibold mb-4">{t('description')}</h2>
           <Textarea
-            placeholder="Describe the vehicle, its features, condition, and any other relevant details..."
+            placeholder={t('descriptionPlaceholder')}
             rows={6}
             value={formData.description}
             onChange={(e) => updateFormData('description', e.target.value)}
@@ -604,21 +607,21 @@ export default function NewInventoryPage() {
             {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Saving...
+                {t('saving')}
               </>
             ) : (
               <>
                 <Save className="h-4 w-4" />
-                Save & Publish
+                {t('saveAndPublish')}
               </>
             )}
           </Button>
           <Button type="button" variant="outline">
-            Save as Draft
+            {t('saveAsDraft')}
           </Button>
           <Link href="/dealer/inventory" className="ml-auto">
             <Button type="button" variant="ghost">
-              Cancel
+              {t('cancel')}
             </Button>
           </Link>
         </div>
@@ -631,15 +634,15 @@ export default function NewInventoryPage() {
           <div className="rounded-xl border bg-card p-6">
             <div className="flex items-center gap-2 mb-4">
               <FileText className="h-5 w-5 text-muted-foreground" />
-              <h2 className="font-semibold">Draft Listings</h2>
+              <h2 className="font-semibold">{t('draftListings')}</h2>
             </div>
             
             {draftListings.length === 0 ? (
               <div className="text-center py-8">
                 <Clock className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">No draft listings</p>
+                <p className="text-sm text-muted-foreground">{t('noDraftListings')}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Your saved drafts will appear here
+                  {t('savedDraftsAppear')}
                 </p>
               </div>
             ) : (

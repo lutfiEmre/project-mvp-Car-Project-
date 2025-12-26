@@ -31,6 +31,7 @@
     "reviews": "avis"
   },
   "nav": {
+    "browse": "Parcourir",
     "buying": "Acheter",
     "usedVehicles": "Véhicules d'occasion",
     "newVehicles": "Véhicules neufs",
@@ -73,6 +74,8 @@
     "viewAllDealers": "Voir tous les concessionnaires",
     "whyChooseUs": "Pourquoi choisir DrivingAway",
     "whyChooseUsSubtitle": "Nous nous engageons à rendre votre expérience d'achat de voiture simple, transparente et agréable",
+    "whyChooseDrivingAway": "Pourquoi choisir DrivingAway?",
+    "whyChooseSubtitle": "Nous construisons le marché automobile le plus fiable au Canada",
     "ctaTitle": "Prêt à trouver la voiture de vos rêves?",
     "ctaSubtitle": "Rejoignez des milliers de clients satisfaits qui ont trouvé leur véhicule parfait via DrivingAway",
     "ctaButton": "Commencez votre recherche"
@@ -270,7 +273,31 @@
     "terms": "Conditions d'utilisation",
     "privacy": "Politique de confidentialité",
     "cookies": "Politique des cookies",
-    "copyright": "© {year} DrivingAway. Tous droits réservés."
+    "copyright": "© {year} DrivingAway. Tous droits réservés.",
+    "browseTitle": "Parcourir",
+    "sellTitle": "Vendre",
+    "companyTitle": "Entreprise",
+    "supportTitle": "Support",
+    "browseByProvince": "Parcourir par Province",
+    "searchCars": "Rechercher des Voitures",
+    "newCars": "Voitures Neuves",
+    "usedCars": "Voitures d'Occasion",
+    "certifiedPreOwned": "Certifié d'Occasion",
+    "electricVehicles": "Véhicules Électriques",
+    "sellYourCar": "Vendre votre Voiture",
+    "dealerSignUp": "Inscription Concessionnaire",
+    "pricing": "Tarification",
+    "dealerResources": "Ressources pour Concessionnaires",
+    "safetyTips": "Conseils de Sécurité",
+    "accessibility": "Accessibilité",
+    "stayUpdated": "Restez Informé",
+    "subscribeDesc": "Abonnez-vous pour recevoir les dernières offres, nouveaux listages et actualités automobiles.",
+    "enterEmail": "Entrez votre adresse e-mail",
+    "subscribe": "S'abonner",
+    "companyDescription": "Le marché de véhicules de premier plan au Canada. Trouvez votre voiture parfaite parmi des milliers d'annonces de concessionnaires de confiance et de vendeurs privés à travers le pays.",
+    "location": "Toronto, Ontario, Canada",
+    "phone": "1-800-DRIVING",
+    "email": "hello@drivingaway.ca"
   },
   "errors": {
     "pageNotFound": "Page non trouvée",
@@ -278,6 +305,25 @@
     "somethingWentWrong": "Quelque chose s'est mal passé",
     "tryAgain": "Réessayer",
     "goHome": "Aller à l'accueil"
+  },
+  "maintenance": {
+    "title": "En Maintenance",
+    "subtitle": "Nous serons de retour sous peu",
+    "thankYou": "Merci pour votre patience",
+    "defaultMessage": "Nous effectuons actuellement une maintenance programmée. Veuillez réessayer bientôt!"
+  },
+  "listing": {
+    "vehicleInfo": "Informations sur le Véhicule",
+    "specifications": "Spécifications",
+    "photos": "Photos",
+    "description": "Description",
+    "pricing": "Tarification",
+    "vehicleInformation": "Informations sur le Véhicule",
+    "descriptionAndLocation": "Description et Emplacement",
+    "draftRestored": "Brouillon restauré. Continuez où vous vous êtes arrêté.",
+    "photosAdded": "{count} photo(s) ajoutée(s).",
+    "descriptionRequired": "La description est requise",
+    "addPhotos": "Ajouter des Photos"
   }
 }
 

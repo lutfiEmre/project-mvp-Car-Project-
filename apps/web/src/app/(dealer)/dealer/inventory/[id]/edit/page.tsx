@@ -28,6 +28,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
 import type { FuelType, TransmissionType, DriveType, BodyType, Condition } from '@carhaus/types';
+import { useTranslations } from 'next-intl';
 
 interface PhotoFile {
   file: File;
@@ -61,6 +62,9 @@ interface FormData {
 }
 
 export default function EditInventoryPage() {
+  const t = useTranslations('dealer.editListing');
+  const tAdd = useTranslations('dealer.addListing');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const params = useParams();
   const listingId = params.id as string;
@@ -205,7 +209,7 @@ export default function EditInventoryPage() {
 
     if (newPhotos.length > 0) {
       setNewImages(prev => [...prev, ...newPhotos]);
-      toast.success(`${newPhotos.length} photo(s) added.`);
+      toast.success(tAdd('photosAdded', { count: newPhotos.length }));
     }
 
     // Reset input
@@ -246,54 +250,54 @@ export default function EditInventoryPage() {
 
     // Check if listing data is still loading
     if (queryLoading || !listingData) {
-      toast.error('Please wait for vehicle data to load');
+      toast.error(t('pleaseWaitForData'));
       return;
     }
 
     // Validation
     if (!formData.make || formData.make.trim() === '') {
-      toast.error('Make is required');
+      toast.error(tAdd('makeRequired'));
       console.error('Make is missing. FormData:', formData);
       return;
     }
     if (!formData.model) {
-      toast.error('Model is required');
+      toast.error(tAdd('modelRequired'));
       return;
     }
     if (!formData.year) {
-      toast.error('Year is required');
+      toast.error(tAdd('yearRequired'));
       return;
     }
     if (!formData.stockNumber) {
-      toast.error('Stock Number is required');
+      toast.error(tAdd('stockNumberRequired'));
       return;
     }
     if (!formData.mileage) {
-      toast.error('Mileage is required');
+      toast.error(tAdd('mileageRequired'));
       return;
     }
     if (!formData.fuelType) {
-      toast.error('Fuel Type is required');
+      toast.error(tAdd('fuelTypeRequired'));
       return;
     }
     if (!formData.transmission) {
-      toast.error('Transmission is required');
+      toast.error(tAdd('transmissionRequired'));
       return;
     }
     if (!formData.driveType) {
-      toast.error('Drive Type is required');
+      toast.error(tAdd('driveTypeRequired'));
       return;
     }
     if (!formData.bodyType) {
-      toast.error('Body Type is required');
+      toast.error(tAdd('bodyTypeRequired'));
       return;
     }
     if (!formData.price) {
-      toast.error('Price is required');
+      toast.error(tAdd('priceRequired'));
       return;
     }
     if (existingImages.length === 0 && newImages.length === 0) {
-      toast.error('At least one photo is required');
+      toast.error(tAdd('atLeastOnePhoto'));
       return;
     }
 
@@ -364,7 +368,7 @@ export default function EditInventoryPage() {
         }
       }
 
-      toast.success('Vehicle updated successfully!');
+      toast.success(t('vehicleUpdatedSuccess'));
       router.push('/dealer/inventory');
     } catch (error: any) {
       console.error('Update error:', error);
@@ -393,7 +397,7 @@ export default function EditInventoryPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground">Loading vehicle details...</p>
+        <p className="text-muted-foreground">{t('loadingVehicleDetails')}</p>
       </div>
     );
   }
@@ -402,13 +406,13 @@ export default function EditInventoryPage() {
     console.error('Query error:', queryError);
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <p className="text-destructive font-semibold">Failed to load vehicle details</p>
+        <p className="text-destructive font-semibold">{t('failedToLoad')}</p>
         <p className="text-sm text-muted-foreground">
           {queryError instanceof Error ? queryError.message : 'Unknown error occurred'}
         </p>
         <p className="text-xs text-muted-foreground">Listing ID: {listingId}</p>
         <Link href="/dealer/inventory">
-          <Button variant="outline">Back to Inventory</Button>
+          <Button variant="outline">{t('backToInventory')}</Button>
         </Link>
       </div>
     );
@@ -417,9 +421,9 @@ export default function EditInventoryPage() {
   if (!listingData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <p className="text-muted-foreground">Vehicle not found</p>
+        <p className="text-muted-foreground">{t('vehicleNotFound')}</p>
         <Link href="/dealer/inventory">
-          <Button variant="outline">Back to Inventory</Button>
+          <Button variant="outline">{t('backToInventory')}</Button>
         </Link>
       </div>
     );
@@ -432,11 +436,11 @@ export default function EditInventoryPage() {
         <div className="mb-8">
           <Link href="/dealer/inventory" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4">
             <ArrowLeft className="h-4 w-4" />
-            Back to Inventory
+            {t('backToInventory')}
           </Link>
-          <h1 className="font-display text-2xl font-bold">Edit Vehicle</h1>
+          <h1 className="font-display text-2xl font-bold">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Update the vehicle details
+            {t('subtitle')}
           </p>
         </div>
 
@@ -447,7 +451,7 @@ export default function EditInventoryPage() {
           animate={{ opacity: 1, y: 0 }}
           className="rounded-xl border bg-card p-6"
         >
-          <h2 className="font-semibold mb-4">Basic Information</h2>
+          <h2 className="font-semibold mb-4">{tAdd('basicInformation')}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Make *</Label>
@@ -525,7 +529,7 @@ export default function EditInventoryPage() {
           transition={{ delay: 0.1 }}
           className="rounded-xl border bg-card p-6"
         >
-          <h2 className="font-semibold mb-4">Specifications</h2>
+          <h2 className="font-semibold mb-4">{tAdd('specifications')}</h2>
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <Label>Mileage *</Label>
@@ -631,7 +635,7 @@ export default function EditInventoryPage() {
           transition={{ delay: 0.2 }}
           className="rounded-xl border bg-card p-6"
         >
-          <h2 className="font-semibold mb-4">Pricing</h2>
+          <h2 className="font-semibold mb-4">{tAdd('pricing')}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Price (CAD) *</Label>
@@ -661,7 +665,7 @@ export default function EditInventoryPage() {
           transition={{ delay: 0.3 }}
           className="rounded-xl border bg-card p-6"
         >
-          <h2 className="font-semibold mb-4">Photos</h2>
+          <h2 className="font-semibold mb-4">{tAdd('photos')}</h2>
           <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
             {/* Add Photo Button */}
             <button
@@ -753,9 +757,9 @@ export default function EditInventoryPage() {
           transition={{ delay: 0.4 }}
           className="rounded-xl border bg-card p-6"
         >
-          <h2 className="font-semibold mb-4">Description</h2>
+          <h2 className="font-semibold mb-4">{tAdd('description')}</h2>
           <Textarea
-            placeholder="Describe the vehicle, its features, condition, and any other relevant details..."
+            placeholder={tAdd('descriptionPlaceholder')}
             rows={6}
             value={formData.description}
             onChange={(e) => updateFormData('description', e.target.value)}
@@ -772,18 +776,18 @@ export default function EditInventoryPage() {
             {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Saving...
+                {t('saving')}
               </>
             ) : (
               <>
                 <Save className="h-4 w-4" />
-                Save Changes
+                {t('saveChanges')}
               </>
             )}
           </Button>
           <Link href="/dealer/inventory" className="ml-auto">
             <Button type="button" variant="ghost">
-              Cancel
+              {tCommon('cancel')}
             </Button>
           </Link>
         </div>

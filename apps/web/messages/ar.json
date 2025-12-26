@@ -31,6 +31,7 @@
     "reviews": "تقييمات"
   },
   "nav": {
+    "browse": "تصفح",
     "buying": "شراء",
     "usedVehicles": "سيارات مستعملة",
     "newVehicles": "سيارات جديدة",
@@ -73,6 +74,8 @@
     "viewAllDealers": "عرض جميع الوكلاء",
     "whyChooseUs": "لماذا تختار DrivingAway",
     "whyChooseUsSubtitle": "نحن ملتزمون بجعل تجربة شراء سيارتك بسيطة وشفافة وممتعة",
+    "whyChooseDrivingAway": "لماذا تختار DrivingAway؟",
+    "whyChooseSubtitle": "نحن نبني سوق السيارات الأكثر موثوقية في كندا",
     "ctaTitle": "هل أنت مستعد للعثور على سيارة أحلامك؟",
     "ctaSubtitle": "انضم إلى آلاف العملاء الراضين الذين وجدوا سيارتهم المثالية عبر DrivingAway",
     "ctaButton": "ابدأ البحث"
@@ -270,7 +273,31 @@
     "terms": "شروط الخدمة",
     "privacy": "سياسة الخصوصية",
     "cookies": "سياسة ملفات تعريف الارتباط",
-    "copyright": "© {year} DrivingAway. جميع الحقوق محفوظة."
+    "copyright": "© {year} DrivingAway. جميع الحقوق محفوظة.",
+    "browseTitle": "تصفح",
+    "sellTitle": "بيع",
+    "companyTitle": "الشركة",
+    "supportTitle": "الدعم",
+    "browseByProvince": "تصفح حسب المقاطعة",
+    "searchCars": "البحث عن سيارات",
+    "newCars": "سيارات جديدة",
+    "usedCars": "سيارات مستعملة",
+    "certifiedPreOwned": "مستعملة معتمدة",
+    "electricVehicles": "المركبات الكهربائية",
+    "sellYourCar": "بيع سيارتك",
+    "dealerSignUp": "تسجيل الوكيل",
+    "pricing": "التسعير",
+    "dealerResources": "موارد الوكيل",
+    "safetyTips": "نصائح السلامة",
+    "accessibility": "إمكانية الوصول",
+    "stayUpdated": "ابق على اطلاع",
+    "subscribeDesc": "اشترك للحصول على أحدث العروض والقوائم الجديدة وأخبار السيارات.",
+    "enterEmail": "أدخل بريدك الإلكتروني",
+    "subscribe": "اشترك",
+    "companyDescription": "سوق السيارات الرائد في كندا. ابحث عن سيارتك المثالية من آلاف القوائم من الوكلاء الموثوقين والبائعين الخاصين في جميع أنحاء البلاد.",
+    "location": "تورونتو، أونتاريو، كندا",
+    "phone": "1-800-DRIVING",
+    "email": "hello@drivingaway.ca"
   },
   "errors": {
     "pageNotFound": "الصفحة غير موجودة",
@@ -278,6 +305,25 @@
     "somethingWentWrong": "حدث خطأ ما",
     "tryAgain": "حاول مجدداً",
     "goHome": "العودة للصفحة الرئيسية"
+  },
+  "maintenance": {
+    "title": "قيد الصيانة",
+    "subtitle": "سنعود قريباً",
+    "thankYou": "شكراً لصبرك",
+    "defaultMessage": "نقوم حاليًا بإجراء صيانة مجدولة. يرجى التحقق مرة أخرى قريبًا!"
+  },
+  "listing": {
+    "vehicleInfo": "معلومات السيارة",
+    "specifications": "المواصفات",
+    "photos": "الصور",
+    "description": "الوصف",
+    "pricing": "التسعير",
+    "vehicleInformation": "معلومات السيارة",
+    "descriptionAndLocation": "الوصف والموقع",
+    "draftRestored": "تمت استعادة المسودة. تابع من حيث توقفت.",
+    "photosAdded": "تمت إضافة {count} صورة.",
+    "descriptionRequired": "الوصف مطلوب",
+    "addPhotos": "إضافة صور"
   }
 }
 

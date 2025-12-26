@@ -29,8 +29,10 @@ import { useAuth } from '@/hooks/use-auth';
 import { useAuthStore } from '@/stores/auth';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 export default function DealerSettingsPage() {
+  const t = useTranslations('dealer.settings');
   const { user, refreshUser } = useAuth();
   const { setUser } = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -82,7 +84,7 @@ export default function DealerSettingsPage() {
       return updateResponse.json();
     },
     onSuccess: (updatedDealer) => {
-      toast.success('Profile updated successfully');
+      toast.success(t('profileUpdatedSuccess'));
       if (updatedDealer && user?.dealer) {
         setUser({
           ...user,
@@ -95,7 +97,7 @@ export default function DealerSettingsPage() {
     },
     onError: (error: any) => {
       console.error('Profile save error:', error);
-      toast.error(`Failed to save profile: ${error.message || 'Unknown error'}`);
+      toast.error(t('failedToSaveProfile') + `: ${error.message || 'Unknown error'}`);
     },
   });
 
@@ -144,24 +146,24 @@ export default function DealerSettingsPage() {
     setPendingLogoPreview(previewUrl);
     setLogoCropperOpen(false);
     setSelectedLogo(null);
-    toast.success('Logo ready to save. Click "Save Changes" to apply.');
+    toast.success(t('logoReadyToSave'));
   };
 
   return (
     <div className="max-w-4xl">
       <div className="mb-8">
-        <h1 className="font-display text-2xl font-bold">Dealership Settings</h1>
+        <h1 className="font-display text-2xl font-bold">{t('title')}</h1>
         <p className="text-muted-foreground">
-          Manage your dealership profile and preferences
+          {t('subtitle')}
         </p>
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="contact">Contact</TabsTrigger>
-          <TabsTrigger value="hours">Hours</TabsTrigger>
-          <TabsTrigger value="social">Social</TabsTrigger>
+          <TabsTrigger value="profile">{t('profile')}</TabsTrigger>
+          <TabsTrigger value="contact">{t('contact')}</TabsTrigger>
+          <TabsTrigger value="hours">{t('hours')}</TabsTrigger>
+          <TabsTrigger value="social">{t('social')}</TabsTrigger>
         </TabsList>
 
         {/* Profile Tab */}
@@ -172,7 +174,7 @@ export default function DealerSettingsPage() {
             className="space-y-6"
           >
             <div className="rounded-xl border bg-card p-6">
-              <h3 className="font-semibold mb-4">Dealership Logo</h3>
+              <h3 className="font-semibold mb-4">{t('dealershipLogo')}</h3>
               <div className="flex items-center gap-6">
                 <Avatar className="h-24 w-24">
                   <AvatarImage 
@@ -200,45 +202,45 @@ export default function DealerSettingsPage() {
                     onClick={() => logoInputRef.current?.click()}
                   >
                     <Camera className="h-4 w-4" />
-                    Upload Logo
+                    {t('uploadLogo')}
                   </Button>
                   <p className="text-xs text-muted-foreground">
-                    PNG, JPG. Max 10MB. Recommended: 400x400px
+                    {t('logoFormat')}
                   </p>
                 </div>
               </div>
             </div>
 
             <div className="rounded-xl border bg-card p-6">
-              <h3 className="font-semibold mb-4">Banner Image</h3>
+              <h3 className="font-semibold mb-4">{t('bannerImage')}</h3>
               <div className="aspect-[3/1] rounded-lg bg-gradient-to-r from-primary/20 to-coral-500/20 flex items-center justify-center">
                 <Button variant="outline" className="gap-2">
                   <Camera className="h-4 w-4" />
-                  Upload Banner
+                  {t('uploadBanner')}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                Recommended: 1200x400px
+                {t('bannerFormat')}
               </p>
             </div>
 
             <div className="rounded-xl border bg-card p-6">
-              <h3 className="font-semibold mb-4">Business Information</h3>
+              <h3 className="font-semibold mb-4">{t('businessInformation')}</h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2 sm:col-span-2">
-                  <Label>Business Name</Label>
+                  <Label>{t('businessName')}</Label>
                   <Input defaultValue="Premium Auto Gallery" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Business License</Label>
-                  <Input placeholder="License number" />
+                  <Label>{t('businessLicense')}</Label>
+                  <Input placeholder={t('licensePlaceholder')} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Tax Number</Label>
-                  <Input placeholder="Tax/GST number" />
+                  <Label>{t('taxNumber')}</Label>
+                  <Input placeholder={t('taxPlaceholder')} />
                 </div>
                 <div className="space-y-2 sm:col-span-2">
-                  <Label>Description</Label>
+                  <Label>{t('description')}</Label>
                   <Textarea
                     rows={4}
                     defaultValue="Premium Auto Gallery is Toronto's trusted destination for luxury and pre-owned vehicles. With over 10 years of experience, we offer a curated selection of quality vehicles."
@@ -255,7 +257,7 @@ export default function DealerSettingsPage() {
                 ) : (
                   <Save className="h-4 w-4" />
                 )}
-                Save Changes
+                {t('saveChanges')}
               </Button>
             </div>
           </motion.div>
@@ -268,31 +270,31 @@ export default function DealerSettingsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="rounded-xl border bg-card p-6"
           >
-            <h3 className="font-semibold mb-4">Contact Information</h3>
+            <h3 className="font-semibold mb-4">{t('contactInformation')}</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Contact Email</Label>
+                <Label>{t('contactEmail')}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input defaultValue="sales@premiumauto.ca" className="pl-10" />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Contact Phone</Label>
+                <Label>{t('contactPhone')}</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input defaultValue="+1 (416) 555-0123" className="pl-10" />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Website</Label>
+                <Label>{t('website')}</Label>
                 <div className="relative">
                   <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input defaultValue="https://premiumautogallery.ca" className="pl-10" />
                 </div>
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <Label>Address</Label>
+                <Label>{t('address')}</Label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Textarea
@@ -305,7 +307,7 @@ export default function DealerSettingsPage() {
             </div>
             <Button className="mt-6 gap-2">
               <Save className="h-4 w-4" />
-              Save Changes
+              {t('saveChanges')}
             </Button>
           </motion.div>
         </TabsContent>
@@ -317,21 +319,21 @@ export default function DealerSettingsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="rounded-xl border bg-card p-6"
           >
-            <h3 className="font-semibold mb-4">Business Hours</h3>
+            <h3 className="font-semibold mb-4">{t('businessHours')}</h3>
             <div className="space-y-4">
-              {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+              {[t('monday'), t('tuesday'), t('wednesday'), t('thursday'), t('friday'), t('saturday'), t('sunday')].map((day) => (
                 <div key={day} className="flex items-center gap-4">
                   <div className="w-28 font-medium">{day}</div>
                   <Switch defaultChecked={day !== 'Sunday'} />
                   <Input className="w-24" defaultValue="09:00" type="time" />
-                  <span>to</span>
-                  <Input className="w-24" defaultValue={day === 'Saturday' ? '17:00' : '20:00'} type="time" />
+                  <span>{t('to')}</span>
+                  <Input className="w-24" defaultValue={day === t('saturday') ? '17:00' : '20:00'} type="time" />
                 </div>
               ))}
             </div>
             <Button className="mt-6 gap-2">
               <Save className="h-4 w-4" />
-              Save Hours
+              {t('saveHours')}
             </Button>
           </motion.div>
         </TabsContent>
@@ -343,40 +345,40 @@ export default function DealerSettingsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="rounded-xl border bg-card p-6"
           >
-            <h3 className="font-semibold mb-4">Social Media Links</h3>
+            <h3 className="font-semibold mb-4">{t('socialMediaLinks')}</h3>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Facebook className="h-4 w-4" />
-                  Facebook
+                  {t('facebook')}
                 </Label>
                 <Input placeholder="https://facebook.com/..." />
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Instagram className="h-4 w-4" />
-                  Instagram
+                  {t('instagram')}
                 </Label>
                 <Input placeholder="https://instagram.com/..." />
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Twitter className="h-4 w-4" />
-                  Twitter / X
+                  {t('twitter')}
                 </Label>
                 <Input placeholder="https://twitter.com/..." />
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Youtube className="h-4 w-4" />
-                  YouTube
+                  {t('youtube')}
                 </Label>
                 <Input placeholder="https://youtube.com/..." />
               </div>
             </div>
             <Button className="mt-6 gap-2">
               <Save className="h-4 w-4" />
-              Save Links
+              {t('saveLinks')}
             </Button>
           </motion.div>
         </TabsContent>

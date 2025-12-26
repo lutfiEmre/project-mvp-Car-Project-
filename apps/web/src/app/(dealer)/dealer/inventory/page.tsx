@@ -50,15 +50,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
-const statusConfig = {
-  ACTIVE: { label: 'Active', color: 'bg-green-100 text-green-700', icon: CheckCircle },
-  PENDING: { label: 'Pending', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
-  PENDING_APPROVAL: { label: 'Pending', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
-  SOLD: { label: 'Sold', color: 'bg-blue-100 text-blue-700', icon: CheckCircle },
-  REJECTED: { label: 'Rejected', color: 'bg-red-100 text-red-700', icon: XCircle },
-  EXPIRED: { label: 'Expired', color: 'bg-gray-100 text-gray-700', icon: XCircle },
-};
+// Status config will be created inside component to use translations
 
 // Fallback data
 const fallbackInventory = [
@@ -105,6 +99,7 @@ const fallbackInventory = [
 ];
 
 export default function InventoryPage() {
+  const t = useTranslations('dealer.inventory');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedListing, setSelectedListing] = useState<any | null>(null);
@@ -114,6 +109,15 @@ export default function InventoryPage() {
   const queryClient = useQueryClient();
   
   const { data: inventoryData, isLoading, error } = useDealerInventory();
+
+  const statusConfig = {
+    ACTIVE: { label: t('active'), color: 'bg-green-100 text-green-700', icon: CheckCircle },
+    PENDING: { label: t('pending'), color: 'bg-yellow-100 text-yellow-700', icon: Clock },
+    PENDING_APPROVAL: { label: t('pending'), color: 'bg-yellow-100 text-yellow-700', icon: Clock },
+    SOLD: { label: t('sold'), color: 'bg-blue-100 text-blue-700', icon: CheckCircle },
+    REJECTED: { label: 'Rejected', color: 'bg-red-100 text-red-700', icon: XCircle },
+    EXPIRED: { label: 'Expired', color: 'bg-gray-100 text-gray-700', icon: XCircle },
+  };
 
   // Fetch reviews for selected listing
   const { data: listingReviews, isLoading: isLoadingReviews } = useQuery({
@@ -155,14 +159,14 @@ export default function InventoryPage() {
       return response.json();
     },
     onSuccess: () => {
-      toast.success('Reply sent successfully!');
+      toast.success(t('replySentSuccess'));
       setReplyingToReview(null);
       setReplyText('');
       queryClient.invalidateQueries({ queryKey: ['listing', 'reviews', selectedListing?.id] });
       queryClient.invalidateQueries({ queryKey: ['dealer', 'reviews'] });
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to send reply');
+      toast.error(error.message || t('failedToSendReply'));
     },
   });
 
@@ -287,15 +291,15 @@ export default function InventoryPage() {
     <div>
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold">Inventory</h1>
+          <h1 className="font-display text-2xl font-bold">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Manage your vehicle inventory
+            {t('subtitle')}
           </p>
         </div>
         <Link href="/dealer/inventory/new">
           <Button className="gap-2">
             <Plus className="h-4 w-4" />
-            Add Vehicle
+            {t('addVehicle')}
           </Button>
         </Link>
       </div>
@@ -305,7 +309,7 @@ export default function InventoryPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search by title or VIN..."
+            placeholder={t('searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -313,28 +317,28 @@ export default function InventoryPage() {
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder={t('status')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="sold">Sold</SelectItem>
+            <SelectItem value="all">{t('allStatus')}</SelectItem>
+            <SelectItem value="active">{t('active')}</SelectItem>
+            <SelectItem value="pending">{t('pending')}</SelectItem>
+            <SelectItem value="sold">{t('sold')}</SelectItem>
           </SelectContent>
         </Select>
         <Button variant="outline" className="gap-2">
           <Filter className="h-4 w-4" />
-          More Filters
+          {t('moreFilters')}
         </Button>
       </div>
 
       {/* Stats */}
       <div className="mb-6 grid gap-4 sm:grid-cols-4">
         {[
-          { label: 'Total Vehicles', value: stats.total },
-          { label: 'Active Listings', value: stats.active },
-          { label: 'Pending Review', value: stats.pending },
-          { label: 'Sold This Month', value: stats.sold },
+          { label: t('totalVehicles'), value: stats.total },
+          { label: t('activeListings'), value: stats.active },
+          { label: t('pendingReview'), value: stats.pending },
+          { label: t('soldThisMonth'), value: stats.sold },
         ].map((stat) => (
           <div key={stat.label} className="rounded-xl border bg-card p-4">
             <p className="text-sm text-muted-foreground">{stat.label}</p>
@@ -351,16 +355,16 @@ export default function InventoryPage() {
           </div>
         ) : inventory.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-lg font-semibold">No vehicles found</p>
+            <p className="text-lg font-semibold">{t('noVehiclesFound')}</p>
             <p className="text-muted-foreground mt-2">
               {searchTerm || statusFilter !== 'all' 
-                ? 'Try adjusting your filters' 
-                : 'Add your first vehicle to get started'}
+                ? t('tryAdjustingFilters') 
+                : t('addFirstVehicle')}
             </p>
             <Link href="/dealer/inventory/new">
               <Button className="mt-4 gap-2">
                 <Plus className="h-4 w-4" />
-                Add Vehicle
+                {t('addVehicle')}
               </Button>
             </Link>
           </div>
@@ -369,15 +373,15 @@ export default function InventoryPage() {
             <table className="w-full">
               <thead className="border-b bg-muted/50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium">Vehicle</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium">Details</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium">Seller</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium">Price</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium">Views</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium">Reviews</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium">Reports</th>
-                  <th className="px-4 py-3 text-right text-sm font-medium">Actions</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">{t('vehicle')}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">{t('details')}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">{t('seller')}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">{t('price')}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">{t('status')}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">{t('views')}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">{t('reviews')}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">{t('reports')}</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium">{t('actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -507,7 +511,7 @@ export default function InventoryPage() {
                             <DropdownMenuItem asChild>
                               <Link href={`/vehicles/${item.slug || item.id}`} className="flex items-center cursor-pointer">
                                 <Eye className="mr-2 h-4 w-4" />
-                                View
+                                {t('view')}
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem
@@ -517,18 +521,18 @@ export default function InventoryPage() {
                               }}
                             >
                               <Star className="mr-2 h-4 w-4" />
-                              View Reviews
+                              {t('viewReviews')}
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                               <Link href={`/dealer/inventory/${item.id}/edit`} className="flex items-center cursor-pointer">
                                 <Edit className="mr-2 h-4 w-4" />
-                                Edit
+                                {t('edit')}
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="text-red-600">
                               <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
+                              {t('delete')}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -547,10 +551,10 @@ export default function InventoryPage() {
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>
-              Reviews for {selectedListing?.title || 'Listing'}
+              {t('reviewsFor')} {selectedListing?.title || 'Listing'}
             </DialogTitle>
             <DialogDescription>
-              Customer reviews for this listing
+              {t('customerReviews')}
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto">
@@ -561,7 +565,7 @@ export default function InventoryPage() {
             ) : !listingReviews || listingReviews.length === 0 ? (
               <div className="text-center py-8">
                 <Star className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">No reviews yet for this listing</p>
+                <p className="text-sm text-muted-foreground">{t('noReviewsYet')}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -609,7 +613,7 @@ export default function InventoryPage() {
                         <div className="mt-4 pt-4 border-t">
                           <div className="flex items-center gap-2 mb-2">
                             <MessageSquare className="h-4 w-4 text-primary" />
-                            <span className="text-sm font-medium">Your Response</span>
+                            <span className="text-sm font-medium">{t('yourResponse')}</span>
                             {review.dealerResponseAt && (
                               <span className="text-xs text-muted-foreground ml-auto">
                                 {formatDate(review.dealerResponseAt)}
@@ -626,7 +630,7 @@ export default function InventoryPage() {
                             onClick={() => setReplyingToReview(review.id)}
                           >
                             <MessageSquare className="mr-2 h-4 w-4" />
-                            Edit Response
+                            {t('editResponse')}
                           </Button>
                         </div>
                       ) : (
@@ -634,7 +638,7 @@ export default function InventoryPage() {
                           {replyingToReview === review.id ? (
                           <div className="space-y-3">
                             <Textarea
-                              placeholder="Write your reply..."
+                              placeholder={t('writeReply')}
                               value={replyText}
                               onChange={(e) => setReplyText(e.target.value)}
                               rows={3}
@@ -649,13 +653,13 @@ export default function InventoryPage() {
                                   setReplyText('');
                                 }}
                               >
-                                Cancel
+                                {t('cancel')}
                               </Button>
                               <Button
                                 size="sm"
                                 onClick={() => {
                                   if (!replyText.trim()) {
-                                    toast.error('Please write a reply');
+                                    toast.error(t('pleaseWriteReply'));
                                     return;
                                   }
                                   replyToReviewMutation.mutate({
@@ -669,10 +673,10 @@ export default function InventoryPage() {
                                 {replyToReviewMutation.isPending ? (
                                   <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Sending...
+                                    {t('sending')}
                                   </>
                                 ) : (
-                                  'Send Reply'
+                                  t('sendReply')
                                 )}
                               </Button>
                             </div>
@@ -684,7 +688,7 @@ export default function InventoryPage() {
                             onClick={() => setReplyingToReview(review.id)}
                           >
                             <MessageSquare className="mr-2 h-4 w-4" />
-                            Reply
+                            {t('reply')}
                           </Button>
                         )}
                         </div>

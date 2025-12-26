@@ -31,6 +31,7 @@
     "reviews": "mga pagsusuri"
   },
   "nav": {
+    "browse": "Mag-browse",
     "buying": "Bumili",
     "usedVehicles": "Mga Gamit na Sasakyan",
     "newVehicles": "Mga Bagong Sasakyan",
@@ -73,6 +74,8 @@
     "viewAllDealers": "Tingnan Lahat ng Dealer",
     "whyChooseUs": "Bakit Piliin ang DrivingAway",
     "whyChooseUsSubtitle": "Committed kami na gawing simple, transparent, at kasiya-siya ang iyong karanasan sa pagbili ng kotse",
+    "whyChooseDrivingAway": "Bakit Piliin ang DrivingAway?",
+    "whyChooseSubtitle": "Binubuo namin ang pinaka-tiwaling automotive marketplace sa Canada",
     "ctaTitle": "Handa ka na bang Hanapin ang Iyong Dream Car?",
     "ctaSubtitle": "Sumali sa libu-libong nasisiyahang customer na nakahanap ng kanilang perpektong sasakyan sa pamamagitan ng DrivingAway",
     "ctaButton": "Simulan ang Iyong Paghahanap"
@@ -270,7 +273,31 @@
     "terms": "Mga Tuntunin ng Serbisyo",
     "privacy": "Patakaran sa Privacy",
     "cookies": "Patakaran sa Cookie",
-    "copyright": "© {year} DrivingAway. Lahat ng karapatan ay nakalaan."
+    "copyright": "© {year} DrivingAway. Lahat ng karapatan ay nakalaan.",
+    "browseTitle": "Mag-browse",
+    "sellTitle": "Magbenta",
+    "companyTitle": "Kompanya",
+    "supportTitle": "Suporta",
+    "browseByProvince": "Mag-browse ayon sa Lalawigan",
+    "searchCars": "Maghanap ng Mga Sasakyan",
+    "newCars": "Bagong Mga Sasakyan",
+    "usedCars": "Ginamit na Mga Sasakyan",
+    "certifiedPreOwned": "Sertipikadong Pre-Owned",
+    "electricVehicles": "Mga De-kuryenteng Sasakyan",
+    "sellYourCar": "Ibenta ang Iyong Kotse",
+    "dealerSignUp": "Mag-sign Up bilang Dealer",
+    "pricing": "Pagpepresyo",
+    "dealerResources": "Mga Mapagkukunan ng Dealer",
+    "safetyTips": "Mga Tip sa Kaligtasan",
+    "accessibility": "Accessibility",
+    "stayUpdated": "Manatiling Na-update",
+    "subscribeDesc": "Mag-subscribe upang makuha ang pinakabagong mga deal, bagong mga listahan, at balita sa automotive.",
+    "enterEmail": "Ilagay ang iyong email",
+    "subscribe": "Mag-subscribe",
+    "companyDescription": "Ang nangungunang marketplace ng sasakyan sa Canada. Hanapin ang iyong perpektong kotse mula sa libu-libong mga listahan ng pinagkakatiwalaang mga dealer at pribadong nagbebenta sa buong bansa.",
+    "location": "Toronto, Ontario, Canada",
+    "phone": "1-800-DRIVING",
+    "email": "hello@drivingaway.ca"
   },
   "errors": {
     "pageNotFound": "Hindi Nahanap ang Pahina",
@@ -278,6 +305,25 @@
     "somethingWentWrong": "May nangyaring mali",
     "tryAgain": "Subukan Muli",
     "goHome": "Pumunta sa Homepage"
+  },
+  "maintenance": {
+    "title": "Sa Pagpapanatili",
+    "subtitle": "Babalik kami sa lalong madaling panahon",
+    "thankYou": "Salamat sa iyong pasensya",
+    "defaultMessage": "Kasalukuyan kaming nagsasagawa ng naka-iskedyul na pagpapanatili. Pakisuri muli sa lalong madaling panahon!"
+  },
+  "listing": {
+    "vehicleInfo": "Impormasyon ng Sasakyan",
+    "specifications": "Mga Pagtutukoy",
+    "photos": "Mga Larawan",
+    "description": "Paglalarawan",
+    "pricing": "Pagpepresyo",
+    "vehicleInformation": "Impormasyon ng Sasakyan",
+    "descriptionAndLocation": "Paglalarawan at Lokasyon",
+    "draftRestored": "Naibalik ang draft. Magpatuloy kung saan ka tumigil.",
+    "photosAdded": "Nagdagdag ng {count} larawan.",
+    "descriptionRequired": "Kinakailangan ang paglalarawan",
+    "addPhotos": "Magdagdag ng Larawan"
   }
 }
 

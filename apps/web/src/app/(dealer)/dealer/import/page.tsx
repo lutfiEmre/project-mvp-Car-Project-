@@ -20,8 +20,10 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 export default function ImportPage() {
+  const t = useTranslations('dealer.import');
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{
     success: number;
@@ -37,11 +39,11 @@ export default function ImportPage() {
     const file = e.target.files?.[0];
     if (file) {
       if (type === 'json' && !file.name.endsWith('.json')) {
-        toast.error('Please select a JSON file');
+        toast.error(t('pleaseSelectJson'));
         return;
       }
       if (type === 'xml' && !file.name.endsWith('.xml')) {
-        toast.error('Please select an XML file');
+        toast.error(t('pleaseSelectXml'));
         return;
       }
       setSelectedFile(file);
@@ -51,7 +53,7 @@ export default function ImportPage() {
 
   const handleJsonImport = async () => {
     if (!jsonData.trim()) {
-      toast.error('Please enter JSON data');
+      toast.error(t('pleaseEnterJson'));
       return;
     }
 
@@ -62,7 +64,7 @@ export default function ImportPage() {
       const vehicles = JSON.parse(jsonData);
       
       if (!Array.isArray(vehicles)) {
-        throw new Error('JSON must be an array of vehicles');
+        throw new Error(t('jsonMustBeArray'));
       }
 
       const token = localStorage.getItem('accessToken');
@@ -80,18 +82,18 @@ export default function ImportPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Import failed');
+        throw new Error(error.message || t('importFailed'));
       }
 
       const result = await response.json();
       setImportResult(result);
-      toast.success(`Successfully imported ${result.success} vehicles`);
+      toast.success(t('successfullyImported', { count: result.success }));
       
       if (result.failed > 0) {
-        toast.warning(`Failed to import ${result.failed} vehicles`);
+        toast.warning(t('failedToImport', { count: result.failed }));
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to import vehicles');
+      toast.error(error.message || t('importFailed'));
       setImportResult({
         success: 0,
         failed: 0,
@@ -104,7 +106,7 @@ export default function ImportPage() {
 
   const handleXmlImport = async () => {
     if (!selectedFile) {
-      toast.error('Please select an XML file');
+      toast.error(t('pleaseSelectXml'));
       return;
     }
 
@@ -129,15 +131,15 @@ export default function ImportPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Import failed');
+        throw new Error(error.message || t('importFailed'));
       }
 
       const result = await response.json();
       setImportResult(result);
-      toast.success(`Successfully imported ${result.success} vehicles`);
+      toast.success(t('successfullyImported', { count: result.success }));
       
       if (result.failed > 0) {
-        toast.warning(`Failed to import ${result.failed} vehicles`);
+        toast.warning(t('failedToImport', { count: result.failed }));
       }
       
       setSelectedFile(null);
@@ -145,7 +147,7 @@ export default function ImportPage() {
         xmlFileInputRef.current.value = '';
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to import vehicles');
+      toast.error(error.message || t('importFailed'));
       setImportResult({
         success: 0,
         failed: 0,
@@ -159,30 +161,30 @@ export default function ImportPage() {
   return (
     <div className="space-y-8 max-w-4xl">
       <div>
-        <h1 className="font-display text-3xl font-bold">Import Inventory</h1>
+        <h1 className="font-display text-3xl font-bold">{t('title')}</h1>
         <p className="text-muted-foreground mt-1">
-          Bulk import your vehicle inventory from XML or JSON files
+          {t('subtitle')}
         </p>
       </div>
 
       <Tabs defaultValue="upload">
         <TabsList>
-          <TabsTrigger value="upload">File Upload</TabsTrigger>
-          <TabsTrigger value="url">URL Import</TabsTrigger>
-          <TabsTrigger value="scheduled">Scheduled Import</TabsTrigger>
+          <TabsTrigger value="upload">{t('fileUpload')}</TabsTrigger>
+          <TabsTrigger value="url">{t('urlImport')}</TabsTrigger>
+          <TabsTrigger value="scheduled">{t('scheduledImport')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="upload" className="mt-6 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Upload XML File</CardTitle>
+              <CardTitle>{t('uploadXmlFile')}</CardTitle>
               <CardDescription>
-                Upload your inventory XML file. Maximum file size: 10MB
+                {t('xmlFileDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="xml-file">XML File</Label>
+                <Label htmlFor="xml-file">{t('xmlFile')}</Label>
                 <div className="flex gap-2">
                   <Input
                     id="xml-file"
@@ -327,26 +329,26 @@ export default function ImportPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <HelpCircle className="h-5 w-5" />
-                Need Help?
+                {t('needHelp')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="border-2 border-dashed rounded-2xl p-12 text-center">
                 <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="font-semibold mb-2">
-                  Drag and drop your file here
+                  {t('dragAndDrop')}
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  or click to browse
+                  {t('orClickToBrowse')}
                 </p>
                 <div className="flex justify-center gap-4">
                   <Button variant="outline" className="gap-2">
                     <FileJson className="h-4 w-4" />
-                    Select JSON
+                    {t('selectJson')}
                   </Button>
                   <Button variant="outline" className="gap-2">
                     <FileCode className="h-4 w-4" />
-                    Select XML
+                    {t('selectXml')}
                   </Button>
                 </div>
               </div>
@@ -357,7 +359,7 @@ export default function ImportPage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="mt-6 rounded-xl bg-slate-50 dark:bg-slate-800 p-6"
                 >
-                  <h4 className="font-semibold mb-4">Import Results</h4>
+                  <h4 className="font-semibold mb-4">{t('importResults')}</h4>
                   <div className="flex gap-6 mb-4">
                     <div className="flex items-center gap-2">
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/10">
@@ -365,7 +367,7 @@ export default function ImportPage() {
                       </div>
                       <div>
                         <p className="text-2xl font-bold">{importResult.success}</p>
-                        <p className="text-xs text-muted-foreground">Successful</p>
+                        <p className="text-xs text-muted-foreground">{t('successful')}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -374,13 +376,13 @@ export default function ImportPage() {
                       </div>
                       <div>
                         <p className="text-2xl font-bold">{importResult.failed}</p>
-                        <p className="text-xs text-muted-foreground">Failed</p>
+                        <p className="text-xs text-muted-foreground">{t('failed')}</p>
                       </div>
                     </div>
                   </div>
                   {importResult.errors.length > 0 && (
                     <div className="space-y-2">
-                      <p className="text-sm font-medium text-red-500">Errors:</p>
+                      <p className="text-sm font-medium text-red-500">{t('errors')}</p>
                       {importResult.errors.map((error, i) => (
                         <p key={i} className="text-sm text-muted-foreground">
                           • {error}
@@ -394,7 +396,7 @@ export default function ImportPage() {
               <div className="mt-6 flex justify-end gap-4">
                 <Button variant="outline" className="gap-2">
                   <Download className="h-4 w-4" />
-                  Download Template
+                  {t('downloadTemplate')}
                 </Button>
                 <Button
                   onClick={handleXmlImport}
@@ -406,7 +408,7 @@ export default function ImportPage() {
                   ) : (
                     <Upload className="h-4 w-4" />
                   )}
-                  Start Import
+                  {t('startImport')}
                 </Button>
               </div>
             </CardContent>
@@ -416,13 +418,13 @@ export default function ImportPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <HelpCircle className="h-5 w-5 text-primary" />
-                File Format Guide
+                {t('fileFormatGuide')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-medium mb-2">Required Fields</h4>
+                  <h4 className="font-medium mb-2">{t('requiredFields')}</h4>
                   <div className="flex flex-wrap gap-2">
                     {['make', 'model', 'year', 'price', 'mileage'].map((field) => (
                       <Badge key={field} variant="secondary">
@@ -432,7 +434,7 @@ export default function ImportPage() {
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-medium mb-2">Optional Fields</h4>
+                  <h4 className="font-medium mb-2">{t('optionalFields')}</h4>
                   <div className="flex flex-wrap gap-2">
                     {[
                       'vin',
@@ -461,21 +463,21 @@ export default function ImportPage() {
         <TabsContent value="url" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Import from URL</CardTitle>
+              <CardTitle>{t('importFromUrl')}</CardTitle>
               <CardDescription>
-                Enter a URL to your XML or JSON feed
+                {t('urlDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Feed URL</label>
+                <label className="text-sm font-medium">{t('feedUrl')}</label>
                 <input
                   type="url"
-                  placeholder="https://example.com/inventory.xml"
+                  placeholder={t('urlPlaceholder')}
                   className="w-full rounded-xl border bg-background px-4 py-3 text-sm"
                 />
               </div>
-              <Button>Validate & Import</Button>
+              <Button>{t('validateAndImport')}</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -483,20 +485,20 @@ export default function ImportPage() {
         <TabsContent value="scheduled" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Scheduled Imports</CardTitle>
+              <CardTitle>{t('scheduledImports')}</CardTitle>
               <CardDescription>
-                Set up automatic imports from your inventory feed
+                {t('scheduledDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="rounded-xl bg-gradient-to-r from-primary/10 to-coral-500/10 p-6 text-center">
                 <h3 className="font-semibold mb-2">
-                  Upgrade to Professional
+                  {t('upgradeToProfessional')}
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Scheduled imports are available on Professional and Enterprise plans
+                  {t('scheduledAvailable')}
                 </p>
-                <Button>Upgrade Now</Button>
+                <Button>{t('upgradeNow')}</Button>
               </div>
             </CardContent>
           </Card>

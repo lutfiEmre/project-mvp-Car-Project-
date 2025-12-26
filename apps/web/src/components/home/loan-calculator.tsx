@@ -7,8 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslations } from 'next-intl';
 
 export function LoanCalculator() {
+  const t = useTranslations('loanCalculator');
   const [price, setPrice] = useState<string>('');
   const [interestRate, setInterestRate] = useState<string>('9.99');
   const [period, setPeriod] = useState<string>('84');
@@ -81,10 +83,10 @@ export function LoanCalculator() {
             <Calculator className="h-8 w-8 text-white" />
           </div>
           <h2 className="font-display text-3xl font-bold sm:text-4xl mb-4 text-white">
-            Loan Calculator
+            {t('title')}
           </h2>
           <p className="mx-auto max-w-2xl text-white/80">
-            Use our loan calculator to calculate payments over the life of your loan. Enter your information to see how much your monthly payments could be. You can adjust length of loan, down payment and interest rate to see how those changes raise or lower your payments.
+            {t('description')}
           </p>
         </motion.div>
 
@@ -101,16 +103,16 @@ export function LoanCalculator() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <DollarSign className="h-5 w-5" />
-                    Loan Details
+                    {t('loanDetails')}
                   </CardTitle>
                   <CardDescription>
-                    Enter your vehicle and loan information
+                    {t('enterInfo')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="price" className="text-sm font-semibold">
-                      Price <span className="text-destructive">*</span>
+                      {t('price')} <span className="text-destructive">*</span>
                     </Label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -127,7 +129,7 @@ export function LoanCalculator() {
 
                   <div className="space-y-2">
                     <Label htmlFor="interest-rate" className="text-sm font-semibold">
-                      Interest Rate <span className="text-destructive">*</span>
+                      {t('interestRate')} <span className="text-destructive">*</span>
                     </Label>
                     <div className="relative">
                       <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -145,7 +147,7 @@ export function LoanCalculator() {
 
                   <div className="space-y-2">
                     <Label htmlFor="period" className="text-sm font-semibold">
-                      Period (months) <span className="text-destructive">*</span>
+                      {t('period')} <span className="text-destructive">*</span>
                     </Label>
                     <div className="relative">
                       <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -162,7 +164,7 @@ export function LoanCalculator() {
 
                   <div className="space-y-2">
                     <Label htmlFor="down-payment" className="text-sm font-semibold">
-                      Down Payment
+                      {t('downPayment')}
                     </Label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -191,10 +193,10 @@ export function LoanCalculator() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5" />
-                    Payment Summary
+                    {t('paymentSummary')}
                   </CardTitle>
                   <CardDescription>
-                    Your estimated loan payments
+                    {t('estimatedPayments')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -202,7 +204,7 @@ export function LoanCalculator() {
                     <div className="rounded-xl bg-background/80 p-6 border-2 border-primary/20">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-muted-foreground">
-                          Monthly Payment
+                          {t('monthlyPayment')}
                         </span>
                       </div>
                       <motion.div
@@ -219,7 +221,7 @@ export function LoanCalculator() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="rounded-xl bg-background/80 p-4 border">
                         <div className="text-xs font-medium text-muted-foreground mb-1">
-                          Total Interest
+                          {t('totalInterest')}
                         </div>
                         <motion.div
                           key={totalInterest}
@@ -234,7 +236,7 @@ export function LoanCalculator() {
 
                       <div className="rounded-xl bg-background/80 p-4 border">
                         <div className="text-xs font-medium text-muted-foreground mb-1">
-                          Total Payments
+                          {t('totalPayments')}
                         </div>
                         <motion.div
                           key={totalPayments}
@@ -256,11 +258,11 @@ export function LoanCalculator() {
                       className="rounded-xl bg-primary/10 p-4 border border-primary/20"
                     >
                       <p className="text-sm text-muted-foreground">
-                        <strong className="text-foreground">Loan Amount:</strong>{' '}
+                        <strong className="text-foreground">{t('loanAmount')}:</strong>{' '}
                         {formatCurrency((parseFloat(price) || 0) - (parseFloat(downPayment) || 0))}
                       </p>
                       <p className="text-sm text-muted-foreground mt-1">
-                        <strong className="text-foreground">Term:</strong> {period} months ({Math.round(parseFloat(period) / 12)} years)
+                        <strong className="text-foreground">{t('term')}:</strong> {period} {t('months')} ({Math.round(parseFloat(period) / 12)} {t('years')})
                       </p>
                     </motion.div>
                   )}

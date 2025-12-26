@@ -12,6 +12,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth';
+import { useTranslations } from 'next-intl';
 import type { Listing } from '@carhaus/types';
 
 // Fallback data when API is unavailable
@@ -161,6 +162,8 @@ export function FeaturedListings() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuth();
+  const t = useTranslations('home');
+  const tCommon = useTranslations('common');
   const { data: listings, isLoading, error } = useFeaturedListings(12);
   const [savedListings, setSavedListings] = useState<Set<string>>(new Set());
   
@@ -170,11 +173,11 @@ export function FeaturedListings() {
     mutationFn: (listingId: string) => api.listings.save(listingId),
     onSuccess: (data, listingId) => {
       setSavedListings(prev => new Set(prev).add(listingId));
-      toast.success('Vehicle saved to favorites');
+      toast.success(tCommon('success'));
       queryClient.invalidateQueries({ queryKey: ['listings', 'saved'] });
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to save vehicle');
+      toast.error(error.message || tCommon('error'));
     },
   });
 
@@ -186,17 +189,17 @@ export function FeaturedListings() {
         newSet.delete(listingId);
         return newSet;
       });
-      toast.success('Vehicle removed from favorites');
+      toast.success(tCommon('success'));
       queryClient.invalidateQueries({ queryKey: ['listings', 'saved'] });
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to remove vehicle');
+      toast.error(error.message || tCommon('error'));
     },
   });
 
   const handleToggleSave = async (listingId: string) => {
     if (!isAuthenticated) {
-      toast.error('Please sign in to save vehicles');
+      toast.error(tCommon('error'));
       router.push('/login');
       return;
     }
@@ -226,18 +229,18 @@ export function FeaturedListings() {
           <div>
             <div className="flex items-center gap-2 text-primary">
               <Sparkles className="h-5 w-5" />
-              <span className="text-sm font-medium uppercase tracking-wider">Featured</span>
+              <span className="text-sm font-medium uppercase tracking-wider">{t('featured')}</span>
             </div>
             <h2 className="mt-2 font-display text-3xl font-bold sm:text-4xl">
-              Hand-Picked Vehicles
+              {t('handPickedVehicles')}
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Curated selection of premium vehicles from verified dealers
+              {t('curatedSelection')}
             </p>
           </div>
           <Link href="/search?featured=true">
             <Button variant="outline" className="gap-2">
-              View All Featured
+              {t('viewAllFeatured')}
               <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>

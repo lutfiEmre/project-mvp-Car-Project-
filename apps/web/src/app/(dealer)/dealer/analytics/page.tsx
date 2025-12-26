@@ -19,12 +19,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useTranslations } from 'next-intl';
 
-const stats = [
-  { label: 'Total Views', value: '12,458', change: '+12.5%', trend: 'up', icon: Eye },
-  { label: 'Inquiries', value: '234', change: '+8.2%', trend: 'up', icon: MessageSquare },
-  { label: 'Vehicles Sold', value: '18', change: '+15%', trend: 'up', icon: Car },
-  { label: 'Revenue', value: '$892,500', change: '-3.1%', trend: 'down', icon: DollarSign },
+const getStats = (t: any) => [
+  { label: t('totalViews'), value: '12,458', change: '+12.5%', trend: 'up', icon: Eye },
+  { label: t('inquiries'), value: '234', change: '+8.2%', trend: 'up', icon: MessageSquare },
+  { label: t('vehiclesSold'), value: '18', change: '+15%', trend: 'up', icon: Car },
+  { label: t('revenue'), value: '$892,500', change: '-3.1%', trend: 'down', icon: DollarSign },
 ];
 
 const topPerformers = [
@@ -35,13 +36,15 @@ const topPerformers = [
 ];
 
 export default function AnalyticsPage() {
+  const t = useTranslations('dealer.analytics');
+  const stats = getStats(t);
   return (
     <div>
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold">Analytics</h1>
+          <h1 className="font-display text-2xl font-bold">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Track your dealership performance
+            {t('subtitle')}
           </p>
         </div>
         <Select defaultValue="30">
@@ -50,10 +53,10 @@ export default function AnalyticsPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="7">Last 7 days</SelectItem>
-            <SelectItem value="30">Last 30 days</SelectItem>
-            <SelectItem value="90">Last 90 days</SelectItem>
-            <SelectItem value="365">Last year</SelectItem>
+            <SelectItem value="7">{t('last7Days')}</SelectItem>
+            <SelectItem value="30">{t('last30Days')}</SelectItem>
+            <SelectItem value="90">{t('last90Days')}</SelectItem>
+            <SelectItem value="365">{t('lastYear')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -97,9 +100,9 @@ export default function AnalyticsPage() {
           transition={{ delay: 0.4 }}
           className="rounded-xl border bg-card p-6"
         >
-          <h3 className="font-semibold mb-4">Views Over Time</h3>
+          <h3 className="font-semibold mb-4">{t('viewsOverTime')}</h3>
           <div className="h-64 flex items-center justify-center bg-muted/30 rounded-lg">
-            <p className="text-muted-foreground">Chart visualization</p>
+            <p className="text-muted-foreground">{t('chartVisualization')}</p>
           </div>
         </motion.div>
 
@@ -109,9 +112,9 @@ export default function AnalyticsPage() {
           transition={{ delay: 0.5 }}
           className="rounded-xl border bg-card p-6"
         >
-          <h3 className="font-semibold mb-4">Inquiries by Source</h3>
+          <h3 className="font-semibold mb-4">{t('inquiriesBySource')}</h3>
           <div className="h-64 flex items-center justify-center bg-muted/30 rounded-lg">
-            <p className="text-muted-foreground">Chart visualization</p>
+            <p className="text-muted-foreground">{t('chartVisualization')}</p>
           </div>
         </motion.div>
       </div>
@@ -124,7 +127,7 @@ export default function AnalyticsPage() {
         className="rounded-xl border bg-card"
       >
         <div className="p-6 border-b">
-          <h3 className="font-semibold">Top Performing Listings</h3>
+          <h3 className="font-semibold">{t('topPerformingListings')}</h3>
         </div>
         <div className="divide-y">
           {topPerformers.map((vehicle, index) => (

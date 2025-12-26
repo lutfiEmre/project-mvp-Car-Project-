@@ -141,10 +141,10 @@ export default function DealerDashboardPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dealer', 'reviews'] });
-      toast.success('Review deleted successfully');
+      toast.success(t('reviewDeletedSuccess'));
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to delete review');
+      toast.error(error.message || t('failedToDeleteReview'));
     },
   });
 
@@ -476,8 +476,8 @@ export default function DealerDashboardPage() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="views" stroke="#3b82f6" strokeWidth={2} name="Views" />
-                <Line type="monotone" dataKey="inquiries" stroke="#10b981" strokeWidth={2} name="Inquiries" />
+                <Line type="monotone" dataKey="views" stroke="#3b82f6" strokeWidth={2} name={t('views')} />
+                <Line type="monotone" dataKey="inquiries" stroke="#10b981" strokeWidth={2} name={t('inquiries')} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -681,7 +681,7 @@ export default function DealerDashboardPage() {
                           size="sm"
                           className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 ml-auto"
                           onClick={() => {
-                            if (confirm('Are you sure you want to delete this review?')) {
+                            if (confirm(t('deleteReviewConfirm'))) {
                               deleteReviewMutation.mutate({
                                 reviewId: review.id,
                                 reviewType: review.type,

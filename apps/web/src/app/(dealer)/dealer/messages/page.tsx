@@ -39,8 +39,11 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSocket } from '@/hooks/use-socket';
+import { useTranslations } from 'next-intl';
 
 export default function DealerMessagesPage() {
+  const t = useTranslations('dealer.messages');
+  const tCommon = useTranslations('common');
   const [selectedInquiry, setSelectedInquiry] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -247,9 +250,9 @@ export default function DealerMessagesPage() {
       queryClient.invalidateQueries({ queryKey: ['dealer', 'inquiries'] });
       
       if (variables.status === 'ARCHIVED') {
-        toast.success('Conversation deleted');
+        toast.success(t('conversationDeleted'));
       } else {
-        toast.success('Reply sent successfully!');
+        toast.success(t('replySentSuccess'));
         setReplyText('');
         setIsReplying(false);
       }
@@ -259,7 +262,7 @@ export default function DealerMessagesPage() {
       }, 100);
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to update inquiry');
+      toast.error(error.message || t('failedToUpdateInquiry'));
       setIsReplying(false);
     },
   });
@@ -294,12 +297,12 @@ export default function DealerMessagesPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold">Messages</h1>
+          <h1 className="font-display text-3xl font-bold">{t('title')}</h1>
           <p className="text-muted-foreground mt-1">
-            Manage inquiries and messages from potential buyers
+            {t('subtitle')}
             {unreadCount > 0 && (
               <Badge variant="secondary" className="ml-2">
-                {unreadCount} new
+                {unreadCount} {t('new')}
               </Badge>
             )}
           </p>
@@ -316,7 +319,7 @@ export default function DealerMessagesPage() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search messages..."
+                    placeholder={t('searchMessages')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"
@@ -324,14 +327,14 @@ export default function DealerMessagesPage() {
                 </div>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Filter by status" />
+                    <SelectValue placeholder={t('filterByStatus')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Messages</SelectItem>
-                    <SelectItem value="NEW">New</SelectItem>
-                    <SelectItem value="READ">Read</SelectItem>
-                    <SelectItem value="REPLIED">Replied</SelectItem>
-                    <SelectItem value="ARCHIVED">Archived</SelectItem>
+                    <SelectItem value="all">{t('allMessages')}</SelectItem>
+                    <SelectItem value="NEW">{t('unread')}</SelectItem>
+                    <SelectItem value="READ">{t('read')}</SelectItem>
+                    <SelectItem value="REPLIED">{t('replied')}</SelectItem>
+                    <SelectItem value="ARCHIVED">{t('archived')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -341,7 +344,7 @@ export default function DealerMessagesPage() {
           {/* Messages List */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Inquiries</CardTitle>
+              <CardTitle className="text-lg">{t('inquiries')}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {isLoading ? (
@@ -351,7 +354,7 @@ export default function DealerMessagesPage() {
               ) : filteredInquiries.length === 0 ? (
                 <div className="text-center py-12 px-4">
                   <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">No inquiries found</p>
+                  <p className="text-muted-foreground">{t('noInquiriesFound')}</p>
                 </div>
               ) : (
                 <div className="divide-y max-h-[600px] overflow-y-auto">
@@ -417,7 +420,7 @@ export default function DealerMessagesPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (confirm('Are you sure you want to delete this conversation?')) {
+                          if (confirm(t('deleteConversationConfirm'))) {
                             handleArchive(inquiry.id);
                           }
                         }}
@@ -589,7 +592,7 @@ export default function DealerMessagesPage() {
                           <div className="text-center">
                             <MessageCircle className="h-12 w-12 mx-auto mb-2 text-muted-foreground opacity-50" />
                             <p className="text-sm text-muted-foreground">
-                              No messages yet
+                              {t('noMessagesYet')}
                             </p>
                           </div>
                         </motion.div>
@@ -678,7 +681,7 @@ export default function DealerMessagesPage() {
                         <div className="bg-primary/50 text-primary-foreground rounded-2xl rounded-tr-sm px-4 py-2.5">
                           <div className="flex items-center gap-2">
                             <Loader2 className="h-3 w-3 animate-spin" />
-                            <p className="text-sm">Sending...</p>
+                            <p className="text-sm">{t('sending')}</p>
                           </div>
                         </div>
                       </div>
@@ -693,7 +696,7 @@ export default function DealerMessagesPage() {
                   <div className="flex items-end gap-2">
                     <div className="flex-1 relative">
                       <Textarea
-                        placeholder="Type a message..."
+                        placeholder={t('typeAMessage')}
                         value={replyText}
                         onChange={(e) => setReplyText(e.target.value)}
                         onKeyDown={(e) => {
@@ -736,14 +739,14 @@ export default function DealerMessagesPage() {
                   >
                     <Button variant="outline" className="w-full gap-2">
                       <Mail className="h-4 w-4" />
-                      Email
+                      {t('email')}
                     </Button>
                   </a>
                   {selectedInquiry.phone && (
                     <a href={`tel:${selectedInquiry.phone}`} className="flex-1">
                       <Button variant="outline" className="w-full gap-2">
                         <Phone className="h-4 w-4" />
-                        Call
+                        {t('call')}
                       </Button>
                     </a>
                   )}
@@ -754,9 +757,9 @@ export default function DealerMessagesPage() {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <MessageCircle className="h-16 w-16 text-muted-foreground mb-4" />
-                <p className="text-lg font-medium mb-2">Select a message</p>
+                <p className="text-lg font-medium mb-2">{t('selectMessage')}</p>
                 <p className="text-sm text-muted-foreground text-center">
-                  Choose an inquiry from the list to view details and reply
+                  {t('chooseMessageFromList')}
                 </p>
               </CardContent>
             </Card>

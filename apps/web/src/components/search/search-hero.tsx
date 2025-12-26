@@ -48,17 +48,6 @@ const priceRanges = [
   { label: 'Over $100,000', value: '100000-999999' },
 ];
 
-const carStyles = [
-  { name: 'SUV', value: 'SUV' },
-  { name: 'Sedan', value: 'SEDAN' },
-  { name: 'Truck', value: 'PICKUP' },
-  { name: 'Coupe', value: 'COUPE' },
-  { name: 'Hatchback', value: 'HATCHBACK' },
-  { name: 'Electric', value: 'ELECTRIC' },
-  { name: 'Luxury', value: 'LUXURY' },
-  { name: 'Convertible', value: 'CONVERTIBLE' },
-];
-
 export function SearchHero() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -71,6 +60,17 @@ export function SearchHero() {
   const t = useTranslations('home');
   const tSearch = useTranslations('search');
   const tCommon = useTranslations('common');
+  
+  const carStyles = [
+    { name: tSearch('suv'), value: 'SUV' },
+    { name: tSearch('sedan'), value: 'SEDAN' },
+    { name: tSearch('truck'), value: 'PICKUP' },
+    { name: tSearch('coupe'), value: 'COUPE' },
+    { name: tSearch('hatchback'), value: 'HATCHBACK' },
+    { name: tSearch('electric'), value: 'ELECTRIC' },
+    { name: tSearch('luxury'), value: 'LUXURY' },
+    { name: tSearch('convertible'), value: 'CONVERTIBLE' },
+  ];
 
   // Get available models based on selected make
   const availableModels = useMemo(() => {
@@ -278,7 +278,7 @@ export function SearchHero() {
                 {/* Price Range */}
                 <Select value={priceRange} onValueChange={setPriceRange}>
                   <SelectTrigger className="h-10 border-0 bg-slate-100 text-sm dark:bg-slate-800">
-                    <SelectValue placeholder="Price" />
+                    <SelectValue placeholder={t('price')} />
                   </SelectTrigger>
                   <SelectContent>
                     {priceRanges.map((p) => (
@@ -291,7 +291,7 @@ export function SearchHero() {
                 <Input
                   value={postalCode}
                   onChange={(e) => setPostalCode(e.target.value.toUpperCase())}
-                  placeholder="Postal"
+                  placeholder={t('postal')}
                   className="h-10 border-0 bg-slate-100 text-sm dark:bg-slate-800"
                   maxLength={7}
                 />
@@ -320,7 +320,7 @@ export function SearchHero() {
             </div>
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm text-white/70">
-              <span>Popular:</span>
+              <span>{t('popular')}</span>
               {['Tesla', 'Toyota RAV4', 'Honda Civic', 'Ford F-150'].map((term) => (
                 <button
                   key={term}
@@ -341,10 +341,10 @@ export function SearchHero() {
           className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4"
         >
           {[
-            { value: '50K+', label: 'Active Listings' },
-            { value: '2,500+', label: 'Trusted Dealers' },
-            { value: '98%', label: 'Happy Customers' },
-            { value: '24/7', label: 'Support' },
+            { value: '50K+', label: t('activeListings') },
+            { value: '2,500+', label: t('trustedDealers') },
+            { value: '98%', label: t('happyCustomers') },
+            { value: '24/7', label: t('support') },
           ].map((stat, i) => (
             <motion.div
               key={stat.label}

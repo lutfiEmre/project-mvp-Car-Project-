@@ -49,8 +49,10 @@ import { useAuthStore } from '@/stores/auth';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { User as UserType } from '@carhaus/types';
+import { useTranslations } from 'next-intl';
 
 export default function SettingsPage() {
+  const t = useTranslations('dashboard');
   const { user, refreshUser } = useAuth();
   const { setUser } = useAuthStore();
   const queryClient = useQueryClient();
@@ -213,7 +215,7 @@ export default function SettingsPage() {
         
         queryClient.invalidateQueries({ queryKey: ['user', 'me'] });
         
-        toast.success('Profile updated successfully');
+        toast.success(t('profileUpdatedSuccess'));
         
         window.location.href = '/dashboard/settings';
       }
@@ -223,7 +225,7 @@ export default function SettingsPage() {
     },
     onError: (error: any) => {
       console.error('Profile update error:', error);
-      toast.error(`Failed to update profile: ${error.message || 'Unknown error'}`);
+      toast.error(error.message || t('failedToUpdateProfile'));
     },
   });
 
@@ -248,11 +250,11 @@ export default function SettingsPage() {
       return response.json();
     },
     onSuccess: () => {
-      toast.success('Password changed successfully');
+      toast.success(t('passwordChangedSuccess'));
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to change password');
+      toast.error(error.message || t('failedToChangePassword'));
     },
   });
 
@@ -325,10 +327,10 @@ export default function SettingsPage() {
       return response.json();
     },
     onSuccess: () => {
-      toast.success('Notification settings updated');
+      toast.success(t('notificationSettingsUpdated'));
     },
     onError: () => {
-      toast.error('Failed to update notification settings');
+      toast.error(t('failedToUpdateNotificationSettings'));
     },
   });
 
@@ -363,7 +365,7 @@ export default function SettingsPage() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('File size must be less than 10MB');
+        toast.error(t('fileSizeLimit'));
         return;
       }
       const reader = new FileReader();
@@ -384,17 +386,17 @@ export default function SettingsPage() {
     setPendingAvatarPreview(previewUrl);
     setCropperOpen(false);
     setSelectedImage(null);
-    toast.success('Avatar ready to save. Click "Save Changes" to apply.');
+    toast.success(t('avatarReadyToSave'));
   };
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast.error('Passwords do not match');
+      toast.error(t('passwordsDoNotMatch'));
       return;
     }
     if (passwordForm.newPassword.length < 8) {
-      toast.error('Password must be at least 8 characters');
+      toast.error(t('passwordMinLength'));
       return;
     }
     changePasswordMutation.mutate({
@@ -406,9 +408,9 @@ export default function SettingsPage() {
   return (
     <div className="max-w-4xl">
       <div className="mb-8">
-        <h1 className="font-display text-2xl font-bold">Settings</h1>
+        <h1 className="font-display text-2xl font-bold">{t('settings')}</h1>
         <p className="text-muted-foreground">
-          Manage your account settings and preferences
+          {t('manageSettings')}
         </p>
       </div>
 
@@ -416,19 +418,19 @@ export default function SettingsPage() {
         <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
           <TabsTrigger value="profile" className="gap-2">
             <User className="h-4 w-4" />
-            <span className="hidden sm:inline">Profile</span>
+            <span className="hidden sm:inline">{t('profile')}</span>
           </TabsTrigger>
           <TabsTrigger value="notifications" className="gap-2">
             <Bell className="h-4 w-4" />
-            <span className="hidden sm:inline">Notifications</span>
+            <span className="hidden sm:inline">{t('notifications')}</span>
           </TabsTrigger>
           <TabsTrigger value="security" className="gap-2">
             <Lock className="h-4 w-4" />
-            <span className="hidden sm:inline">Security</span>
+            <span className="hidden sm:inline">{t('security')}</span>
           </TabsTrigger>
           <TabsTrigger value="preferences" className="gap-2">
             <Palette className="h-4 w-4" />
-            <span className="hidden sm:inline">Preferences</span>
+            <span className="hidden sm:inline">{t('preferences')}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -439,7 +441,7 @@ export default function SettingsPage() {
             className="space-y-6"
           >
             <div className="rounded-xl border bg-card p-6">
-              <h3 className="font-semibold mb-4">Profile Photo</h3>
+              <h3 className="font-semibold mb-4">{t('profilePhoto')}</h3>
               <div className="flex items-center gap-6">
                 <Avatar className="h-20 w-20" key={user?.avatar || 'no-avatar'}>
                   <AvatarImage 
@@ -447,7 +449,7 @@ export default function SettingsPage() {
                       pendingAvatarPreview || 
                       (user?.avatar ? `${user.avatar}?cb=${Date.now()}` : '')
                     } 
-                    alt="Profile photo"
+                    alt={t('profilePhoto')}
                     key={user?.avatar || 'avatar-img'}
                   />
                   <AvatarFallback className="bg-primary text-primary-foreground text-xl">
@@ -469,20 +471,20 @@ export default function SettingsPage() {
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <Camera className="h-4 w-4" />
-                    Change Photo
+                    {t('changePhoto')}
                   </Button>
                   <p className="text-xs text-muted-foreground">
-                    JPG, PNG or GIF. Max 2MB.
+                    {t('photoFormatHint')}
                   </p>
                 </div>
               </div>
             </div>
 
             <div className="rounded-xl border bg-card p-6">
-              <h3 className="font-semibold mb-4">Personal Information</h3>
+              <h3 className="font-semibold mb-4">{t('personalInformation')}</h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName">{t('firstName')}</Label>
                   <Input 
                     id="firstName" 
                     value={profileForm.firstName}
@@ -490,7 +492,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName">{t('lastName')}</Label>
                   <Input 
                     id="lastName" 
                     value={profileForm.lastName}
@@ -498,7 +500,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('email')}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input 
@@ -510,7 +512,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="phone">{t('phone')}</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input 
@@ -524,10 +526,10 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
+                <Label htmlFor="bio">{t('bio')}</Label>
                 <Textarea
                   id="bio"
-                  placeholder="Tell us about yourself..."
+                  placeholder={t('bioPlaceholder')}
                   value={profileForm.bio}
                   onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
                   rows={4}
@@ -540,12 +542,12 @@ export default function SettingsPage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
+                  <Label htmlFor="city">{t('city')}</Label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       id="city"
-                      placeholder="e.g., Toronto"
+                      placeholder={t('cityPlaceholder')}
                       value={profileForm.city}
                       onChange={(e) => setProfileForm({ ...profileForm, city: e.target.value })}
                       className="pl-10"
@@ -553,13 +555,13 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="province">Province</Label>
+                  <Label htmlFor="province">{t('province')}</Label>
                   <Select
                     value={profileForm.province}
                     onValueChange={(value) => setProfileForm({ ...profileForm, province: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select province" />
+                      <SelectValue placeholder={t('selectProvince')} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Ontario">Ontario</SelectItem>
@@ -587,7 +589,7 @@ export default function SettingsPage() {
                 ) : (
                 <Save className="h-4 w-4" />
                 )}
-                Save Changes
+                {t('saveChanges')}
               </Button>
             </div>
           </motion.div>
@@ -599,13 +601,13 @@ export default function SettingsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="rounded-xl border bg-card p-6"
           >
-            <h3 className="font-semibold mb-6">Notification Preferences</h3>
+            <h3 className="font-semibold mb-6">{t('notificationPreferences')}</h3>
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Email Notifications</Label>
+                  <Label>{t('emailNotifications')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Receive notifications via email
+                    {t('emailNotificationsDesc')}
                   </p>
                 </div>
                 <Switch
@@ -617,9 +619,9 @@ export default function SettingsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Push Notifications</Label>
+                  <Label>{t('pushNotifications')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Receive push notifications on your device
+                    {t('pushNotificationsDesc')}
                   </p>
                 </div>
                 <Switch
@@ -631,9 +633,9 @@ export default function SettingsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>SMS Notifications</Label>
+                  <Label>{t('smsNotifications')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Receive notifications via SMS
+                    {t('smsNotificationsDesc')}
                   </p>
                 </div>
                 <Switch
@@ -645,9 +647,9 @@ export default function SettingsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Marketing Emails</Label>
+                  <Label>{t('marketingEmails')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Receive marketing and promotional emails
+                    {t('marketingEmailsDesc')}
                   </p>
                 </div>
                 <Switch
@@ -668,7 +670,7 @@ export default function SettingsPage() {
               ) : (
               <Save className="h-4 w-4" />
               )}
-              Save Preferences
+              {t('savePreferences')}
             </Button>
           </motion.div>
         </TabsContent>
@@ -680,10 +682,10 @@ export default function SettingsPage() {
             className="space-y-6"
           >
             <div className="rounded-xl border bg-card p-6">
-              <h3 className="font-semibold mb-4">Change Password</h3>
+              <h3 className="font-semibold mb-4">{t('changePassword')}</h3>
               <form onSubmit={handlePasswordSubmit} className="space-y-4 max-w-md">
                 <div className="space-y-2">
-                  <Label htmlFor="currentPassword">Current Password</Label>
+                  <Label htmlFor="currentPassword">{t('currentPassword')}</Label>
                   <div className="relative">
                     <Input
                       id="currentPassword"
@@ -705,7 +707,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="newPassword">New Password</Label>
+                  <Label htmlFor="newPassword">{t('newPassword')}</Label>
                   <Input
                     id="newPassword"
                     type={showPassword ? 'text' : 'password'}
@@ -714,7 +716,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                  <Label htmlFor="confirmPassword">{t('confirmNewPassword')}</Label>
                   <Input
                     id="confirmPassword"
                     type={showPassword ? 'text' : 'password'}
@@ -732,33 +734,33 @@ export default function SettingsPage() {
                   ) : (
                   <Lock className="h-4 w-4" />
                   )}
-                  Update Password
+                  {t('updatePassword')}
                 </Button>
               </form>
             </div>
 
             <div className="rounded-xl border bg-card p-6">
-              <h3 className="font-semibold mb-4">Two-Factor Authentication</h3>
+              <h3 className="font-semibold mb-4">{t('twoFactorAuth')}</h3>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm">
-                    Add an extra layer of security to your account
+                    {t('twoFactorAuthDesc')}
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Status: <span className="text-yellow-600">Not Enabled</span>
+                    {t('status')}: <span className="text-yellow-600">{t('notEnabled')}</span>
                   </p>
                 </div>
                 <Button variant="outline" className="gap-2">
                   <Shield className="h-4 w-4" />
-                  Enable 2FA
+                  {t('enable2FA')}
                 </Button>
               </div>
             </div>
 
             <div className="rounded-xl border border-destructive/50 bg-destructive/5 p-6">
-              <h3 className="font-semibold mb-4 text-destructive">Delete Account</h3>
+              <h3 className="font-semibold mb-4 text-destructive">{t('deleteAccount')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Once you delete your account, there is no going back. Your request will be reviewed by an admin.
+                {t('deleteAccountWarning')}
               </p>
               <Button 
                 variant="destructive" 
@@ -766,7 +768,7 @@ export default function SettingsPage() {
                 onClick={() => setDeleteDialogOpen(true)}
               >
                 <Trash2 className="h-4 w-4" />
-                Request Account Deletion
+                {t('requestAccountDeletion')}
               </Button>
             </div>
           </motion.div>
@@ -778,10 +780,10 @@ export default function SettingsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="rounded-xl border bg-card p-6"
           >
-            <h3 className="font-semibold mb-6">Display Preferences</h3>
+            <h3 className="font-semibold mb-6">{t('displayPreferences')}</h3>
             <div className="space-y-6 max-w-md">
               <div className="space-y-2">
-                <Label>Language</Label>
+                <Label>{t('language')}</Label>
                 <Select defaultValue="en">
                   <SelectTrigger>
                     <Globe className="mr-2 h-4 w-4" />
@@ -795,7 +797,7 @@ export default function SettingsPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Currency</Label>
+                <Label>{t('currency')}</Label>
                 <Select defaultValue="cad">
                   <SelectTrigger>
                     <SelectValue />
@@ -808,20 +810,20 @@ export default function SettingsPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Distance Unit</Label>
+                <Label>{t('distanceUnit')}</Label>
                 <Select defaultValue="km">
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="km">Kilometers (km)</SelectItem>
-                    <SelectItem value="mi">Miles (mi)</SelectItem>
+                    <SelectItem value="km">{t('kilometers')}</SelectItem>
+                    <SelectItem value="mi">{t('miles')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <Button className="gap-2">
                 <Save className="h-4 w-4" />
-                Save Preferences
+                {t('savePreferences')}
               </Button>
             </div>
           </motion.div>
@@ -833,26 +835,26 @@ export default function SettingsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />
-              Request Account Deletion
+              {t('requestAccountDeletion')}
             </DialogTitle>
             <DialogDescription>
-              Your account deletion request will be reviewed by an admin. This process may take 1-3 business days.
+              {t('deleteAccountRequestDesc')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Reason for deletion (optional)</Label>
+              <Label>{t('reasonForDeletion')}</Label>
               <Textarea
                 value={deleteReason}
                 onChange={(e) => setDeleteReason(e.target.value)}
-                placeholder="Please tell us why you want to delete your account..."
+                placeholder={t('reasonForDeletionPlaceholder')}
                 rows={4}
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button 
               variant="destructive"
@@ -862,7 +864,7 @@ export default function SettingsPage() {
               {requestDeletionMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
-              Submit Request
+              {t('submitRequest')}
             </Button>
           </DialogFooter>
         </DialogContent>

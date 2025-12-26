@@ -31,6 +31,7 @@
     "reviews": "відгуків"
   },
   "nav": {
+    "browse": "Переглянути",
     "buying": "Купити",
     "usedVehicles": "Вживані авто",
     "newVehicles": "Нові авто",
@@ -73,6 +74,8 @@
     "viewAllDealers": "Переглянути всіх дилерів",
     "whyChooseUs": "Чому обрати DrivingAway",
     "whyChooseUsSubtitle": "Ми прагнемо зробити ваш досвід покупки авто простим, прозорим та приємним",
+    "whyChooseDrivingAway": "Чому обрати DrivingAway?",
+    "whyChooseSubtitle": "Ми створюємо найбільш надійний автомобільний ринок у Канаді",
     "ctaTitle": "Готові знайти авто своєї мрії?",
     "ctaSubtitle": "Приєднуйтесь до тисяч задоволених клієнтів, які знайшли свій ідеальний автомобіль через DrivingAway",
     "ctaButton": "Розпочати пошук"
@@ -270,7 +273,31 @@
     "terms": "Умови обслуговування",
     "privacy": "Політика конфіденційності",
     "cookies": "Політика cookies",
-    "copyright": "© {year} DrivingAway. Усі права захищені."
+    "copyright": "© {year} DrivingAway. Усі права захищені.",
+    "browseTitle": "Переглянути",
+    "sellTitle": "Продати",
+    "companyTitle": "Компанія",
+    "supportTitle": "Підтримка",
+    "browseByProvince": "Переглянути за провінцією",
+    "searchCars": "Пошук авто",
+    "newCars": "Нові авто",
+    "usedCars": "Вживані авто",
+    "certifiedPreOwned": "Сертифіковані вживані",
+    "electricVehicles": "Електромобілі",
+    "sellYourCar": "Продати авто",
+    "dealerSignUp": "Реєстрація дилера",
+    "pricing": "Ціноутворення",
+    "dealerResources": "Ресурси для дилерів",
+    "safetyTips": "Поради з безпеки",
+    "accessibility": "Доступність",
+    "stayUpdated": "Залишайтеся в курсі",
+    "subscribeDesc": "Підпишіться, щоб отримувати останні пропозиції, нові оголошення та автомобільні новини.",
+    "enterEmail": "Введіть вашу електронну пошту",
+    "subscribe": "Підписатися",
+    "companyDescription": "Провідний автомобільний ринок Канади. Знайдіть ідеальний автомобіль з тисяч оголошень від надійних дилерів та приватних продавців по всій країні.",
+    "location": "Торонто, Онтаріо, Канада",
+    "phone": "1-800-DRIVING",
+    "email": "hello@drivingaway.ca"
   },
   "errors": {
     "pageNotFound": "Сторінку не знайдено",
@@ -278,6 +305,25 @@
     "somethingWentWrong": "Щось пішло не так",
     "tryAgain": "Спробувати знову",
     "goHome": "На головну"
+  },
+  "maintenance": {
+    "title": "На обслуговуванні",
+    "subtitle": "Ми незабаром повернемося",
+    "thankYou": "Дякуємо за ваше терпіння",
+    "defaultMessage": "Ми зараз проводимо планове обслуговування. Будь ласка, перевірте пізніше!"
+  },
+  "listing": {
+    "vehicleInfo": "Інформація про авто",
+    "specifications": "Технічні характеристики",
+    "photos": "Фото",
+    "description": "Опис",
+    "pricing": "Ціноутворення",
+    "vehicleInformation": "Інформація про авто",
+    "descriptionAndLocation": "Опис та місцезнаходження",
+    "draftRestored": "Чернетку відновлено. Продовжіть з того місця, де ви зупинилися.",
+    "photosAdded": "Додано {count} фото.",
+    "descriptionRequired": "Опис обов'язковий",
+    "addPhotos": "Додати фото"
   }
 }
 

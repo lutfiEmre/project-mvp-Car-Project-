@@ -11,8 +11,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 export default function ReviewsPage() {
+  const t = useTranslations('dealer.reviews');
+  const tCommon = useTranslations('common');
   const queryClient = useQueryClient();
   const [respondingToReview, setRespondingToReview] = useState<string | null>(null);
   const [responseText, setResponseText] = useState<{ [key: string]: string }>({});
@@ -87,10 +90,10 @@ export default function ReviewsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dealer', 'reviews'] });
-      toast.success('Review deleted successfully');
+      toast.success(t('reviewDeletedSuccess'));
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to delete review');
+      toast.error(error.message || t('failedToDeleteReview'));
     },
   });
 
@@ -131,10 +134,10 @@ export default function ReviewsPage() {
       queryClient.invalidateQueries({ queryKey: ['listing', 'reviews'] });
       setRespondingToReview(null);
       setResponseText({});
-      toast.success('Response added successfully');
+      toast.success(t('responseAddedSuccess'));
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to add response');
+      toast.error(error.message || t('failedToAddResponse'));
     },
   });
 
@@ -146,7 +149,7 @@ export default function ReviewsPage() {
   const handleSubmitResponse = (reviewId: string, review: any) => {
     const response = responseText[reviewId]?.trim();
     if (!response) {
-      toast.error('Please enter a response');
+      toast.error(t('pleaseEnterResponse'));
       return;
     }
     respondToReviewMutation.mutate({ 
@@ -185,10 +188,10 @@ export default function ReviewsPage() {
   if (error) {
     return (
       <div className="text-center py-12">
-        <p className="text-lg font-semibold text-red-600 mb-2">Error loading reviews</p>
+        <p className="text-lg font-semibold text-red-600 mb-2">{t('errorLoadingReviews')}</p>
         <p className="text-muted-foreground mb-4">{error.message}</p>
         <Button onClick={() => refetch()}>
-          Try Again
+          {t('tryAgain')}
         </Button>
         <div className="mt-4 text-xs text-muted-foreground">
           <p>Debug Info:</p>
@@ -204,9 +207,9 @@ export default function ReviewsPage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold">Reviews</h1>
+          <h1 className="font-display text-2xl font-bold">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Manage and respond to customer reviews
+            {t('subtitle')}
           </p>
           {reviewsData && (
             <div className="text-xs text-muted-foreground mt-1 space-y-1 bg-slate-100 dark:bg-slate-800 p-2 rounded">
@@ -227,10 +230,10 @@ export default function ReviewsPage() {
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Refreshing...
+              {t('refreshing')}
             </>
           ) : (
-            'Refresh'
+            t('refresh')
           )}
         </Button>
       </div>
@@ -262,14 +265,14 @@ export default function ReviewsPage() {
               ))}
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              Based on {ratingStats.total} review{ratingStats.total !== 1 ? 's' : ''}
+              {t('basedOn', { count: ratingStats.total })}
             </p>
           </div>
 
           <div className="space-y-2">
             {ratingStats.distribution.map((item) => (
               <div key={item.stars} className="flex items-center gap-2">
-                <span className="w-12 text-sm">{item.stars} stars</span>
+                <span className="w-12 text-sm">{item.stars} {t('stars')}</span>
                 <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                   <div
                     className="h-full bg-yellow-400 rounded-full transition-all"
@@ -292,9 +295,9 @@ export default function ReviewsPage() {
         <Card>
           <CardContent className="p-12 text-center">
             <Star className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Reviews Yet</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('noReviewsYet')}</h3>
             <p className="text-muted-foreground">
-              You haven't received any reviews yet.
+              {t('noReviewsMessage')}
             </p>
           </CardContent>
         </Card>
@@ -338,9 +341,9 @@ export default function ReviewsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   {review.isPublished ? (
-                    <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">Published</span>
+                    <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">{t('published')}</span>
                   ) : (
-                    <span className="text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded">Pending</span>
+                    <span className="text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded">{t('pending')}</span>
                   )}
                   {(review.isOwnReview || review.type === 'listing') && (
                     <Button
@@ -348,7 +351,7 @@ export default function ReviewsPage() {
                       size="sm"
                       className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                       onClick={() => {
-                        if (confirm('Are you sure you want to delete this review?')) {
+                        if (confirm(t('deleteConfirm'))) {
                           deleteReviewMutation.mutate({
                             reviewId: review.id,
                             reviewType: review.type,
@@ -370,7 +373,7 @@ export default function ReviewsPage() {
               {/* Show listing info for listing reviews */}
               {review.type === 'listing' && review.listing && (
                 <div className="mt-3 mb-2 p-2 bg-muted/50 rounded text-sm">
-                  <span className="text-muted-foreground">Review for: </span>
+                  <span className="text-muted-foreground">{t('reviewFor')} </span>
                   <Link 
                     href={`/vehicles/${review.listing.slug || review.listing.id}`}
                     className="text-primary hover:underline font-medium"
@@ -389,7 +392,7 @@ export default function ReviewsPage() {
                 <div className="mt-4 pt-4 border-t">
                   <div className="flex items-center gap-2 mb-2">
                     <MessageSquare className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium">Your Response</span>
+                    <span className="text-sm font-medium">{t('yourResponse')}</span>
                     {review.dealerResponseAt && (
                       <span className="text-xs text-muted-foreground ml-auto">
                         {formatDate(review.dealerResponseAt)}
@@ -406,7 +409,7 @@ export default function ReviewsPage() {
                     onClick={() => handleRespond(review.id)}
                   >
                     <Reply className="mr-2 h-3 w-3" />
-                    Edit Response
+                    {t('editResponse')}
                   </Button>
                 </div>
               ) : respondingToReview === review.id ? (
@@ -414,7 +417,7 @@ export default function ReviewsPage() {
                   <div className="space-y-3">
                     <div>
                       <Textarea
-                        placeholder="Write your response to this review..."
+                        placeholder={t('writeResponse')}
                         value={responseText[review.id] || ''}
                         onChange={(e) =>
                           setResponseText({ ...responseText, [review.id]: e.target.value })
@@ -432,12 +435,12 @@ export default function ReviewsPage() {
                         {respondToReviewMutation.isPending ? (
                           <>
                             <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                            Sending...
+                            {t('sending')}
                           </>
                         ) : (
                           <>
                             <Reply className="mr-2 h-3 w-3" />
-                            Send Response
+                            {t('sendResponse')}
                           </>
                         )}
                       </Button>
@@ -447,7 +450,7 @@ export default function ReviewsPage() {
                         onClick={() => handleCancelResponse(review.id)}
                         disabled={respondToReviewMutation.isPending}
                       >
-                        Cancel
+                        {tCommon('cancel')}
                       </Button>
                     </div>
                   </div>
@@ -460,7 +463,7 @@ export default function ReviewsPage() {
                     onClick={() => handleRespond(review.id)}
                   >
                     <Reply className="mr-2 h-3 w-3" />
-                    Respond to Review
+                    {t('respondToReview')}
                   </Button>
                 </div>
               )}

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 const plans = [
   {
@@ -47,12 +48,13 @@ const invoices = [
 ];
 
 export default function BillingPage() {
+  const t = useTranslations('dashboard');
   return (
     <div>
       <div className="mb-8">
-        <h1 className="font-display text-2xl font-bold">Billing</h1>
+        <h1 className="font-display text-2xl font-bold">{t('billing')}</h1>
         <p className="text-muted-foreground">
-          Manage your subscription and billing information
+          {t('manageBilling')}
         </p>
       </div>
 
@@ -64,9 +66,9 @@ export default function BillingPage() {
               <Zap className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h3 className="font-display text-lg font-semibold">Starter Plan</h3>
+              <h3 className="font-display text-lg font-semibold">{t('starterPlan')}</h3>
               <p className="text-sm text-muted-foreground">
-                Renews on February 1, 2024
+                {t('renewsOn')} February 1, 2024
               </p>
             </div>
           </div>
@@ -79,7 +81,7 @@ export default function BillingPage() {
 
       {/* Plans */}
       <div className="mb-8">
-        <h2 className="font-display text-lg font-semibold mb-4">Available Plans</h2>
+        <h2 className="font-display text-lg font-semibold mb-4">{t('availablePlans')}</h2>
         <div className="grid gap-6 md:grid-cols-3">
           {plans.map((plan, index) => (
             <motion.div
@@ -96,7 +98,7 @@ export default function BillingPage() {
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-white">
-                    Popular
+                    {t('popular')}
                   </span>
                 </div>
               )}
@@ -126,7 +128,7 @@ export default function BillingPage() {
                 variant={plan.current ? 'outline' : 'default'}
                 disabled={plan.current}
               >
-                {plan.current ? 'Current Plan' : 'Upgrade'}
+                {plan.current ? t('currentPlan') : t('upgrade')}
               </Button>
             </motion.div>
           ))}
@@ -136,10 +138,10 @@ export default function BillingPage() {
       {/* Payment Method */}
       <div className="mb-8 rounded-xl border bg-card p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-lg font-semibold">Payment Method</h2>
+          <h2 className="font-display text-lg font-semibold">{t('paymentMethod')}</h2>
           <Button variant="outline" size="sm" className="gap-2">
             <Plus className="h-4 w-4" />
-            Add New
+            {t('addNew')}
           </Button>
         </div>
         
@@ -149,16 +151,16 @@ export default function BillingPage() {
           </div>
           <div className="flex-1">
             <p className="font-medium">•••• •••• •••• 4242</p>
-            <p className="text-sm text-muted-foreground">Expires 12/25</p>
+            <p className="text-sm text-muted-foreground">{t('expires')} 12/25</p>
           </div>
-          <Button variant="ghost" size="sm">Edit</Button>
+          <Button variant="ghost" size="sm">{t('edit')}</Button>
         </div>
       </div>
 
       {/* Billing History */}
       <div className="rounded-xl border bg-card">
         <div className="p-6 border-b">
-          <h2 className="font-display text-lg font-semibold">Billing History</h2>
+          <h2 className="font-display text-lg font-semibold">{t('billingHistory')}</h2>
         </div>
         <div className="divide-y">
           {invoices.map((invoice) => (

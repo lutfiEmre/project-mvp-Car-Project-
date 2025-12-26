@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 const categories = [
   {
@@ -44,15 +45,17 @@ const categories = [
 ];
 
 export function BrowseByType() {
+  const t = useTranslations('home');
+  const tDashboard = useTranslations('dashboard');
   return (
     <section className="py-20 bg-slate-50 dark:bg-slate-900/50">
       <div className="container mx-auto px-4">
         <div className="text-center">
           <h2 className="font-display text-3xl font-bold sm:text-4xl">
-            Browse by Category
+            {t('browseByType')}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            Find the perfect vehicle type that fits your lifestyle
+            {t('browseByTypeSubtitle')}
           </p>
         </div>
 
@@ -75,7 +78,7 @@ export function BrowseByType() {
                         {category.name}
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        {category.count} listings
+                        {category.count} {tDashboard('listings')}
                       </p>
                     </div>
                     <ArrowRight className="h-5 w-5 text-muted-foreground transition-transform duration-300 group-hover:translate-x-1 group-hover:text-primary" />

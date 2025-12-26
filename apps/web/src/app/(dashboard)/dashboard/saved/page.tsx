@@ -60,10 +60,10 @@ export default function SavedVehiclesPage() {
     },
     onError: (error: any, listingId, context) => {
       queryClient.setQueryData(['listings', 'saved'], context?.previousData);
-      toast.error(error.message || 'Failed to remove vehicle');
+      toast.error(error.message || t('failedToRemove'));
     },
     onSuccess: () => {
-      toast.success('Vehicle removed from saved');
+      toast.success(t('vehicleRemoved'));
       queryClient.invalidateQueries({ queryKey: ['listings', 'saved'] });
     },
   });
@@ -102,7 +102,7 @@ export default function SavedVehiclesPage() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search saved vehicles..."
+            placeholder={t('searchSavedVehicles')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -111,13 +111,13 @@ export default function SavedVehiclesPage() {
         <div className="flex gap-2">
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Sort by" />
+              <SelectValue placeholder={t('sortBy')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="recent">Recently Saved</SelectItem>
-              <SelectItem value="price-low">Price: Low to High</SelectItem>
-              <SelectItem value="price-high">Price: High to Low</SelectItem>
-              <SelectItem value="year">Newest Year</SelectItem>
+              <SelectItem value="recent">{t('recentlySaved')}</SelectItem>
+              <SelectItem value="price-low">{t('priceLowHigh')}</SelectItem>
+              <SelectItem value="price-high">{t('priceHighLow')}</SelectItem>
+              <SelectItem value="year">{t('newestYear')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -135,13 +135,13 @@ export default function SavedVehiclesPage() {
         >
           <Heart className="mx-auto h-12 w-12 text-muted-foreground/50" />
           <h3 className="mt-4 font-display text-lg font-semibold">
-            No saved vehicles
+            {t('noSavedVehicles')}
           </h3>
           <p className="mt-2 text-muted-foreground">
-            Start browsing and save vehicles you are interested in.
+            {t('startBrowsing')}
           </p>
           <Link href="/search">
-            <Button className="mt-6">Browse Vehicles</Button>
+            <Button className="mt-6">{t('browseVehicles')}</Button>
           </Link>
         </motion.div>
       ) : (
@@ -227,7 +227,7 @@ export default function SavedVehiclesPage() {
                     <Link href={`/vehicles/${listing.slug || listing.id}`} className="flex-1">
                       <Button variant="outline" className="w-full gap-2">
                         <ExternalLink className="h-4 w-4" />
-                        View Details
+                        {t('viewDetails')}
                       </Button>
                     </Link>
                     <Button

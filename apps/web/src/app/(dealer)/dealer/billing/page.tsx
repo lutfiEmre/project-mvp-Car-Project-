@@ -22,12 +22,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth';
+import { useTranslations } from 'next-intl';
 
-const PLAN_NAMES: Record<string, string> = {
-  FREE: 'Free',
-  STARTER: 'Starter',
-  PROFESSIONAL: 'Professional',
-  ENTERPRISE: 'Enterprise',
+const getPlanName = (plan: string, t: any) => {
+  const names: Record<string, string> = {
+    FREE: t('planFree'),
+    STARTER: t('planStarter'),
+    PROFESSIONAL: t('planProfessional'),
+    ENTERPRISE: t('planEnterprise'),
+  };
+  return names[plan] || plan;
 };
 
 const getPlanFeatures = (plan: any) => {
@@ -53,6 +57,7 @@ const getPlanFeatures = (plan: any) => {
 };
 
 export default function DealerBillingPage() {
+  const t = useTranslations('dealer.billing');
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -85,7 +90,7 @@ export default function DealerBillingPage() {
       }
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to create checkout session');
+      toast.error(error.message || t('failedToCreateCheckout'));
     },
   });
 
@@ -93,10 +98,10 @@ export default function DealerBillingPage() {
     mutationFn: () => api.payments.cancelSubscription(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscription'] });
-      toast.success('Subscription cancelled successfully');
+      toast.success(t('subscriptionCancelled'));
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to cancel subscription');
+      toast.error(error.message || t('failedToCancel'));
     },
   });
 
@@ -106,19 +111,19 @@ export default function DealerBillingPage() {
     const sessionId = searchParams.get('session_id');
 
     if (success && sessionId) {
-      toast.success('Payment successful! Your subscription is now active.');
+      toast.success(t('paymentSuccessful'));
       queryClient.invalidateQueries({ queryKey: ['subscription'] });
       queryClient.invalidateQueries({ queryKey: ['payments'] });
       router.replace('/dealer/billing');
     } else if (canceled) {
-      toast.info('Payment was cancelled');
+      toast.info(t('paymentCancelled'));
       router.replace('/dealer/billing');
     }
   }, [searchParams, queryClient, router]);
 
   const handleSubscribe = (plan: string) => {
     if (plan === 'FREE') {
-      toast.info('You are already on the free plan');
+      toast.info(t('youAreAlreadyOnFree'));
       return;
     }
     setSelectedPlan(plan);
@@ -134,17 +139,17 @@ export default function DealerBillingPage() {
       if (plan && plan.plan) {
         map[plan.plan] = {
           ...plan,
-          name: PLAN_NAMES[plan.plan] || plan.plan,
+          name: getPlanName(plan.plan, t),
           yearlyPrice: (plan.price || 0) * 10,
           features: getPlanFeatures(plan),
         };
       }
     });
     return map;
-  }, [plansData]);
+  }, [plansData, t]);
 
   const planDetails = plansMap[currentPlan] || {
-    name: PLAN_NAMES[currentPlan] || currentPlan,
+    name: getPlanName(currentPlan, t),
     price: 0,
     yearlyPrice: 0,
     features: ['3 active listings', '5 photos per listing', 'Basic support'],
@@ -159,9 +164,9 @@ export default function DealerBillingPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="font-display text-2xl font-bold">Billing & Subscription</h1>
+        <h1 className="font-display text-2xl font-bold">{t('title')}</h1>
         <p className="text-muted-foreground">
-          Manage your subscription and billing
+          {t('subtitle')}
         </p>
       </div>
 
@@ -185,9 +190,9 @@ export default function DealerBillingPage() {
                   <div>
                     <h3 className="font-display text-lg font-semibold">{planDetails.name} Plan</h3>
                     <p className="text-sm text-muted-foreground">
-                      {currentSubscription.billingCycle === 'yearly' ? 'Yearly' : 'Monthly'} billing
+                      {currentSubscription.billingCycle === 'yearly' ? t('yearly') : t('monthly')} {t('billing')}
                       {currentSubscription.endDate && (
-                        <> • Renews {new Date(currentSubscription.endDate).toLocaleDateString()}</>
+                        <> • {t('renews')} {new Date(currentSubscription.endDate).toLocaleDateString()}</>
                       )}
                     </p>
                   </div>
@@ -204,9 +209,9 @@ export default function DealerBillingPage() {
               {currentSubscription.maxListings > 0 && (
                 <div className="mt-4">
                   <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="text-muted-foreground">Listings usage</span>
+                    <span className="text-muted-foreground">{t('listingsUsage')}</span>
                     <span className="font-medium">
-                      {currentSubscription.maxListings === -1 ? 'Unlimited' : `Limited to ${currentSubscription.maxListings}`}
+                      {currentSubscription.maxListings === -1 ? t('unlimited') : `${t('limitedTo')} ${currentSubscription.maxListings}`}
                     </span>
                   </div>
                 </div>
@@ -217,14 +222,14 @@ export default function DealerBillingPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      if (confirm('Are you sure you want to cancel your subscription?')) {
+                      if (confirm(t('cancelConfirm'))) {
                         cancelMutation.mutate();
                       }
                     }}
                     disabled={cancelMutation.isPending}
                   >
                     {cancelMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                    Cancel Subscription
+                    {t('cancelSubscription')}
                   </Button>
                 </div>
               )}
@@ -241,10 +246,10 @@ export default function DealerBillingPage() {
                 <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                 <div>
                   <h3 className="font-semibold text-amber-900 dark:text-amber-100">
-                    No Active Subscription
+                    {t('noActiveSubscription')}
                   </h3>
                   <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                    You are currently on the free plan. Upgrade to unlock more features.
+                    {t('freePlanMessage')}
                   </p>
                 </div>
               </div>
@@ -257,20 +262,20 @@ export default function DealerBillingPage() {
               size="sm"
               onClick={() => setBillingCycle('monthly')}
             >
-              Monthly
+              {t('monthly')}
             </Button>
             <Button
               variant={billingCycle === 'yearly' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setBillingCycle('yearly')}
             >
-              Yearly
-              <span className="ml-2 text-xs bg-primary/20 px-2 py-0.5 rounded">Save 2 months</span>
+              {t('yearly')}
+              <span className="ml-2 text-xs bg-primary/20 px-2 py-0.5 rounded">{t('save2Months')}</span>
             </Button>
           </div>
 
           <div className="mb-8">
-            <h2 className="font-display text-lg font-semibold mb-4">Available Plans</h2>
+            <h2 className="font-display text-lg font-semibold mb-4">{t('availablePlans')}</h2>
             <div className="grid gap-6 md:grid-cols-3">
               {plans.map(([planKey, plan], index) => {
                 const isCurrent = currentPlan === planKey && currentSubscription?.status === 'ACTIVE';
@@ -328,15 +333,15 @@ export default function DealerBillingPage() {
                       {isCurrent ? (
                         <>
                           <CheckCircle className="h-4 w-4 mr-2" />
-                          Current Plan
+                          {t('currentPlan')}
                         </>
                       ) : checkoutMutation.isPending && selectedPlan === planKey ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          Processing...
+                          {t('processing')}
                         </>
                       ) : (
-                        'Subscribe'
+                        t('subscribe')
                       )}
                     </Button>
                   </motion.div>
@@ -352,7 +357,7 @@ export default function DealerBillingPage() {
             className="rounded-xl border bg-card"
           >
             <CardHeader>
-              <CardTitle>Billing History</CardTitle>
+              <CardTitle>{t('billingHistory')}</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoadingPayments ? (
@@ -404,7 +409,7 @@ export default function DealerBillingPage() {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>No payment history</p>
+                  <p>{t('noPaymentHistory')}</p>
                 </div>
               )}
             </CardContent>

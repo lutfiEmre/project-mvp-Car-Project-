@@ -4,8 +4,11 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight, Car, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslations } from 'next-intl';
 
 export function CTASection() {
+  const t = useTranslations('home');
+  
   return (
     <section className="py-20">
       <div className="container mx-auto px-4">
@@ -25,28 +28,28 @@ export function CTASection() {
                 <Car className="h-8 w-8" />
               </div>
               <h3 className="mt-6 font-display text-3xl font-bold">
-                Ready to Sell Your Car?
+                {t('readyToSell')}
               </h3>
               <p className="mt-4 max-w-sm text-white/80">
-                List your vehicle in minutes and reach thousands of potential buyers across Canada.
+                {t('readyToSellDesc')}
               </p>
               <ul className="mt-6 space-y-2 text-sm text-white/80">
                 <li className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-coral-400" />
-                  Free listing for private sellers
+                  {t('freeListing')}
                 </li>
                 <li className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-coral-400" />
-                  Upload up to 20 photos
+                  {t('uploadPhotos')}
                 </li>
                 <li className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-coral-400" />
-                  Connect directly with buyers
+                  {t('connectBuyers')}
                 </li>
               </ul>
               <Link href="/sell" className="mt-8 inline-block">
                 <Button size="lg" variant="glass" className="gap-2">
-                  Start Selling
+                  {t('startSelling')}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -68,28 +71,28 @@ export function CTASection() {
                 <Building2 className="h-8 w-8" />
               </div>
               <h3 className="mt-6 font-display text-3xl font-bold">
-                Are You a Dealer?
+                {t('areYouDealer')}
               </h3>
               <p className="mt-4 max-w-sm text-white/80">
-                Join Canada&apos;s fastest-growing automotive marketplace and boost your sales.
+                {t('dealerDesc')}
               </p>
               <ul className="mt-6 space-y-2 text-sm text-white/80">
                 <li className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                  Premium dealer profiles
+                  {t('premiumProfiles')}
                 </li>
                 <li className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                  Bulk import via XML/JSON
+                  {t('bulkImport')}
                 </li>
                 <li className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                  Analytics & insights
+                  {t('analyticsInsights')}
                 </li>
               </ul>
               <Link href="/register?type=dealer" className="mt-8 inline-block">
                 <Button size="lg" className="gap-2 bg-coral-500 hover:bg-coral-600">
-                  Become a Dealer
+                  {t('becomeDealer')}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>

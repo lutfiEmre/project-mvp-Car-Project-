@@ -37,41 +37,43 @@ import { useMyListings } from '@/hooks/use-listings';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
-
-const statusColors: Record<string, string> = {
-  ACTIVE: 'bg-emerald-500',
-  PENDING_APPROVAL: 'bg-amber-500',
-  SOLD: 'bg-blue-500',
-  EXPIRED: 'bg-slate-500',
-  REJECTED: 'bg-red-500',
-  INACTIVE: 'bg-slate-400',
-};
-
-const statusLabels: Record<string, string> = {
-  ACTIVE: 'Active',
-  PENDING_APPROVAL: 'Pending',
-  SOLD: 'Sold',
-  EXPIRED: 'Expired',
-  REJECTED: 'Rejected',
-  INACTIVE: 'Inactive',
-};
+import { useTranslations } from 'next-intl';
 
 export default function MyListingsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const t = useTranslations('dashboard');
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   
   const { data: myListingsData, isLoading, error } = useMyListings();
 
+  const statusColors: Record<string, string> = {
+    ACTIVE: 'bg-emerald-500',
+    PENDING_APPROVAL: 'bg-amber-500',
+    SOLD: 'bg-blue-500',
+    EXPIRED: 'bg-slate-500',
+    REJECTED: 'bg-red-500',
+    INACTIVE: 'bg-slate-400',
+  };
+
+  const statusLabels: Record<string, string> = {
+    ACTIVE: t('active'),
+    PENDING_APPROVAL: t('pending'),
+    SOLD: t('sold'),
+    EXPIRED: t('expired'),
+    REJECTED: t('rejected'),
+    INACTIVE: t('inactive'),
+  };
+
   const deleteMutation = useMutation({
     mutationFn: (listingId: string) => api.listings.delete(listingId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['listings', 'my'] });
-      toast.success('Listing deleted successfully');
+      toast.success(t('listingDeleted'));
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to delete listing');
+      toast.error(error.message || t('failedToDelete'));
     },
   });
 
@@ -89,7 +91,7 @@ export default function MyListingsPage() {
   });
 
   const handleDelete = async (listingId: string) => {
-    if (window.confirm('Are you sure you want to delete this listing?')) {
+    if (window.confirm(t('deleteConfirm'))) {
       await deleteMutation.mutateAsync(listingId);
     }
   };
@@ -98,7 +100,7 @@ export default function MyListingsPage() {
     if (listing.slug) {
       router.push(`/vehicles/${listing.slug}`);
     } else {
-      toast.error('Listing slug not available');
+      toast.error(t('listingSlugNotAvailable'));
     }
   };
 
@@ -106,15 +108,15 @@ export default function MyListingsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold">My Listings</h1>
+          <h1 className="font-display text-3xl font-bold">{t('myListings')}</h1>
           <p className="text-muted-foreground mt-1">
-            Manage and track your vehicle listings
+            {t('manageListings')}
           </p>
         </div>
         <Link href="/dashboard/listings/new">
           <Button className="gap-2">
             <Plus className="h-4 w-4" />
-            New Listing
+            {t('newListing')}
           </Button>
         </Link>
       </div>
@@ -125,7 +127,7 @@ export default function MyListingsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input 
-                placeholder="Search listings..." 
+                placeholder={t('searchListings')} 
                 className="pl-9"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -133,14 +135,14 @@ export default function MyListingsPage() {
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder={t('status')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="PENDING_APPROVAL">Pending</SelectItem>
-                <SelectItem value="SOLD">Sold</SelectItem>
-                <SelectItem value="EXPIRED">Expired</SelectItem>
+                <SelectItem value="all">{t('allStatus')}</SelectItem>
+                <SelectItem value="ACTIVE">{t('active')}</SelectItem>
+                <SelectItem value="PENDING_APPROVAL">{t('pending')}</SelectItem>
+                <SelectItem value="SOLD">{t('sold')}</SelectItem>
+                <SelectItem value="EXPIRED">{t('expired')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -152,7 +154,7 @@ export default function MyListingsPage() {
             </div>
           ) : error ? (
             <div className="text-center py-12">
-              <p className="text-destructive mb-2">Error loading listings</p>
+              <p className="text-destructive mb-2">{t('errorLoadingListings')}</p>
               <p className="text-sm text-muted-foreground">{error.message}</p>
             </div>
           ) : filteredListings.length === 0 ? (
@@ -160,13 +162,13 @@ export default function MyListingsPage() {
               <Car className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground mb-4">
                 {searchQuery || statusFilter !== 'all' 
-                  ? 'No listings match your search' 
-                  : 'No listings yet'}
+                  ? t('noListingsMatch') || 'No listings match your search'
+                  : t('noListingsYet')}
               </p>
               <Link href="/dashboard/listings/new">
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Listing
+                  {t('createFirstListing')}
                 </Button>
               </Link>
             </div>
@@ -176,7 +178,7 @@ export default function MyListingsPage() {
                 const status = listing.status || 'ACTIVE';
                 const title = listing.title || 
                   `${listing.year || ''} ${listing.make || ''} ${listing.model || ''}`.trim() ||
-                  'Untitled Listing';
+                  t('untitledListing');
                 const firstMedia = listing.media?.[0];
                 const imageUrl = firstMedia?.url || 
                   (typeof firstMedia === 'string' ? firstMedia : '/placeholder-car.jpg');
@@ -215,22 +217,22 @@ export default function MyListingsPage() {
                       {formatPrice(listing.price || 0)}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Listed on {new Date(listing.createdAt).toLocaleDateString()}
+                      {t('listedOn')} {new Date(listing.createdAt).toLocaleDateString()}
                     </p>
                   </div>
 
                   <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
                     <div className="text-center">
                       <p className="font-semibold text-foreground">{listing.views || 0}</p>
-                      <p>Views</p>
+                      <p>{t('views')}</p>
                     </div>
                     <div className="text-center">
                       <p className="font-semibold text-foreground">{listing.saves || 0}</p>
-                      <p>Saves</p>
+                      <p>{t('saves')}</p>
                     </div>
                     <div className="text-center">
                       <p className="font-semibold text-foreground">{listing.inquiries || 0}</p>
-                      <p>Inquiries</p>
+                      <p>{t('inquiries')}</p>
                     </div>
                   </div>
 
@@ -246,14 +248,14 @@ export default function MyListingsPage() {
                         onClick={() => handleViewListing(listing)}
                       >
                         <Eye className="h-4 w-4" />
-                        View Listing
+                        {t('viewListing')}
                       </DropdownMenuItem>
                       <DropdownMenuItem 
                         className="gap-2 cursor-pointer"
                         onClick={() => router.push(`/dashboard/listings/${listing.id}/edit`)}
                       >
                         <Edit className="h-4 w-4" />
-                        Edit
+                        {t('edit')}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem 
@@ -262,7 +264,7 @@ export default function MyListingsPage() {
                         disabled={deleteMutation.isPending}
                       >
                         <Trash2 className="h-4 w-4" />
-                        Delete
+                        {t('delete')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

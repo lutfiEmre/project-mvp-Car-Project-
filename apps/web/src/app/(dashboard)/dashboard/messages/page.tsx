@@ -39,8 +39,11 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSocket } from '@/hooks/use-socket';
+import { useTranslations } from 'next-intl';
 
 export default function UserMessagesPage() {
+  const t = useTranslations('dashboard');
+  const tCommon = useTranslations('common');
   const [selectedInquiry, setSelectedInquiry] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -232,7 +235,7 @@ export default function UserMessagesPage() {
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to send message');
+        throw new Error(errorData.message || t('failedToSendMessage') || 'Failed to send message');
       }
       
       const result = await response.json();
@@ -249,14 +252,14 @@ export default function UserMessagesPage() {
       queryClient.invalidateQueries({ queryKey: ['user', 'inquiries'] });
       queryClient.invalidateQueries({ queryKey: ['user', 'inquiries', 'unread'] });
       setNewMessage('');
-      toast.success('Message sent successfully!');
+      toast.success(t('messageSentSuccess') || 'Message sent successfully!');
       
       setTimeout(() => {
         queryClient.refetchQueries({ queryKey: ['user', 'inquiries'] });
       }, 100);
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to send message');
+      toast.error(error.message || t('failedToSendMessage') || 'Failed to send message');
     },
   });
 
@@ -278,7 +281,7 @@ export default function UserMessagesPage() {
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to delete conversation');
+        throw new Error(errorData.message || t('failedToDeleteConversation') || 'Failed to delete conversation');
       }
       
       return response.json();
@@ -301,10 +304,10 @@ export default function UserMessagesPage() {
         setSelectedInquiry(null);
       }
       
-      toast.success('Conversation deleted');
+      toast.success(t('conversationDeleted') || 'Conversation deleted');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to delete conversation');
+      toast.error(error.message || t('failedToDeleteConversation') || 'Failed to delete conversation');
     },
   });
 
@@ -374,12 +377,12 @@ export default function UserMessagesPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold">Messages</h1>
+          <h1 className="font-display text-3xl font-bold">{t('messages')}</h1>
           <p className="text-muted-foreground mt-1">
-            Your conversations with dealers
+            {t('conversationsWithDealers')}
             {unreadCount > 0 && (
               <Badge variant="secondary" className="ml-2">
-                {unreadCount} new
+                {unreadCount} {t('new')}
               </Badge>
             )}
           </p>
@@ -396,7 +399,7 @@ export default function UserMessagesPage() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search messages..."
+                    placeholder={t('searchMessages')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"
@@ -404,14 +407,14 @@ export default function UserMessagesPage() {
                 </div>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Filter by status" />
+                    <SelectValue placeholder={t('filterByStatus')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Messages</SelectItem>
-                    <SelectItem value="NEW">New</SelectItem>
-                    <SelectItem value="READ">Read</SelectItem>
-                    <SelectItem value="REPLIED">Replied</SelectItem>
-                    <SelectItem value="ARCHIVED">Archived</SelectItem>
+                    <SelectItem value="all">{t('allMessages')}</SelectItem>
+                    <SelectItem value="NEW">{t('new')}</SelectItem>
+                    <SelectItem value="READ">{t('read')}</SelectItem>
+                    <SelectItem value="REPLIED">{t('replied')}</SelectItem>
+                    <SelectItem value="ARCHIVED">{t('archived')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -421,7 +424,7 @@ export default function UserMessagesPage() {
           {/* Messages List */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Conversations</CardTitle>
+              <CardTitle className="text-lg">{t('conversations')}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {isLoading ? (
@@ -431,8 +434,8 @@ export default function UserMessagesPage() {
               ) : filteredInquiries.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">
                   <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No messages yet</p>
-                  <p className="text-sm mt-2">Send a message to a dealer to start a conversation</p>
+                  <p>{t('noMessagesYet')}</p>
+                  <p className="text-sm mt-2">{t('sendMessageToDealer')}</p>
                 </div>
               ) : (
                 <div className="divide-y">
@@ -463,7 +466,7 @@ export default function UserMessagesPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
                               <p className="font-semibold text-sm truncate">
-                                {inquiry.dealer?.businessName || 'Dealer'}
+                                {inquiry.dealer?.businessName || t('dealer')}
                               </p>
                               {inquiry.status === 'NEW' && (
                                 <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
@@ -482,7 +485,7 @@ export default function UserMessagesPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (confirm('Are you sure you want to delete this conversation?')) {
+                          if (confirm(t('deleteConversationConfirm'))) {
                             deleteInquiryMutation.mutate(inquiry.id);
                           }
                         }}
@@ -520,7 +523,7 @@ export default function UserMessagesPage() {
                       </div>
                     )}
                     <div>
-                      <CardTitle>{selectedInquiry.dealer?.businessName || 'Dealer'}</CardTitle>
+                      <CardTitle>{selectedInquiry.dealer?.businessName || t('dealer')}</CardTitle>
                       <p className="text-sm text-muted-foreground mt-1">
                         {selectedInquiry.dealer?.city}, {selectedInquiry.dealer?.province}
                       </p>
@@ -562,7 +565,7 @@ export default function UserMessagesPage() {
                         href={`/vehicles/${selectedInquiry.listing?.slug}`}
                         className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2"
                       >
-                        View Listing <ArrowRight className="h-3 w-3" />
+                        {t('viewListing')} <ArrowRight className="h-3 w-3" />
                       </Link>
                     </div>
                   </div>
@@ -652,7 +655,7 @@ export default function UserMessagesPage() {
                           <div className="text-center">
                             <MessageCircle className="h-12 w-12 mx-auto mb-2 text-muted-foreground opacity-50" />
                             <p className="text-sm text-muted-foreground">
-                              No messages yet
+                              {t('noMessagesYet')}
                             </p>
                           </div>
                         </motion.div>
@@ -741,7 +744,7 @@ export default function UserMessagesPage() {
                         <div className="bg-primary/50 text-primary-foreground rounded-2xl rounded-tr-sm px-4 py-2.5">
                           <div className="flex items-center gap-2">
                             <Loader2 className="h-3 w-3 animate-spin" />
-                            <p className="text-sm">Sending...</p>
+                            <p className="text-sm">{t('sending')}</p>
                           </div>
                         </div>
                       </div>
@@ -756,7 +759,7 @@ export default function UserMessagesPage() {
                   <div className="flex items-end gap-2">
                     <div className="flex-1 relative">
                       <Textarea
-                        placeholder="Type a message..."
+                        placeholder={t('typeAMessage')}
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={(e) => {
@@ -793,7 +796,7 @@ export default function UserMessagesPage() {
 
                 {/* Contact Info */}
                 <div className="rounded-lg border p-4 space-y-3">
-                  <h4 className="font-semibold text-sm">Contact Information</h4>
+                  <h4 className="font-semibold text-sm">{t('contactInformation')}</h4>
                   <div className="space-y-2 text-sm">
                     {selectedInquiry.dealer?.contactPhone && (
                       <div className="flex items-center gap-2">
@@ -825,9 +828,9 @@ export default function UserMessagesPage() {
             <Card>
               <CardContent className="flex flex-col items-center justify-center p-12 text-center">
                 <MessageCircle className="h-16 w-16 text-muted-foreground opacity-50 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Select a conversation</h3>
+                <h3 className="text-lg font-semibold mb-2">{t('selectConversation')}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Choose a message from the list to view the conversation
+                  {t('chooseMessageFromList')}
                 </p>
               </CardContent>
             </Card>

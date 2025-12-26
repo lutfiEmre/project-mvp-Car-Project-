@@ -7,44 +7,44 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useTranslations } from 'next-intl';
 
-const footerLinks = {
-  browse: [
-    { name: 'Search Cars', href: '/search' },
-    { name: 'New Cars', href: '/search?condition=NEW' },
-    { name: 'Used Cars', href: '/search?condition=USED' },
-    { name: 'Certified Pre-Owned', href: '/search?condition=CERTIFIED_PRE_OWNED' },
-    { name: 'Electric Vehicles', href: '/search?fuelType=ELECTRIC' },
-  ],
-  sell: [
-    { name: 'Sell Your Car', href: '/sell' },
-    { name: 'Dealer Sign Up', href: '/register?type=dealer' },
-    { name: 'Pricing', href: '/pricing' },
-    { name: 'Dealer Resources', href: '/dealer/resources' },
-  ],
-  company: [
-    { name: 'About Us', href: '/about' },
-    { name: 'Careers', href: '/careers' },
-    { name: 'Press', href: '/press' },
-    { name: 'Contact', href: '/contact' },
-    { name: 'Blog', href: '/blog' },
-  ],
-  support: [
-    { name: 'Help Center', href: '/help' },
-    { name: 'Safety Tips', href: '/safety' },
-    { name: 'Terms of Service', href: '/terms' },
-    { name: 'Privacy Policy', href: '/privacy' },
-    { name: 'Accessibility', href: '/accessibility' },
-  ],
-};
+export function Footer() {
+  const t = useTranslations('footer');
+  
+  const footerLinks = {
+    browse: [
+      { name: t('searchCars'), href: '/search' },
+      { name: t('newCars'), href: '/search?condition=NEW' },
+      { name: t('usedCars'), href: '/search?condition=USED' },
+      { name: t('certifiedPreOwned'), href: '/search?condition=CERTIFIED_PRE_OWNED' },
+      { name: t('electricVehicles'), href: '/search?fuelType=ELECTRIC' },
+    ],
+    sell: [
+      { name: t('sellYourCar'), href: '/sell' },
+      { name: t('dealerSignUp'), href: '/register?type=dealer' },
+      { name: t('pricing'), href: '/pricing' },
+      { name: t('dealerResources'), href: '/dealer/resources' },
+    ],
+    company: [
+      { name: t('aboutUs'), href: '/about' },
+      { name: t('careers'), href: '/careers' },
+      { name: t('press'), href: '/press' },
+      { name: t('contact'), href: '/contact' },
+      { name: t('blog'), href: '/blog' },
+    ],
+    support: [
+      { name: t('help'), href: '/help' },
+      { name: t('safetyTips'), href: '/safety' },
+      { name: t('terms'), href: '/terms' },
+      { name: t('privacy'), href: '/privacy' },
+      { name: t('accessibility'), href: '/accessibility' },
+    ],
+  };
 
 const provinces = [
   'Ontario', 'Quebec', 'British Columbia', 'Alberta', 'Manitoba',
   'Saskatchewan', 'Nova Scotia', 'New Brunswick',
 ];
 
-export function Footer() {
-  const t = useTranslations('footer');
-  
   return (
     <footer className="bg-slate-900 text-slate-300">
       <div className="container mx-auto px-4 py-16">
@@ -59,20 +59,20 @@ export function Footer() {
               </span>
             </Link>
             <p className="max-w-md text-slate-400">
-              Canada&apos;s premier vehicle marketplace. Find your perfect car from thousands of listings by trusted dealers and private sellers across the country.
+              {t('companyDescription')}
             </p>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <MapPin className="h-5 w-5 text-primary" />
-                <span>Toronto, Ontario, Canada</span>
+                <span>{t('location')}</span>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-primary" />
-                <span>1-800-DRIVING</span>
+                <span>{t('phone')}</span>
               </div>
               <div className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-primary" />
-                <span>hello@drivingaway.ca</span>
+                <span>{t('email')}</span>
               </div>
             </div>
             <div className="flex gap-3">
@@ -92,17 +92,17 @@ export function Footer() {
           </div>
 
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-white">Stay Updated</h3>
+            <h3 className="text-lg font-semibold text-white">{t('stayUpdated')}</h3>
             <p className="text-slate-400">
-              Subscribe to get the latest deals, new listings, and automotive news.
+              {t('subscribeDesc')}
             </p>
             <div className="flex gap-3">
               <Input
                 type="email"
-                placeholder="Enter your email"
+                placeholder={t('enterEmail')}
                 className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
               />
-              <Button className="shrink-0">Subscribe</Button>
+              <Button className="shrink-0">{t('subscribe')}</Button>
             </div>
           </div>
         </div>
@@ -111,7 +111,7 @@ export function Footer() {
 
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <h4 className="mb-4 font-semibold text-white">Browse</h4>
+            <h4 className="mb-4 font-semibold text-white">{t('browseTitle')}</h4>
             <ul className="space-y-2">
               {footerLinks.browse.map((link) => (
                 <li key={link.name}>
@@ -123,7 +123,7 @@ export function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="mb-4 font-semibold text-white">Sell</h4>
+            <h4 className="mb-4 font-semibold text-white">{t('sellTitle')}</h4>
             <ul className="space-y-2">
               {footerLinks.sell.map((link) => (
                 <li key={link.name}>
@@ -135,7 +135,7 @@ export function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="mb-4 font-semibold text-white">Company</h4>
+            <h4 className="mb-4 font-semibold text-white">{t('companyTitle')}</h4>
             <ul className="space-y-2">
               {footerLinks.company.map((link) => (
                 <li key={link.name}>
@@ -147,7 +147,7 @@ export function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="mb-4 font-semibold text-white">Support</h4>
+            <h4 className="mb-4 font-semibold text-white">{t('supportTitle')}</h4>
             <ul className="space-y-2">
               {footerLinks.support.map((link) => (
                 <li key={link.name}>
@@ -163,7 +163,7 @@ export function Footer() {
         <Separator className="my-12 bg-slate-800" />
 
         <div>
-          <h4 className="mb-4 font-semibold text-white">Browse by Province</h4>
+          <h4 className="mb-4 font-semibold text-white">{t('browseByProvince')}</h4>
           <div className="flex flex-wrap gap-3">
             {provinces.map((province) => (
               <Link

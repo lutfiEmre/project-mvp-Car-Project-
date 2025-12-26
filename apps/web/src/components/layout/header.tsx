@@ -66,15 +66,6 @@ const getResearchItems = (t: any) => [
 
 // Languages are now imported from config
 
-const bodyTypes = [
-  { name: 'SUV', href: '/search?bodyType=SUV' },
-  { name: 'Sedan', href: '/search?bodyType=SEDAN' },
-  { name: 'Truck', href: '/search?bodyType=PICKUP' },
-  { name: 'Coupe', href: '/search?bodyType=COUPE' },
-  { name: 'Electric', href: '/search?fuelType=ELECTRIC' },
-  { name: 'Luxury', href: '/search?bodyType=LUXURY' },
-];
-
 interface HeaderProps {
   user?: {
     firstName: string;
@@ -200,11 +191,24 @@ export function Header({ user }: HeaderProps) {
   const queryClient = useQueryClient();
   const t = useTranslations('nav');
   const tCommon = useTranslations('common');
+  const tSearch = useTranslations('search');
+  const tDashboard = useTranslations('dashboard');
+  const tAuth = useTranslations('auth');
 
   // Get translated nav items
   const buyingItems = getBuyingItems(t);
   const sellItems = getSellItems(t);
   const researchItems = getResearchItems(t);
+  
+  // Get translated body types
+  const bodyTypes = [
+    { name: tSearch('suv'), href: '/search?bodyType=SUV' },
+    { name: tSearch('sedan'), href: '/search?bodyType=SEDAN' },
+    { name: tSearch('truck'), href: '/search?bodyType=PICKUP' },
+    { name: tSearch('coupe'), href: '/search?bodyType=COUPE' },
+    { name: tSearch('electric'), href: '/search?fuelType=ELECTRIC' },
+    { name: tSearch('luxury'), href: '/search?bodyType=LUXURY' },
+  ];
 
   // Get saved listings for Heart icon dropdown
   const { data: savedListingsData } = useQuery<any>({
@@ -361,7 +365,7 @@ export function Header({ user }: HeaderProps) {
                         ? "text-white/90 hover:bg-white/10 hover:text-white" 
                         : "text-foreground/80 hover:bg-primary hover:text-primary-foreground"
                     )}>
-                      Browse
+                      {t('browse')}
                       <ChevronDown className={cn(
                         "h-4 w-4 transition-transform",
                         showBodyTypes && "rotate-180"
@@ -449,12 +453,12 @@ export function Header({ user }: HeaderProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-80">
-                        <DropdownMenuLabel>Saved Vehicles</DropdownMenuLabel>
+                        <DropdownMenuLabel>{tDashboard('savedVehicles')}</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <div className="max-h-[300px] overflow-y-auto">
                           {savedListings.length === 0 ? (
                             <div className="px-2 py-6 text-center text-sm text-muted-foreground">
-                              No saved vehicles yet
+                              {tDashboard('noSavedVehicles')}
                             </div>
                           ) : (
                             <>
@@ -490,7 +494,7 @@ export function Header({ user }: HeaderProps) {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
                           <Link href="/saved" className="w-full text-center cursor-pointer">
-                            View All Saved Vehicles
+                            {tDashboard('viewAllSavedVehicles')}
                           </Link>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -527,7 +531,7 @@ export function Header({ user }: HeaderProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-80">
                         <div className="flex items-center justify-between px-2 py-1.5">
-                          <h3 className="text-sm font-semibold">Notifications</h3>
+                          <h3 className="text-sm font-semibold">{tDashboard('notifications')}</h3>
                           {unreadNotificationCount > 0 && (
                             <Button
                               variant="ghost"
@@ -536,7 +540,7 @@ export function Header({ user }: HeaderProps) {
                               onClick={() => markAllAsRead.mutate()}
                               disabled={markAllAsRead.isPending}
                             >
-                              Mark all as read
+                              {tDashboard('markAllRead')}
                             </Button>
                           )}
                         </div>
@@ -544,7 +548,7 @@ export function Header({ user }: HeaderProps) {
                         <div className="max-h-[400px] overflow-y-auto">
                           {notifications.length === 0 ? (
                             <div className="px-2 py-8 text-center text-sm text-muted-foreground">
-                              No notifications
+                              {tDashboard('noNotifications')}
                             </div>
                           ) : (
                             <div className="py-1">
@@ -561,7 +565,7 @@ export function Header({ user }: HeaderProps) {
                                     }}
                                   >
                                     <div className="flex items-start justify-between w-full gap-2">
-                                      <p className="text-sm font-medium flex-1">{notification.title || 'Notification'}</p>
+                                      <p className="text-sm font-medium flex-1">{notification.title || tDashboard('notification')}</p>
                                       {!notification.isRead && (
                                         <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1" />
                                       )}
@@ -588,7 +592,7 @@ export function Header({ user }: HeaderProps) {
                             } 
                             className="w-full text-center"
                           >
-                            View all notifications
+                            {tDashboard('viewAllNotifications')}
                           </Link>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -604,7 +608,7 @@ export function Header({ user }: HeaderProps) {
                           <Avatar className="h-8 w-8">
                             <AvatarImage 
                               src={user.avatar ? `${user.avatar}${user.avatar.includes('?') ? '&' : '?'}cb=${Date.now()}` : ''} 
-                              alt="Profile" 
+                              alt={tDashboard('profile')} 
                             />
                             <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                               {user.firstName[0]}{user.lastName[0]}
@@ -626,14 +630,14 @@ export function Header({ user }: HeaderProps) {
                           <DropdownMenuItem asChild>
                             <Link href="/admin" className="cursor-pointer">
                               <LayoutDashboard className="mr-2 h-4 w-4" />
-                              Admin Dashboard
+                              {tDashboard('adminDashboard')}
                             </Link>
                           </DropdownMenuItem>
                         ) : user.role === 'DEALER' ? (
                           <DropdownMenuItem asChild>
                             <Link href="/dealer/dashboard" className="cursor-pointer">
                               <LayoutDashboard className="mr-2 h-4 w-4" />
-                              Dealer Dashboard
+                              {tDashboard('dealerDashboard')}
                             </Link>
                           </DropdownMenuItem>
                         ) : (
@@ -641,25 +645,25 @@ export function Header({ user }: HeaderProps) {
                             <DropdownMenuItem asChild>
                               <Link href="/dashboard" className="cursor-pointer">
                                 <LayoutDashboard className="mr-2 h-4 w-4" />
-                                Dashboard
+                                {tDashboard('dashboard')}
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                               <Link href="/dashboard/listings" className="cursor-pointer">
                                 <Car className="mr-2 h-4 w-4" />
-                                My Listings
+                                {tDashboard('myListings')}
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                               <Link href="/saved" className="cursor-pointer">
                                 <Heart className="mr-2 h-4 w-4" />
-                                Saved Vehicles
+                                {tDashboard('savedVehicles')}
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                               <Link href="/dashboard/messages" className="cursor-pointer">
                                 <MessageCircle className="mr-2 h-4 w-4" />
-                                Messages
+                                {tDashboard('messages')}
                                 {unreadCount > 0 && (
                                   <span className="ml-auto rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white">
                                     {unreadCount > 9 ? '9+' : unreadCount}
@@ -681,7 +685,7 @@ export function Header({ user }: HeaderProps) {
                             className="cursor-pointer"
                           >
                             <Settings className="mr-2 h-4 w-4" />
-                            Settings
+                            {tDashboard('settings')}
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
@@ -690,7 +694,7 @@ export function Header({ user }: HeaderProps) {
                           onClick={handleLogout}
                         >
                           <LogOut className="mr-2 h-4 w-4" />
-                          Sign Out
+                          {tAuth('signOut')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

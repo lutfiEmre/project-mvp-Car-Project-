@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 const iconMap: Record<string, any> = {
   listing: Car,
@@ -33,6 +34,7 @@ const iconMap: Record<string, any> = {
 };
 
 export default function DealerNotificationsPage() {
+  const t = useTranslations('dealer.notifications');
   const { data: notificationsData, isLoading } = useQuery({
     queryKey: ['notifications', 'all'],
     queryFn: () => api.notifications.getAll({ limit: 100 }),
@@ -43,7 +45,7 @@ export default function DealerNotificationsPage() {
     mutationFn: (id: string) => api.notifications.markAsRead(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      toast.success('Notification marked as read');
+      toast.success(t('notificationMarkedAsRead'));
     },
   });
 
@@ -51,7 +53,7 @@ export default function DealerNotificationsPage() {
     mutationFn: () => api.notifications.markAllAsRead(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      toast.success('All notifications marked as read');
+      toast.success(t('allNotificationsMarkedAsRead'));
     },
   });
 
@@ -59,7 +61,7 @@ export default function DealerNotificationsPage() {
     mutationFn: (id: string) => api.notifications.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      toast.success('Notification deleted');
+      toast.success(t('notificationDeleted'));
     },
   });
 
@@ -75,11 +77,9 @@ export default function DealerNotificationsPage() {
     <div className="max-w-3xl">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold">Notifications</h1>
+          <h1 className="font-display text-2xl font-bold">{t('title')}</h1>
           <p className="text-muted-foreground">
-            {unreadCount > 0
-              ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
-              : 'All caught up!'}
+            {t('subtitle', { count: unreadCount })}
           </p>
         </div>
         <div className="flex gap-2">
@@ -96,7 +96,7 @@ export default function DealerNotificationsPage() {
               ) : (
                 <CheckCheck className="h-4 w-4" />
               )}
-              Mark all read
+              {t('markAllRead')}
             </Button>
           )}
           <Button variant="ghost" size="icon">
@@ -117,10 +117,10 @@ export default function DealerNotificationsPage() {
         >
           <Bell className="mx-auto h-12 w-12 text-muted-foreground/50" />
           <h3 className="mt-4 font-display text-lg font-semibold">
-            No notifications
+            {t('noNotifications')}
           </h3>
           <p className="mt-2 text-muted-foreground">
-            We will notify you when something important happens.
+            {t('noNotificationsMessage')}
           </p>
         </motion.div>
       ) : (
@@ -165,7 +165,7 @@ export default function DealerNotificationsPage() {
                         'font-medium',
                         !notification.read && 'text-primary'
                       )}>
-                        {notification.title || 'Notification'}
+                        {notification.title || t('notification')}
                       </h4>
                       {notification.message && (
                         <p className="text-sm text-muted-foreground mt-0.5">

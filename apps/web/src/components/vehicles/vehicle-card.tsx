@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatPrice, formatMileage } from '@/lib/utils';
 import type { Listing } from '@carhaus/types';
+import { useTranslations } from 'next-intl';
 
 interface VehicleCardProps {
   listing: Listing;
@@ -18,6 +19,8 @@ interface VehicleCardProps {
 }
 
 export function VehicleCard({ listing, index = 0, saved = false, onSave }: VehicleCardProps) {
+  const t = useTranslations('vehicle');
+  const tCommon = useTranslations('common');
   const primaryImage = listing.media?.find(m => m.isPrimary)?.url || listing.media?.[0]?.url || '/placeholder-car.jpg';
 
   return (
@@ -40,15 +43,15 @@ export function VehicleCard({ listing, index = 0, saved = false, onSave }: Vehic
             
             <div className="absolute left-3 top-3 flex flex-wrap gap-2">
               {listing.featured && (
-                <Badge className="bg-coral-500 text-white">Featured</Badge>
+                <Badge className="bg-coral-500 text-white">{tCommon('featured')}</Badge>
               )}
               {listing.condition === 'NEW' && (
-                <Badge className="bg-emerald-500 text-white">New</Badge>
+                <Badge className="bg-emerald-500 text-white">{t('new')}</Badge>
               )}
               {listing.condition === 'CERTIFIED_PRE_OWNED' && (
                 <Badge className="bg-primary text-white">
                   <Check className="mr-1 h-3 w-3" />
-                  Certified
+                  {t('certified')}
                 </Badge>
               )}
             </div>
@@ -119,7 +122,7 @@ export function VehicleCard({ listing, index = 0, saved = false, onSave }: Vehic
                   {listing.dealer.verified && (
                     <div className="flex items-center gap-1 text-xs text-emerald-600">
                       <Check className="h-3 w-3" />
-                      Verified Dealer
+                      {t('verifiedDealer')}
                     </div>
                   )}
                 </div>

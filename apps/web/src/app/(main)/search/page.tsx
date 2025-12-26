@@ -70,8 +70,6 @@ import { formatNumber } from '@/lib/utils';
 const fallbackListings: Listing[] = [];
 
 const makes = ['All Makes', 'Toyota', 'Honda', 'Ford', 'BMW', 'Mercedes-Benz', 'Audi', 'Tesla', 'Chevrolet', 'Nissan', 'Porsche', 'Kia', 'Volkswagen', 'Hyundai'];
-const bodyTypes = ['All Types', 'SUV', 'Sedan', 'Truck', 'Coupe', 'Hatchback', 'Convertible'];
-const fuelTypes = ['Gasoline', 'Diesel', 'Electric', 'Hybrid', 'Plug-in Hybrid'];
 const years = Array.from({ length: 15 }, (_, i) => 2024 - i);
 
 // Filter Sidebar Component
@@ -104,6 +102,8 @@ function FilterSidebar({
   onClear: () => void;
   isMobile?: boolean;
 }) {
+  const t = useTranslations('search');
+  const tCommon = useTranslations('common');
   const [openSections, setOpenSections] = useState({
     make: true,
     body: true,
@@ -111,6 +111,9 @@ function FilterSidebar({
     fuel: false,
     year: false,
   });
+  
+  const bodyTypes = [t('allTypes'), t('suv'), t('sedan'), t('truck'), t('coupe'), t('hatchback'), t('convertible')];
+  const fuelTypes = [t('gasoline'), t('diesel'), t('electric'), t('hybrid'), t('plugInHybrid')];
 
   const toggleSection = (key: keyof typeof openSections) => {
     setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
@@ -123,13 +126,25 @@ function FilterSidebar({
       setSelectedFuelTypes([...selectedFuelTypes, fuel]);
     }
   };
+  
+  // Map translated fuel types to API values
+  const getFuelTypeValue = (translated: string) => {
+    const fuelMap: Record<string, string> = {
+      [t('gasoline')]: 'GASOLINE',
+      [t('diesel')]: 'DIESEL',
+      [t('electric')]: 'ELECTRIC',
+      [t('hybrid')]: 'HYBRID',
+      [t('plugInHybrid')]: 'PLUG_IN_HYBRID',
+    };
+    return fuelMap[translated] || translated;
+  };
 
   return (
     <div className={`space-y-1 ${isMobile ? '' : 'pr-2'}`}>
       {/* Make */}
       <Collapsible open={openSections.make} onOpenChange={() => toggleSection('make')}>
         <CollapsibleTrigger className="flex w-full items-center justify-between py-3 text-sm font-semibold hover:text-primary transition-colors">
-          Make
+          {t('make')}
           {openSections.make ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </CollapsibleTrigger>
         <CollapsibleContent className="pb-4">
@@ -138,7 +153,8 @@ function FilterSidebar({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {makes.map((make) => (
+              <SelectItem key="All Makes" value="All Makes">{t('allMakes')}</SelectItem>
+              {makes.filter(m => m !== 'All Makes').map((make) => (
                 <SelectItem key={make} value={make}>{make}</SelectItem>
               ))}
             </SelectContent>
@@ -151,24 +167,27 @@ function FilterSidebar({
       {/* Body Type */}
       <Collapsible open={openSections.body} onOpenChange={() => toggleSection('body')}>
         <CollapsibleTrigger className="flex w-full items-center justify-between py-3 text-sm font-semibold hover:text-primary transition-colors">
-          Body Type
+          {t('bodyType')}
           {openSections.body ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </CollapsibleTrigger>
         <CollapsibleContent className="pb-4">
           <div className="grid grid-cols-2 gap-2">
-            {bodyTypes.map((type) => (
-              <button
-                key={type}
-                onClick={() => setSelectedBody(type)}
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                  selectedBody === type
-                    ? 'bg-primary text-primary-foreground shadow-md'
-                    : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                {type === 'All Types' ? 'All' : type}
-              </button>
-            ))}
+            {bodyTypes.map((type, index) => {
+              const typeValue = index === 0 ? 'All Types' : ['SUV', 'SEDAN', 'PICKUP', 'COUPE', 'HATCHBACK', 'CONVERTIBLE'][index - 1];
+              return (
+                <button
+                  key={`${type}-${index}`}
+                  onClick={() => setSelectedBody(typeValue)}
+                  className={`rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                    selectedBody === typeValue
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  {type}
+                </button>
+              );
+            })}
           </div>
         </CollapsibleContent>
       </Collapsible>
@@ -178,7 +197,7 @@ function FilterSidebar({
       {/* Price Range */}
       <Collapsible open={openSections.price} onOpenChange={() => toggleSection('price')}>
         <CollapsibleTrigger className="flex w-full items-center justify-between py-3 text-sm font-semibold hover:text-primary transition-colors">
-          Price Range
+          {t('priceRange')}
           {openSections.price ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </CollapsibleTrigger>
         <CollapsibleContent className="pb-4 -mt-2 space-y-4">
@@ -192,7 +211,7 @@ function FilterSidebar({
           />
           <div className="flex items-center gap-2">
             <div className="flex-1">
-              <label className="text-xs text-muted-foreground mb-1 block">Min</label>
+              <label className="text-xs text-muted-foreground mb-1 block">{t('minPrice')}</label>
               <Input
                 type="text"
                 value={formatNumber(priceRange[0])}
@@ -207,7 +226,7 @@ function FilterSidebar({
             </div>
             <div className="text-muted-foreground pt-5">—</div>
             <div className="flex-1">
-              <label className="text-xs text-muted-foreground mb-1 block">Max</label>
+              <label className="text-xs text-muted-foreground mb-1 block">{t('maxPrice')}</label>
               <Input
                 type="text"
                 value={formatNumber(priceRange[1])}
@@ -229,22 +248,25 @@ function FilterSidebar({
       {/* Fuel Type */}
       <Collapsible open={openSections.fuel} onOpenChange={() => toggleSection('fuel')}>
         <CollapsibleTrigger className="flex w-full items-center justify-between py-3 text-sm font-semibold hover:text-primary transition-colors">
-          Fuel Type
+          {t('fuelType')}
           {openSections.fuel ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </CollapsibleTrigger>
         <CollapsibleContent className="pb-4">
           <div className="space-y-2">
-            {fuelTypes.map((fuel) => (
-              <label key={fuel} className="flex items-center gap-3 cursor-pointer group">
-                <input 
-                  type="checkbox" 
-                  checked={selectedFuelTypes.includes(fuel)}
-                  onChange={() => toggleFuelType(fuel)}
-                  className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
-                />
-                <span className="text-sm group-hover:text-primary transition-colors">{fuel}</span>
-              </label>
-            ))}
+            {fuelTypes.map((fuel, index) => {
+              const fuelValue = ['GASOLINE', 'DIESEL', 'ELECTRIC', 'HYBRID', 'PLUG_IN_HYBRID'][index];
+              return (
+                <label key={fuel} className="flex items-center gap-3 cursor-pointer group">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedFuelTypes.includes(fuelValue)}
+                    onChange={() => toggleFuelType(fuelValue)}
+                    className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+                  />
+                  <span className="text-sm group-hover:text-primary transition-colors">{fuel}</span>
+                </label>
+              );
+            })}
           </div>
         </CollapsibleContent>
       </Collapsible>
@@ -254,16 +276,16 @@ function FilterSidebar({
       {/* Year */}
       <Collapsible open={openSections.year} onOpenChange={() => toggleSection('year')}>
         <CollapsibleTrigger className="flex w-full items-center justify-between py-3 text-sm font-semibold hover:text-primary transition-colors">
-          Year
+          {t('year')}
           {openSections.year ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </CollapsibleTrigger>
         <CollapsibleContent className="pb-4">
           <Select value={selectedYear} onValueChange={setSelectedYear}>
             <SelectTrigger className="h-10">
-              <SelectValue placeholder="Any Year" />
+              <SelectValue placeholder={t('anyYear')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Any Year</SelectItem>
+              <SelectItem value="all">{t('anyYear')}</SelectItem>
               {years.map((year) => (
                 <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
               ))}
@@ -276,21 +298,21 @@ function FilterSidebar({
 
       {/* Location */}
       <div className="py-3">
-        <p className="text-sm font-semibold mb-3">Location</p>
+        <p className="text-sm font-semibold mb-3">{t('location')}</p>
         <div className="relative">
           <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="City or Postal Code" className="pl-9 h-10" />
+          <Input placeholder={t('cityOrPostalCode')} className="pl-9 h-10" />
         </div>
       </div>
 
       {/* Action Buttons */}
       <div className="pt-4 space-y-2">
         <Button className="w-full" onClick={onApply}>
-          Apply Filters
+          {t('applyFilters')}
         </Button>
         <Button variant="outline" className="w-full gap-2" onClick={onClear}>
           <RotateCcw className="h-4 w-4" />
-          Clear All
+          {t('clearAll')}
         </Button>
       </div>
     </div>
@@ -302,6 +324,7 @@ function SearchPageContent() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuth();
+  const t = useTranslations('search');
   
   const urlMake = searchParams.get('make') || 'All Makes';
   const urlBody = searchParams.get('bodyType') || 'All Types';
@@ -533,7 +556,7 @@ function SearchPageContent() {
               <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Search make, model, or keyword..."
+                placeholder={t('searchPlaceholder')}
                 className="pl-10 h-12 rounded-xl"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -547,7 +570,7 @@ function SearchPageContent() {
                 <SheetTrigger asChild>
                   <Button variant="outline" className="gap-2 lg:hidden">
                     <SlidersHorizontal className="h-4 w-4" />
-                    Filters
+                    {t('filters')}
                     {activeFilters.length > 0 && (
                       <Badge variant="secondary" className="ml-1">{activeFilters.length}</Badge>
                     )}
@@ -555,7 +578,7 @@ function SearchPageContent() {
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[320px] overflow-y-auto">
                   <SheetHeader>
-                    <SheetTitle>Filters</SheetTitle>
+                    <SheetTitle>{t('filters')}</SheetTitle>
                   </SheetHeader>
                   <div className="mt-6">
                     <FilterSidebar
@@ -586,14 +609,14 @@ function SearchPageContent() {
                 router.push(`/search?${params.toString()}`, { scroll: false });
               }}>
                 <SelectTrigger className="w-[180px] h-12 rounded-xl">
-                  <SelectValue placeholder="Sort by" />
+                  <SelectValue placeholder={t('sortBy')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="newest">Newest First</SelectItem>
-                  <SelectItem value="price_asc">Price: Low to High</SelectItem>
-                  <SelectItem value="price_desc">Price: High to Low</SelectItem>
-                  <SelectItem value="mileage_asc">Lowest Mileage</SelectItem>
-                  <SelectItem value="year_desc">Year: Newest</SelectItem>
+                  <SelectItem value="newest">{t('newestFirst')}</SelectItem>
+                  <SelectItem value="price_asc">{t('priceLowHigh')}</SelectItem>
+                  <SelectItem value="price_desc">{t('priceHighLow')}</SelectItem>
+                  <SelectItem value="mileage_asc">{t('lowestMileage')}</SelectItem>
+                  <SelectItem value="year_desc">{t('yearNewest')}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -709,7 +732,7 @@ function SearchPageContent() {
                 </p>
                 <Button variant="outline" className="mt-6 gap-2" onClick={clearFilters}>
                   <RotateCcw className="h-4 w-4" />
-                  Clear Filters
+                  {t('clearFilters')}
                 </Button>
               </motion.div>
             ) : (

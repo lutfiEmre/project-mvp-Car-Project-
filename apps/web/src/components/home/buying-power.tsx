@@ -235,7 +235,7 @@ export function BuyingPower() {
                   exit={{ opacity: 0, height: 0 }}
                   className="space-y-1"
                 >
-                  <Label className="text-[10px] sm:text-xs">Trade-in Value</Label>
+                  <Label className="text-[10px] sm:text-xs">{t('tradeInValue')}</Label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs sm:text-sm">$</span>
                     <Input

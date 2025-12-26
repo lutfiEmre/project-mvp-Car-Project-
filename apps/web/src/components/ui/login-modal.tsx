@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/use-auth';
+import { useTranslations } from 'next-intl';
 
 interface LoginModalProps {
   open: boolean;
@@ -25,6 +26,7 @@ interface LoginModalProps {
 export function LoginModal({ open, onOpenChange, redirectTo }: LoginModalProps) {
   const router = useRouter();
   const { login } = useAuth();
+  const t = useTranslations('auth');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -43,7 +45,7 @@ export function LoginModal({ open, onOpenChange, redirectTo }: LoginModalProps) 
         router.push(redirectTo);
       }
     } catch (err: any) {
-      setError(err.message || 'Invalid email or password');
+      setError(err.message || t('loginFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -53,9 +55,9 @@ export function LoginModal({ open, onOpenChange, redirectTo }: LoginModalProps) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Welcome Back</DialogTitle>
+          <DialogTitle className="text-2xl font-bold">{t('loginTitle')}</DialogTitle>
           <DialogDescription>
-            Sign in to your account to continue
+            {t('loginSubtitle')}
           </DialogDescription>
         </DialogHeader>
 
@@ -67,11 +69,11 @@ export function LoginModal({ open, onOpenChange, redirectTo }: LoginModalProps) 
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('email')}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="Enter your email"
+              placeholder={t('enterEmail')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -80,12 +82,12 @@ export function LoginModal({ open, onOpenChange, redirectTo }: LoginModalProps) 
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t('password')}</Label>
             <div className="relative">
               <Input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Enter your password"
+                placeholder={t('enterPassword')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -111,7 +113,7 @@ export function LoginModal({ open, onOpenChange, redirectTo }: LoginModalProps) 
               className="text-sm text-primary hover:underline"
               onClick={() => onOpenChange(false)}
             >
-              Forgot password?
+              {t('forgotPassword')}
             </Link>
           </div>
 
@@ -119,21 +121,21 @@ export function LoginModal({ open, onOpenChange, redirectTo }: LoginModalProps) 
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
+                {t('signingIn')}
               </>
             ) : (
-              'Sign In'
+              t('signIn')
             )}
           </Button>
 
           <div className="text-center text-sm text-muted-foreground">
-            Don't have an account?{' '}
+            {t('noAccount')}{' '}
             <Link
               href="/register"
               className="text-primary hover:underline font-medium"
               onClick={() => onOpenChange(false)}
             >
-              Create account
+              {t('createAccount')}
             </Link>
           </div>
         </form>

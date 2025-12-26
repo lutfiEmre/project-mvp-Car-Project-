@@ -71,6 +71,7 @@ const fallbackDealers = [
 export function FeaturedDealers() {
   const t = useTranslations('home');
   const tCommon = useTranslations('common');
+  const tDashboard = useTranslations('dashboard');
   
   // Fetch real dealers from API
   const { data: dealersData, isLoading } = useQuery({
@@ -155,13 +156,13 @@ export function FeaturedDealers() {
                     <span className="text-sm text-muted-foreground">({dealer.reviewCount || 0})</span>
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {dealer.totalListings || 0} listings
+                    {dealer.totalListings || 0} {tDashboard('listings')}
                   </div>
                 </div>
                 
                 {dealer.totalSold > 0 && (
                   <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{dealer.totalSold}+ vehicles sold</span>
+                    <span>{dealer.totalSold}+ {t('vehiclesSold')}</span>
                   </div>
                 )}
                 
@@ -182,7 +183,7 @@ export function FeaturedDealers() {
                     </Link>
                   ) : (
                     <Button size="sm" className="flex-1 rounded-lg" disabled>
-                      Demo Dealer
+                      {t('demoDealer')}
                     </Button>
                   )}
                 </div>

@@ -61,6 +61,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { api } from '@/lib/api';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 // All available vehicles data
 const allVehicles: Record<string, any> = {
@@ -266,6 +267,8 @@ const defaultVehicle = allVehicles['2024-bmw-m4-competition'];
 // Quick Search Sidebar Component
 function QuickSearchSidebar({ currentMake }: { currentMake: string }) {
   const router = useRouter();
+  const t = useTranslations('vehicle');
+  const tSearch = useTranslations('search');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMake, setSelectedMake] = useState('All Makes');
 
@@ -295,14 +298,14 @@ function QuickSearchSidebar({ currentMake }: { currentMake: string }) {
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Search className="h-5 w-5 text-primary" />
-            Quick Search
+            {t('quickSearch')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search vehicles..."
+              placeholder={t('searchVehicles')}
               className="pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -312,7 +315,7 @@ function QuickSearchSidebar({ currentMake }: { currentMake: string }) {
           
           <Select value={selectedMake} onValueChange={setSelectedMake}>
             <SelectTrigger>
-              <SelectValue placeholder="Select Make" />
+              <SelectValue placeholder={t('selectMake')} />
             </SelectTrigger>
             <SelectContent>
               {makes.map((make) => (
@@ -323,13 +326,13 @@ function QuickSearchSidebar({ currentMake }: { currentMake: string }) {
 
           <Button className="w-full gap-2" onClick={handleSearch}>
             <Search className="h-4 w-4" />
-            Search
+            {tSearch('search')}
           </Button>
 
           <Link href="/search">
             <Button variant="outline" className="w-full mt-3 gap-2">
               <SlidersHorizontal className="h-4 w-4" />
-              Advanced Filters
+              {t('advancedFilters')}
             </Button>
           </Link>
         </CardContent>
@@ -342,11 +345,11 @@ function QuickSearchSidebar({ currentMake }: { currentMake: string }) {
             <CardTitle className="flex items-center justify-between text-lg">
               <span className="flex items-center gap-2">
                 <Car className="h-5 w-5 text-primary" />
-                More {currentMake}
+                {t('moreMake', { make: currentMake })}
               </span>
               <Link href={`/search?make=${currentMake}`}>
                 <Button variant="ghost" size="sm" className="gap-1 text-xs">
-                  View All <ArrowRight className="h-3 w-3" />
+                  {t('viewAll')} <ArrowRight className="h-3 w-3" />
                 </Button>
               </Link>
             </CardTitle>
@@ -382,10 +385,10 @@ function QuickSearchSidebar({ currentMake }: { currentMake: string }) {
       <Card>
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center justify-between text-lg">
-            <span>You May Also Like</span>
+            <span>{t('youMayAlsoLike')}</span>
             <Link href="/search">
               <Button variant="ghost" size="sm" className="gap-1 text-xs">
-                Browse All <ArrowRight className="h-3 w-3" />
+                {t('browseAll')} <ArrowRight className="h-3 w-3" />
               </Button>
             </Link>
           </CardTitle>
@@ -419,36 +422,36 @@ function QuickSearchSidebar({ currentMake }: { currentMake: string }) {
       {/* Quick Links */}
       <Card>
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg">Quick Links</CardTitle>
+          <CardTitle className="text-lg">{t('quickLinks')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           <Link href="/search?condition=NEW" className="block">
             <div className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-              <span className="text-sm">New Vehicles</span>
+              <span className="text-sm">{t('newVehicles')}</span>
               <ArrowRight className="h-4 w-4 text-muted-foreground" />
             </div>
           </Link>
           <Link href="/search?condition=USED" className="block">
             <div className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-              <span className="text-sm">Used Vehicles</span>
+              <span className="text-sm">{t('usedVehicles')}</span>
               <ArrowRight className="h-4 w-4 text-muted-foreground" />
             </div>
           </Link>
           <Link href="/search?bodyType=SUV" className="block">
             <div className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-              <span className="text-sm">SUVs</span>
+              <span className="text-sm">{t('suvs')}</span>
               <ArrowRight className="h-4 w-4 text-muted-foreground" />
             </div>
           </Link>
           <Link href="/search?fuelType=ELECTRIC" className="block">
             <div className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-              <span className="text-sm">Electric Vehicles</span>
+              <span className="text-sm">{t('electricVehicles')}</span>
               <ArrowRight className="h-4 w-4 text-muted-foreground" />
             </div>
           </Link>
           <Link href="/dealers" className="block">
             <div className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-              <span className="text-sm">Find Dealers</span>
+              <span className="text-sm">{t('findDealers')}</span>
               <ArrowRight className="h-4 w-4 text-muted-foreground" />
             </div>
           </Link>
@@ -464,6 +467,8 @@ export default function VehicleDetailPage() {
   const slug = params.slug as string;
   const { user, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
+  const t = useTranslations('vehicle');
+  const tCommon = useTranslations('common');
   
   const { data: apiListing, isLoading } = useListing(slug);
   const [currentImage, setCurrentImage] = useState(0);
@@ -638,15 +643,15 @@ export default function VehicleDetailPage() {
       if (isSaved) {
         await api.listings.unsave(vehicle.id);
         setIsSaved(false);
-        toast.success('Removed from saved');
+        toast.success(t('removedFromSaved'));
       } else {
         await api.listings.save(vehicle.id);
         setIsSaved(true);
-        toast.success('Added to saved');
+        toast.success(t('addedToSaved'));
       }
       queryClient.invalidateQueries({ queryKey: ['listings', 'saved'] });
     } catch (e: any) {
-      toast.error(e.message || 'Failed to update saved status');
+      toast.error(e.message || t('failedToUpdateSaved'));
     } finally {
       setIsSaving(false);
     }
@@ -671,7 +676,7 @@ export default function VehicleDetailPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to create review');
+        throw new Error(error.message || t('failedToCreateReview'));
       }
 
       return response.json();
@@ -680,17 +685,17 @@ export default function VehicleDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['listing', slug] });
       setReviewForm({ rating: 5, title: '', content: '' });
       setShowReviewForm(false);
-      toast.success('Review submitted successfully!');
+      toast.success(t('reviewSubmittedSuccess'));
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to submit review');
+      toast.error(error.message || t('failedToSubmitReview'));
     },
   });
 
   const handleSubmitReview = (e: React.FormEvent) => {
     e.preventDefault();
     if (!reviewForm.content.trim()) {
-      toast.error('Please write a review');
+      toast.error(t('pleaseWriteReview'));
       return;
     }
     createReviewMutation.mutate({
@@ -713,10 +718,10 @@ export default function VehicleDetailPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Listing not found</h1>
-          <p className="text-muted-foreground mb-4">The vehicle you're looking for doesn't exist.</p>
+          <h1 className="text-2xl font-bold mb-2">{t('listingNotFound')}</h1>
+          <p className="text-muted-foreground mb-4">{t('listingNotFoundMessage')}</p>
           <Link href="/search">
-            <Button>Back to Search</Button>
+            <Button>{t('backToSearch')}</Button>
           </Link>
         </div>
       </div>
@@ -728,9 +733,9 @@ export default function VehicleDetailPage() {
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-          <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
+          <Link href="/" className="hover:text-foreground transition-colors">{t('home')}</Link>
           <span>/</span>
-          <Link href="/search" className="hover:text-foreground transition-colors">Search</Link>
+          <Link href="/search" className="hover:text-foreground transition-colors">{t('search')}</Link>
           <span>/</span>
           <Link href={`/search?make=${vehicle.make}`} className="hover:text-foreground transition-colors">{vehicle.make}</Link>
           <span>/</span>
@@ -793,16 +798,16 @@ export default function VehicleDetailPage() {
 
                 <div className="absolute left-4 top-4 flex gap-2">
                   {vehicle.featured && (
-                    <Badge className="bg-coral-500 text-white">Featured</Badge>
+                    <Badge className="bg-coral-500 text-white">{t('featured')}</Badge>
                   )}
                   {vehicle.condition === 'CERTIFIED_PRE_OWNED' && (
                     <Badge className="bg-emerald-500 text-white">
                       <Check className="mr-1 h-3 w-3" />
-                      Certified
+                      {t('certified')}
                     </Badge>
                   )}
                   {vehicle.condition === 'NEW' && (
-                    <Badge className="bg-blue-500 text-white">New</Badge>
+                    <Badge className="bg-blue-500 text-white">{t('new')}</Badge>
                   )}
                 </div>
               </div>
@@ -874,28 +879,28 @@ export default function VehicleDetailPage() {
                     <div className="flex items-center gap-3 rounded-xl bg-slate-100 p-4 dark:bg-slate-800">
                       <Gauge className="h-5 w-5 text-primary" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Mileage</p>
+                        <p className="text-xs text-muted-foreground">{t('mileage')}</p>
                         <p className="font-semibold">{formatMileage(vehicle.mileage, vehicle.mileageUnit)}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 rounded-xl bg-slate-100 p-4 dark:bg-slate-800">
                       <Fuel className="h-5 w-5 text-primary" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Fuel</p>
+                        <p className="text-xs text-muted-foreground">{t('fuel')}</p>
                         <p className="font-semibold capitalize">{vehicle.fuelType?.toLowerCase().replace('_', ' ')}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 rounded-xl bg-slate-100 p-4 dark:bg-slate-800">
                       <Settings2 className="h-5 w-5 text-primary" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Transmission</p>
+                        <p className="text-xs text-muted-foreground">{t('transmission')}</p>
                         <p className="font-semibold capitalize">{vehicle.transmission?.toLowerCase()}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 rounded-xl bg-slate-100 p-4 dark:bg-slate-800">
                       <Calendar className="h-5 w-5 text-primary" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Year</p>
+                        <p className="text-xs text-muted-foreground">{t('year')}</p>
                         <p className="font-semibold">{vehicle.year}</p>
                       </div>
                     </div>
@@ -907,18 +912,18 @@ export default function VehicleDetailPage() {
             {/* Tabs */}
             <Tabs defaultValue="overview" className="w-full">
               <TabsList className="w-full justify-start">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="features">Features</TabsTrigger>
-                <TabsTrigger value="specs">Specifications</TabsTrigger>
+                <TabsTrigger value="overview">{t('overview')}</TabsTrigger>
+                <TabsTrigger value="features">{t('features')}</TabsTrigger>
+                <TabsTrigger value="specs">{t('specifications')}</TabsTrigger>
                 <TabsTrigger value="reviews">
-                  Reviews {reviews.length > 0 && `(${reviews.length})`}
+                  {t('reviews')} {reviews.length > 0 && `(${reviews.length})`}
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="mt-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Vehicle Description</CardTitle>
+                    <CardTitle>{t('vehicleDescription')}</CardTitle>
                   </CardHeader>
                   <CardContent className="prose dark:prose-invert max-w-none">
                     <div 
@@ -941,7 +946,7 @@ export default function VehicleDetailPage() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Check className="h-5 w-5 text-primary" />
-                        Features
+                        {t('features')}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -955,7 +960,7 @@ export default function VehicleDetailPage() {
                           ))}
                         </ul>
                       ) : (
-                        <p className="text-muted-foreground">No features listed</p>
+                        <p className="text-muted-foreground">{t('noFeaturesListed')}</p>
                       )}
                     </CardContent>
                   </Card>
@@ -964,7 +969,7 @@ export default function VehicleDetailPage() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Shield className="h-5 w-5 text-emerald-500" />
-                        Safety Features
+                        {t('safetyFeatures')}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -978,7 +983,7 @@ export default function VehicleDetailPage() {
                           ))}
                         </ul>
                       ) : (
-                        <p className="text-muted-foreground">No safety features listed</p>
+                        <p className="text-muted-foreground">{t('noSafetyFeaturesListed')}</p>
                       )}
                     </CardContent>
                   </Card>
@@ -990,14 +995,14 @@ export default function VehicleDetailPage() {
                   <CardContent className="pt-6">
                     <div className="grid gap-4 sm:grid-cols-2">
                       {[
-                        { label: 'Body Type', value: vehicle.bodyType?.replace('_', ' ') },
-                        { label: 'Drive Type', value: vehicle.driveType },
-                        { label: 'Engine', value: vehicle.engine },
-                        { label: 'Horsepower', value: vehicle.horsepower ? `${vehicle.horsepower} hp` : 'N/A' },
-                        { label: 'Exterior Color', value: vehicle.exteriorColor },
-                        { label: 'Interior Color', value: vehicle.interiorColor },
-                        { label: 'Condition', value: vehicle.condition?.replace('_', ' ') },
-                        { label: 'Location', value: `${vehicle.city}, ${vehicle.province}` },
+                        { label: t('bodyType'), value: vehicle.bodyType?.replace('_', ' ') },
+                        { label: t('driveType'), value: vehicle.driveType },
+                        { label: t('engine'), value: vehicle.engine },
+                        { label: t('horsepower'), value: vehicle.horsepower ? `${vehicle.horsepower} hp` : 'N/A' },
+                        { label: t('exteriorColor'), value: vehicle.exteriorColor },
+                        { label: t('interiorColor'), value: vehicle.interiorColor },
+                        { label: t('condition'), value: vehicle.condition?.replace('_', ' ') },
+                        { label: t('location'), value: `${vehicle.city}, ${vehicle.province}` },
                       ].map((spec) => (
                         <div key={spec.label} className="flex justify-between py-2 border-b">
                           <span className="text-muted-foreground">{spec.label}</span>
@@ -1013,7 +1018,7 @@ export default function VehicleDetailPage() {
                 <div className="space-y-6">
                   {/* Review Form Header */}
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-bold">Reviews ({reviews.length})</h3>
+                    <h3 className="text-xl font-bold">{t('reviews')} ({reviews.length})</h3>
                     {!showReviewForm && (
                       <Button
                         onClick={() => {
@@ -1026,7 +1031,7 @@ export default function VehicleDetailPage() {
                         variant="outline"
                       >
                         <MessageSquare className="mr-2 h-4 w-4" />
-                        Write a Review
+                        {t('writeReview')}
                       </Button>
                     )}
                   </div>
@@ -1038,24 +1043,24 @@ export default function VehicleDetailPage() {
                         {!isAuthenticated ? (
                           <div className="text-center py-8">
                             <LogIn className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                            <h3 className="text-lg font-semibold mb-2">Login Required</h3>
+                            <h3 className="text-lg font-semibold mb-2">{t('loginRequired')}</h3>
                             <p className="text-muted-foreground mb-4">
-                              Please login to write a review for this listing.
+                              {t('loginToReview')}
                             </p>
                             <div className="flex gap-3 justify-center">
                               <Button onClick={() => router.push(`/login?redirect=/vehicles/${slug}`)}>
                                 <LogIn className="mr-2 h-4 w-4" />
-                                Login
+                                {tCommon('login')}
                               </Button>
                               <Button variant="outline" onClick={() => setShowReviewForm(false)}>
-                                Cancel
+                                {tCommon('cancel')}
                               </Button>
                             </div>
                           </div>
                         ) : (
                           <form onSubmit={handleSubmitReview} className="space-y-4">
                             <div>
-                              <Label>Rating</Label>
+                              <Label>{t('rating')}</Label>
                               <div className="flex gap-1 mt-2">
                                 {[1, 2, 3, 4, 5].map((rating) => (
                                   <button
@@ -1077,23 +1082,23 @@ export default function VehicleDetailPage() {
                             </div>
 
                             <div>
-                              <Label htmlFor="review-title">Title (Optional)</Label>
+                              <Label htmlFor="review-title">{t('titleOptional')}</Label>
                               <Input
                                 id="review-title"
                                 value={reviewForm.title}
                                 onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })}
-                                placeholder="Review title..."
+                                placeholder={t('reviewTitle')}
                                 className="mt-2"
                               />
                             </div>
 
                             <div>
-                              <Label htmlFor="review-content">Review</Label>
+                              <Label htmlFor="review-content">{t('review')}</Label>
                               <Textarea
                                 id="review-content"
                                 value={reviewForm.content}
                                 onChange={(e) => setReviewForm({ ...reviewForm, content: e.target.value })}
-                                placeholder="Share your experience with this vehicle..."
+                                placeholder={t('shareExperience')}
                                 className="mt-2 min-h-[120px]"
                                 required
                               />
@@ -1107,10 +1112,10 @@ export default function VehicleDetailPage() {
                                 {createReviewMutation.isPending ? (
                                   <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Submitting...
+                                    {t('submitting')}
                                   </>
                                 ) : (
-                                  'Submit Review'
+                                  t('submitReview')
                                 )}
                               </Button>
                               <Button
@@ -1121,7 +1126,7 @@ export default function VehicleDetailPage() {
                                   setReviewForm({ rating: 5, title: '', content: '' });
                                 }}
                               >
-                                Cancel
+                                {tCommon('cancel')}
                               </Button>
                             </div>
                           </form>
@@ -1135,9 +1140,9 @@ export default function VehicleDetailPage() {
                     <Card>
                       <CardContent className="p-12 text-center">
                         <Star className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold mb-2">No Reviews Yet</h3>
+                        <h3 className="text-lg font-semibold mb-2">{t('noReviewsYet')}</h3>
                         <p className="text-muted-foreground">
-                          Be the first to review this vehicle!
+                          {t('beFirstToReview')}
                         </p>
                       </CardContent>
                     </Card>
@@ -1148,7 +1153,7 @@ export default function VehicleDetailPage() {
                           <CardContent className="p-6">
                             <div className="flex items-start justify-between mb-2">
                               <div>
-                                <p className="font-semibold">{review.reviewerName || 'Anonymous'}</p>
+                                <p className="font-semibold">{review.reviewerName || t('anonymous')}</p>
                                 <div className="flex items-center gap-1 mt-1">
                                   {[...Array(5)].map((_, i) => (
                                     <Star
@@ -1180,7 +1185,7 @@ export default function VehicleDetailPage() {
                               <div className="mt-4 pt-4 border-t">
                                 <div className="flex items-center gap-2 mb-2">
                                   <MessageSquare className="h-4 w-4 text-primary" />
-                                  <span className="text-sm font-medium">Dealer Response</span>
+                                  <span className="text-sm font-medium">{t('dealerResponse')}</span>
                                   {review.dealerResponseAt && (
                                     <span className="text-xs text-muted-foreground ml-auto">
                                       {new Date(review.dealerResponseAt).toLocaleDateString()}
@@ -1220,7 +1225,7 @@ export default function VehicleDetailPage() {
                         {formatPrice(vehicle.originalPrice)}
                       </p>
                     )}
-                    <p className="text-sm text-muted-foreground mt-1">+ taxes & licensing</p>
+                    <p className="text-sm text-muted-foreground mt-1">{t('taxesAndLicensing')}</p>
                   </div>
 
                   <div className="space-y-3">
@@ -1228,7 +1233,7 @@ export default function VehicleDetailPage() {
                       <Button className="w-full gap-2" size="lg" asChild>
                         <a href={`tel:${vehicle.dealer.contactPhone}`}>
                           <Phone className="h-5 w-5" />
-                          Call Dealer
+                          {t('callDealer')}
                         </a>
                       </Button>
                     )}
@@ -1239,20 +1244,20 @@ export default function VehicleDetailPage() {
                       onClick={() => setMessageDialogOpen(true)}
                     >
                       <MessageCircle className="h-5 w-5" />
-                      Send Message
+                      {t('sendMessage')}
                     </Button>
                     {vehicle.dealer?.contactEmail && (
                       <Button variant="outline" className="w-full gap-2" size="lg" asChild>
                         <a href={`mailto:${vehicle.dealer.contactEmail}`}>
                           <Mail className="h-5 w-5" />
-                          Email Dealer
+                          {t('emailDealer')}
                         </a>
                       </Button>
                     )}
                     {vehicle.user && !vehicle.dealer && (
                       <Button variant="outline" className="w-full gap-2" size="lg">
                         <MessageCircle className="h-5 w-5" />
-                        Contact Seller
+                        {t('contactSeller')}
                       </Button>
                     )}
                   </div>
@@ -1273,7 +1278,7 @@ export default function VehicleDetailPage() {
                           {vehicle.dealer.verified && (
                             <div className="flex items-center gap-1 text-sm text-muted-foreground">
                               <Check className="h-4 w-4 text-emerald-500" />
-                              Verified Dealer
+                              {t('verifiedDealer')}
                             </div>
                           )}
                         </div>
@@ -1295,7 +1300,7 @@ export default function VehicleDetailPage() {
                           </div>
                           <span className="text-sm font-medium">{vehicle.dealer.rating}</span>
                           <span className="text-sm text-muted-foreground">
-                            ({vehicle.dealer.reviewCount} reviews)
+                            ({vehicle.dealer.reviewCount} {t('reviewsCount')})
                           </span>
                         </div>
                       )}
@@ -1307,7 +1312,7 @@ export default function VehicleDetailPage() {
 
                       <Link href={`/dealers/${vehicle.dealer.id || 'dealer'}`}>
                         <Button variant="ghost" className="w-full gap-2">
-                          View Dealer Profile
+                          {t('viewDealerProfile')}
                           <ExternalLink className="h-4 w-4" />
                         </Button>
                       </Link>
@@ -1326,20 +1331,20 @@ export default function VehicleDetailPage() {
                           <p className="font-semibold">
                             {vehicle.user.firstName} {vehicle.user.lastName}
                           </p>
-                          <p className="text-sm text-muted-foreground">Private Seller</p>
+                          <p className="text-sm text-muted-foreground">{t('privateSeller')}</p>
                         </div>
                       </div>
                       <Link href={`/users/${vehicle.user.id}`}>
                         <Button variant="ghost" className="w-full gap-2">
-                          View User Profile
+                          {t('viewUserProfile')}
                           <ExternalLink className="h-4 w-4" />
                         </Button>
                       </Link>
                     </div>
                   ) : (
                     <div className="text-center text-muted-foreground">
-                      <p className="font-medium">Private Seller</p>
-                      <p className="text-sm mt-1">Contact for more information</p>
+                      <p className="font-medium">{t('privateSeller')}</p>
+                      <p className="text-sm mt-1">{t('contactForInfo')}</p>
                     </div>
                   )}
                 </CardContent>
@@ -1353,9 +1358,9 @@ export default function VehicleDetailPage() {
       <Dialog open={messageDialogOpen} onOpenChange={setMessageDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Send Message to Dealer</DialogTitle>
+            <DialogTitle>{t('sendMessageToDealer')}</DialogTitle>
             <DialogDescription>
-              Send a message to {vehicle.dealer?.businessName || vehicle.user?.firstName} about this vehicle.
+              {t('sendMessageTo', { name: vehicle.dealer?.businessName || vehicle.user?.firstName || '' })}
             </DialogDescription>
           </DialogHeader>
           <form
@@ -1392,16 +1397,16 @@ export default function VehicleDetailPage() {
                     queryClient.invalidateQueries({ queryKey: ['user', 'inquiries'] });
                     queryClient.invalidateQueries({ queryKey: ['user', 'inquiries', 'unread'] });
                   }
-                  toast.success('Message sent successfully!');
+                  toast.success(t('messageSentSuccess'));
                   setMessageDialogOpen(false);
                   setMessageForm({ name: '', email: '', phone: '', message: '' });
                 } else {
                   const errorData = await response.json().catch(() => ({}));
-                  toast.error(errorData.message || 'Failed to send message. Please try again.');
+                  toast.error(errorData.message || t('failedToSendMessage'));
                 }
               } catch (error) {
                 console.error('Error sending message:', error);
-                toast.error('Failed to send message. Please try again.');
+                toast.error(t('failedToSendMessage'));
               } finally {
                 setIsSubmitting(false);
               }
@@ -1409,44 +1414,44 @@ export default function VehicleDetailPage() {
             className="space-y-4"
           >
             <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
+              <Label htmlFor="name">{t('name')} *</Label>
               <Input
                 id="name"
                 value={messageForm.name}
                 onChange={(e) => setMessageForm({ ...messageForm, name: e.target.value })}
                 required
-                placeholder="Your name"
+                placeholder={t('yourName')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
+              <Label htmlFor="email">{tCommon('email')} *</Label>
               <Input
                 id="email"
                 type="email"
                 value={messageForm.email}
                 onChange={(e) => setMessageForm({ ...messageForm, email: e.target.value })}
                 required
-                placeholder="your.email@example.com"
+                placeholder={t('yourEmail')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phone">{t('phone')}</Label>
               <Input
                 id="phone"
                 type="tel"
                 value={messageForm.phone}
                 onChange={(e) => setMessageForm({ ...messageForm, phone: e.target.value })}
-                placeholder="+1 (555) 123-4567"
+                placeholder={t('phonePlaceholder')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="message">Message *</Label>
+              <Label htmlFor="message">{t('message')} *</Label>
               <Textarea
                 id="message"
                 value={messageForm.message}
                 onChange={(e) => setMessageForm({ ...messageForm, message: e.target.value })}
                 required
-                placeholder="I'm interested in this vehicle. Please contact me..."
+                placeholder={t('messagePlaceholder')}
                 rows={5}
               />
             </div>
@@ -1457,16 +1462,16 @@ export default function VehicleDetailPage() {
                 onClick={() => setMessageDialogOpen(false)}
                 disabled={isSubmitting}
               >
-                Cancel
+                {tCommon('cancel')}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending...
+                    {t('sending')}
                   </>
                 ) : (
-                  'Send Message'
+                  t('sendMessage')
                 )}
               </Button>
             </DialogFooter>

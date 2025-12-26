@@ -35,14 +35,15 @@ import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 
-const statusConfig = {
-  NEW: { label: 'New', color: 'bg-blue-100 text-blue-700', icon: Clock },
-  READ: { label: 'Contacted', color: 'bg-yellow-100 text-yellow-700', icon: MessageSquare },
-  REPLIED: { label: 'Qualified', color: 'bg-green-100 text-green-700', icon: CheckCircle },
-  ARCHIVED: { label: 'Closed', color: 'bg-gray-100 text-gray-700', icon: XCircle },
-};
+const getStatusConfig = (t: any) => ({
+  NEW: { label: t('new'), color: 'bg-blue-100 text-blue-700', icon: Clock },
+  READ: { label: t('read'), color: 'bg-yellow-100 text-yellow-700', icon: MessageSquare },
+  REPLIED: { label: t('replied'), color: 'bg-green-100 text-green-700', icon: CheckCircle },
+  ARCHIVED: { label: t('archived'), color: 'bg-gray-100 text-gray-700', icon: XCircle },
+});
 
 export default function LeadsPage() {
+  const t = useTranslations('dealer.leads');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -86,18 +87,18 @@ export default function LeadsPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="font-display text-2xl font-bold">Leads</h1>
+        <h1 className="font-display text-2xl font-bold">{t('title')}</h1>
         <p className="text-muted-foreground">
-          Manage inquiries and potential customers
+          {t('subtitle')}
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4 mb-8">
         {[
-          { label: 'Total Leads', value: stats.total.toString(), icon: Users },
-          { label: 'New Today', value: stats.new.toString(), icon: Clock },
-          { label: 'Contacted', value: stats.contacted.toString(), icon: MessageSquare },
-          { label: 'Converted', value: stats.converted.toString(), icon: CheckCircle },
+          { label: t('totalLeads'), value: stats.total.toString(), icon: Users },
+          { label: t('newToday'), value: stats.new.toString(), icon: Clock },
+          { label: t('contacted'), value: stats.contacted.toString(), icon: MessageSquare },
+          { label: t('converted'), value: stats.converted.toString(), icon: CheckCircle },
         ].map((stat, index) => (
           <motion.div
             key={stat.label}
@@ -123,7 +124,7 @@ export default function LeadsPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search leads..."
+            placeholder={t('searchLeads')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -131,14 +132,14 @@ export default function LeadsPage() {
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder={t('allStatus')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="NEW">New</SelectItem>
-            <SelectItem value="READ">Contacted</SelectItem>
-            <SelectItem value="REPLIED">Qualified</SelectItem>
-            <SelectItem value="ARCHIVED">Closed</SelectItem>
+            <SelectItem value="all">{t('allStatus')}</SelectItem>
+            <SelectItem value="NEW">{t('new')}</SelectItem>
+            <SelectItem value="READ">{t('read')}</SelectItem>
+            <SelectItem value="REPLIED">{t('replied')}</SelectItem>
+            <SelectItem value="ARCHIVED">{t('archived')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -152,16 +153,17 @@ export default function LeadsPage() {
           <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <p className="text-muted-foreground mb-2">
             {searchTerm || statusFilter !== 'all' 
-              ? 'No leads match your search' 
-              : 'No leads yet'}
+              ? t('noLeadsMatch')
+              : t('noLeadsYet')}
           </p>
           <p className="text-sm text-muted-foreground">
-            Leads will appear here when customers inquire about your vehicles
+            {t('leadsWillAppear')}
           </p>
         </div>
       ) : (
         <div className="space-y-4">
           {filteredLeads.map((lead: any, index: number) => {
+            const statusConfig = getStatusConfig(t);
             const status = statusConfig[lead.status as keyof typeof statusConfig] || statusConfig.NEW;
             const vehicleTitle = lead.listing?.title || 
               `${lead.listing?.year || ''} ${lead.listing?.make || ''} ${lead.listing?.model || ''}`.trim() ||
@@ -187,7 +189,7 @@ export default function LeadsPage() {
                       <div>
                         <h3 className="font-semibold">{lead.name}</h3>
                         <p className="text-sm text-muted-foreground">
-                          Interested in: {vehicleTitle}
+                          {t('interestedIn')} {vehicleTitle}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -207,7 +209,7 @@ export default function LeadsPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
                               <Link href="/dealer/messages" className="cursor-pointer">
-                                View Details
+                                {t('viewDetails')}
                               </Link>
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -216,7 +218,7 @@ export default function LeadsPage() {
                     </div>
 
                     <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
-                      {lead.message || 'No message'}
+                      {lead.message || t('noMessage')}
                     </p>
 
                     <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
@@ -240,21 +242,21 @@ export default function LeadsPage() {
                       <a href={`mailto:${lead.email}`}>
                         <Button size="sm" className="gap-2">
                           <Mail className="h-4 w-4" />
-                          Email
+                          {t('email')}
                         </Button>
                       </a>
                       {lead.phone && (
                         <a href={`tel:${lead.phone}`}>
                           <Button size="sm" variant="outline" className="gap-2">
                             <Phone className="h-4 w-4" />
-                            Call
+                            {t('call')}
                           </Button>
                         </a>
                       )}
                       <Link href="/dealer/messages">
                         <Button size="sm" variant="outline" className="gap-2">
                           <MessageSquare className="h-4 w-4" />
-                          Reply
+                          {t('reply')}
                         </Button>
                       </Link>
                     </div>

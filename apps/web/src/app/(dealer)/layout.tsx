@@ -37,21 +37,23 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { useTranslations } from 'next-intl';
 
-const sidebarLinks = [
-  { name: 'Dashboard', href: '/dealer/dashboard', icon: LayoutDashboard },
-  { name: 'Inventory', href: '/dealer/inventory', icon: Package },
-  { name: 'Add Listing', href: '/dealer/inventory/new', icon: ListPlus },
-  { name: 'Messages', href: '/dealer/messages', icon: MessageCircle },
-  { name: 'Reviews', href: '/dealer/reviews', icon: Star },
-  { name: 'Analytics', href: '/dealer/analytics', icon: BarChart3 },
-  { name: 'Import', href: '/dealer/import', icon: FileInput },
-  { name: 'Notifications', href: '/dealer/notifications', icon: Bell },
-  { name: 'Billing', href: '/dealer/billing', icon: CreditCard },
-  { name: 'Settings', href: '/dealer/settings', icon: Settings },
+const getSidebarLinks = (t: any) => [
+  { name: t('layout.dashboard'), href: '/dealer/dashboard', icon: LayoutDashboard },
+  { name: t('layout.inventory'), href: '/dealer/inventory', icon: Package },
+  { name: t('layout.addListing'), href: '/dealer/inventory/new', icon: ListPlus },
+  { name: t('layout.messages'), href: '/dealer/messages', icon: MessageCircle },
+  { name: t('layout.reviews'), href: '/dealer/reviews', icon: Star },
+  { name: t('layout.analytics'), href: '/dealer/analytics', icon: BarChart3 },
+  { name: t('layout.import'), href: '/dealer/import', icon: FileInput },
+  { name: t('layout.notifications'), href: '/dealer/notifications', icon: Bell },
+  { name: t('layout.billing'), href: '/dealer/billing', icon: CreditCard },
+  { name: t('layout.settings'), href: '/dealer/settings', icon: Settings },
 ];
 
 function NotificationsDropdown() {
+  const t = useTranslations('dealer');
   const router = useRouter();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { data: notificationsData } = useQuery({
@@ -120,7 +122,7 @@ function NotificationsDropdown() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
         <div className="flex items-center justify-between px-2 py-1.5">
-          <h3 className="text-sm font-semibold">Notifications</h3>
+          <h3 className="text-sm font-semibold">{t('layout.notifications')}</h3>
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -153,7 +155,7 @@ function NotificationsDropdown() {
         <div className="max-h-[400px] overflow-y-auto">
           {notifications.length === 0 ? (
             <div className="px-2 py-8 text-center text-sm text-muted-foreground">
-              No notifications
+              {t('layout.noNotifications')}
             </div>
           ) : (
             <div className="py-1">
@@ -192,7 +194,7 @@ function NotificationsDropdown() {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/dealer/notifications" className="w-full text-center">
-            View all notifications
+            {t('layout.viewAllNotifications')}
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -200,10 +202,10 @@ function NotificationsDropdown() {
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={() => deleteAll.mutate()}
-        title="Delete All Notifications?"
-        message="This will permanently delete all your notifications. This action cannot be undone."
-        confirmText="Delete All"
-        cancelText="Cancel"
+        title={t('layout.deleteAllNotifications')}
+        message={t('layout.deleteAllConfirm')}
+        confirmText={t('layout.deleteAll')}
+        cancelText={t('common.cancel')}
         variant="danger"
         isLoading={deleteAll.isPending}
       />
@@ -216,10 +218,12 @@ export default function DealerLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const t = useTranslations('dealer');
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const sidebarLinks = getSidebarLinks(t);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -244,7 +248,7 @@ export default function DealerLayout({
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">{t('layout.loading')}</p>
         </div>
       </div>
     );
@@ -259,7 +263,7 @@ export default function DealerLayout({
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Redirecting...</p>
+          <p className="text-muted-foreground">{t('layout.redirecting')}</p>
         </div>
       </div>
     );
@@ -416,6 +420,7 @@ export default function DealerLayout({
             <Menu className="h-6 w-6" />
           </button>
           <div className="flex-1" />
+          asd
           <NotificationsDropdown />
         </header>
 
